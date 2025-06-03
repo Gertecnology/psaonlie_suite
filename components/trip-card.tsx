@@ -12,33 +12,42 @@ interface TripCardProps {
 }
 
 export function TripCard({ trip }: TripCardProps) {
-  const formatTime = (dateString: string, timeString: string) => {
+  // Adaptada para tomar una cadena ISO completa (fechaembarque)
+  const formatTimeToDisplay = (isoDateTimeString: string | undefined) => {
+    if (!isoDateTimeString || typeof isoDateTimeString !== 'string') {
+      console.warn("formatTimeToDisplay: isoDateTimeString inválido o ausente", isoDateTimeString);
+      return "Hora no disp.";
+    }
     try {
-      const [hours, minutes] = timeString.split(':').map(Number);
-      const date = parseISO(dateString);
-      date.setHours(hours);
-      date.setMinutes(minutes);
+      const date = parseISO(isoDateTimeString);
       return format(date, "HH:mm 'hs.'", { locale: es });
     } catch (error) {
-      console.error("Error formatting time:", error);
-      return timeString; // Fallback to original time string
+      console.error("Error formatting time from ISO:", isoDateTimeString, error);
+      return "Hora inválida"; // Fallback
     }
   };
 
-  const formatDate = (dateString: string) => {
+  // Adaptada para tomar una cadena ISO completa (fechaembarque)
+  const formatDateToDisplay = (isoDateTimeString: string | undefined) => {
+    if (!isoDateTimeString || typeof isoDateTimeString !== 'string') {
+      console.warn("formatDateToDisplay: isoDateTimeString inválido o ausente", isoDateTimeString);
+      return "Fecha no disp.";
+    }
     try {
-      const date = parseISO(dateString);
-      // Sumar un día porque parseISO puede interpretarlo como UTC y llevarlo al día anterior
-      // Dependerá de cómo se esté guardando la fecha originalmente.
-      // Si la fecha ya está correcta, esta línea no es necesaria.
-      // const correctedDate = addDays(date, 1); 
+      const date = parseISO(isoDateTimeString);
       return format(date, "eee. dd 'de' MMM.", { locale: es });
     } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateString; // Fallback to original date string
+      console.error("Error formatting date from ISO:", isoDateTimeString, error);
+      return "Fecha inválida"; // Fallback
     }
   };
 
+  // Obtener la información de la fecha y hora de salida directamente de fechaembarque
+  const salidaFechaFormateada = formatDateToDisplay(trip.fechaembarque);
+  const salidaHoraFormateada = formatTimeToDisplay(trip.fechaembarque);
+  
+  // La información de llegada y duración ya no está disponible en la interfaz Trip simplificada.
+  // Si necesitas mostrarla, primero debe estar presente en la interfaz Trip y mapeada desde la API.
 
   return (
     <Card className="bg-blue-900 text-white rounded-lg shadow-md overflow-hidden mb-4">
@@ -46,39 +55,44 @@ export function TripCard({ trip }: TripCardProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
           {/* Columna Izquierda: Detalles del viaje */}
           <div className="md:col-span-2 space-y-3">
-            <h3 className="text-xl font-semibold text-yellow-400">{trip.empresaNombre.toUpperCase()}</h3>
+            <h3 className="text-xl font-semibold text-yellow-400">{(trip.empresaNombre || "Empresa Desconocida").toUpperCase()}</h3>
             <div className="flex items-center space-x-2 text-sm">
               <CalendarDays className="w-4 h-4 text-gray-300" />
-              <span>Salida: {formatDate(trip.fechaSalida)}</span>
+              <span>Salida: {salidaFechaFormateada}</span>
               <Clock className="w-4 h-4 text-gray-300" />
-              <span>{formatTime(trip.fechaSalida, trip.horaSalida)}</span>
+              <span>{salidaHoraFormateada}</span>
             </div>
+            {/* Sección de Llegada y Duración eliminada temporalmente 
             <div className="flex items-center space-x-2 text-sm">
               <CalendarDays className="w-4 h-4 text-gray-300" />
               <span>Llegada: {formatDate(trip.fechaLlegada)}</span>
               <Clock className="w-4 h-4 text-gray-300" />
               <span>{formatTime(trip.fechaLlegada, trip.horaLlegada)}</span>
             </div>
+            */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm mt-2">
               <span className="flex items-center">
                 <Users className="w-4 h-4 mr-1.5 text-gray-300" />
-                {trip.tipoServicio}
+                {trip.tipoServicio || "No especificado"}
               </span>
               <span className="flex items-center">
                 <Tag className="w-4 h-4 mr-1.5 text-gray-300" />
                 {trip.asientosDisponibles} asientos libres
               </span>
+              {/* Duración eliminada temporalmente
               <span className="flex items-center">
                 <Hourglass className="w-4 h-4 mr-1.5 text-gray-300" />
                 {trip.duracionViajeFormato}
               </span>
+              */}
             </div>
           </div>
 
           {/* Columna Derecha: Precio y Botón */}
           <div className="md:col-span-1 flex flex-col items-center md:items-end justify-center space-y-2">
             <p className="text-2xl font-bold text-white">
-              {trip.moneda.toUpperCase()} {trip.precio.toLocaleString('es-PY')}
+              {/* Moneda hardcodeada a Gs. ya que no viene en la API por viaje */}
+              Gs. {trip.precio ? trip.precio.toLocaleString('es-PY') : 'N/A'}
             </p>
             <Button className="bg-red-600 hover:bg-red-700 text-white font-semibold w-full md:w-auto px-6 py-3 text-base">
               SELECCIONAR

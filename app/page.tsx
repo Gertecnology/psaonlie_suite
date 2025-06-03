@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from "next/image" // Restaurar Image si se usa en el diseño original
 import { SearchForm } from "@/components/search-form"
 import { SearchResultsPage } from "@/components/search-results-page"
@@ -8,137 +8,206 @@ import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
 import { SearchTips } from "@/components/search-tips"
 import type { Parada, Trip } from "@/lib/api"
-import { searchParadas } from "@/lib/api"
+import { searchParadas, getTripsFromApi } from "@/lib/api"
 import { format } from "date-fns"
+import { es } from 'date-fns/locale'
 
-interface SearchParameters {
-  origin: Parada
-  destination: Parada
-  departureDate: Date
+interface SearchSummary {
+  origin: string
+  destination: string
+  date: string
 }
 
 export default function Home() {
   const [showResults, setShowResults] = useState<boolean>(false)
-  const [searchResults, setSearchResults] = useState<Trip[]>([])
-  const [searchParameters, setSearchParameters] = useState<SearchParameters | null>(null)
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [searchSummary, setSearchSummary] = useState<SearchSummary | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [searchErrorMsg, setSearchErrorMsg] = useState<string | null>(null)
 
   const handleGoToHomeSearch = () => {
     setShowResults(false)
-    setSearchResults([])
-    setSearchParameters(null)
+    setTrips([])
+    setSearchSummary(null)
     window.scrollTo(0, 0)
   }
 
-  const اصلیHandleSearchSubmit = (
-    results: Trip[],
-    origin: Parada,
-    destination: Parada,
-    departureDate: Date
-  ) => {
-    setSearchResults(results)
-    setSearchParameters({ origin, destination, departureDate })
-    setShowResults(true)
-    window.scrollTo(0, 0)
-  }
+  const اصلیHandleSearchSubmit = async (origin: Parada | null, destination: Parada | null, dateString: string) => {
+    if (!origin || !destination || !dateString) {
+      setSearchErrorMsg("Por favor, complete todos los campos de búsqueda.")
+      setTrips([])
+      return
+    }
 
-  const handleUpdateSearch = async (originText: string, destinationText: string, date: Date) => {
-    console.log("Attempting to update search with:", { originText, destinationText, date });
+    setIsLoading(true)
+    setSearchErrorMsg(null)
+    setTrips([])
+    setSearchSummary({ origin: origin.descripcion, destination: destination.descripcion, date: dateString })
 
     try {
-      const originCandidates = await searchParadas(originText);
-      const destinationCandidates = await searchParadas(destinationText);
+      const [originParadasFull, destinationParadasFull] = await Promise.all([
+        searchParadas(origin.descripcion),
+        searchParadas(destination.descripcion)
+      ])
 
-      if (originCandidates.length === 0) {
-        alert(`No se encontró una parada de origen para "${originText}". Por favor, intenta con un nombre más específico o verifica la ortografía.`);
-        return;
+      if (!originParadasFull.length) {
+        setSearchErrorMsg(`No se encontraron paradas homologadas para el origen: ${origin.descripcion}`)
+        setIsLoading(false)
+        return
       }
-      if (destinationCandidates.length === 0) {
-        alert(`No se encontró una parada de destino para "${destinationText}". Por favor, intenta con un nombre más específico o verifica la ortografía.`);
-        return;
-      }
-
-      const newOrigin: Parada = originCandidates[0];
-      const newDestination: Parada = destinationCandidates[0];
-
-      console.log("Resolved newOrigin:", JSON.stringify(newOrigin, null, 2));
-      console.log("Resolved newDestination:", JSON.stringify(newDestination, null, 2));
-      if (!newOrigin || typeof newOrigin.empresaNombre === 'undefined') {
-        console.error("newOrigin está mal formado o le falta empresaNombre", newOrigin);
-        alert("Error interno: Datos de origen incompletos después de la búsqueda de parada.");
-        return;
-      }
-      if (!newDestination || typeof newDestination.empresaNombre === 'undefined') {
-        console.error("newDestination está mal formado o le falta empresaNombre", newDestination);
-        alert("Error interno: Datos de destino incompletos después de la búsqueda de parada.");
-        return;
+      if (!destinationParadasFull.length) {
+        setSearchErrorMsg(`No se encontraron paradas homologadas para el destino: ${destination.descripcion}`)
+        setIsLoading(false)
+        return
       }
 
-      console.log("Simulating API call for updated trips with:", { newOrigin, newDestination, date });
-      setTimeout(() => {
-        console.log("Inside setTimeout - newOrigin:", JSON.stringify(newOrigin, null, 2)); 
-        console.log("Inside setTimeout - newDestination:", JSON.stringify(newDestination, null, 2));
+      const allOriginIds = originParadasFull.map(p => p.idExterno)
+      const allDestinationIds = destinationParadasFull.map(p => p.idExterno)
 
-        const resultadosSimulados: Trip[] = [
-          {
-            id: "updated-1",
-            empresaNombre: newOrigin.empresaNombre || "Empresa Actualizada A",
-            fechaSalida: format(date, "yyyy-MM-dd"),
-            horaSalida: "09:00",
-            fechaLlegada: format(date, "yyyy-MM-dd"), 
-            horaLlegada: "13:00",
-            tipoServicio: "Coche Cama Deluxe",
-            asientosDisponibles: 10,
-            duracionViajeFormato: "4h aprox.",
-            precio: 280000,
-            moneda: "Gs",
-          },
-          {
-            id: "updated-2",
-            empresaNombre: newDestination.empresaNombre || "Empresa Actualizada B",
-            fechaSalida: format(date, "yyyy-MM-dd"),
-            horaSalida: "15:00",
-            fechaLlegada: format(date, "yyyy-MM-dd"),
-            horaLlegada: "19:00",
-            tipoServicio: "Semi Cama Plus",
-            asientosDisponibles: 5,
-            duracionViajeFormato: "4h aprox.",
-            precio: 380000,
-            moneda: "Gs",
-          }
-        ];
-        
-        setSearchResults(resultadosSimulados);
-        setSearchParameters({ origin: newOrigin, destination: newDestination, departureDate: date });
-        window.scrollTo(0, 0);
-        console.log("Search results and parameters updated.");
-      }, 1000);
+      if (!allOriginIds.length || !allDestinationIds.length) {
+        setSearchErrorMsg("No se pudieron obtener los IDs externos para la búsqueda.")
+        setIsLoading(false)
+        return
+      }
+
+      console.log("Enviando a getTripsFromApi:", { origin: allOriginIds, destino: allDestinationIds, fecha: dateString })
+      const fetchedTrips = await getTripsFromApi(allOriginIds, allDestinationIds, dateString)
+
+      if (fetchedTrips.length === 0) {
+        setSearchErrorMsg("No se encontraron viajes para la búsqueda realizada.")
+      }
+      setTrips(fetchedTrips)
 
     } catch (error) {
-      console.error("Error updating search:", error);
-      alert("Ocurrió un error al actualizar la búsqueda. Por favor, inténtalo de nuevo.");
+      console.error("Error en handleSearchSubmit:", error)
+      setSearchErrorMsg(error instanceof Error ? error.message : "Ocurrió un error al buscar viajes.")
+      setTrips([])
+    } finally {
+      setIsLoading(false)
+      setShowResults(true)
+      window.scrollTo(0, 0)
     }
-  };
+  }
+
+  const handleUpdateSearch = async (newOriginText: string, newDestinationText: string, newDateObject: Date) => {
+    if (!newOriginText || !newDestinationText || !newDateObject) {
+      setSearchErrorMsg("Por favor, complete todos los campos para actualizar la búsqueda.")
+      return
+    }
+    setIsLoading(true)
+    setSearchErrorMsg(null)
+    
+    const formattedDate = format(newDateObject, "yyyy-MM-dd")
+    setSearchSummary({ origin: newOriginText, destination: newDestinationText, date: formattedDate })
+
+    try {
+      const [originParadasFull, destinationParadasFull] = await Promise.all([
+        searchParadas(newOriginText),
+        searchParadas(newDestinationText)
+      ])
+
+      if (!originParadasFull.length) {
+        setSearchErrorMsg(`No se encontraron paradas homologadas para el origen: ${newOriginText}`)
+        setTrips([])
+        setIsLoading(false)
+        return
+      }
+      if (!destinationParadasFull.length) {
+        setSearchErrorMsg(`No se encontraron paradas homologadas para el destino: ${newDestinationText}`)
+        setTrips([])
+        setIsLoading(false)
+        return
+      }
+
+      const allOriginIds = originParadasFull.map(p => p.idExterno)
+      const allDestinationIds = destinationParadasFull.map(p => p.idExterno)
+
+      if (!allOriginIds.length || !allDestinationIds.length) {
+        setSearchErrorMsg("No se pudieron obtener los IDs externos para la búsqueda.")
+        setTrips([])
+        setIsLoading(false)
+        return
+      }
+      
+      console.log("Actualizando búsqueda con:", { origin: allOriginIds, destino: allDestinationIds, fecha: formattedDate })
+      const fetchedTrips = await getTripsFromApi(allOriginIds, allDestinationIds, formattedDate) 
+      
+      if (fetchedTrips.length === 0) {
+        setSearchErrorMsg("No se encontraron viajes para los nuevos criterios de búsqueda.")
+      }
+      setTrips(fetchedTrips)
+
+    } catch (error) {
+      console.error("Error en handleUpdateSearch:", error)
+      setSearchErrorMsg(error instanceof Error ? error.message : "Ocurrió un error al actualizar la búsqueda.")
+      setTrips([])
+    } finally {
+      setIsLoading(false)
+      // setShowResults se mantiene true ya que estamos en la página de resultados
+    }
+  }
+
+  const handleNewSearch = () => {
+    setShowResults(false)
+    setTrips([])
+    setSearchSummary(null)
+    setSearchErrorMsg(null)
+    // Opcionalmente, resetear también los inputs del SearchForm si fuera necesario,
+    // pero SearchForm maneja su propio estado interno para los inputs.
+  }
 
   const handleSearchStart = () => {
-    console.log("Search started")
+    console.log("Search started from main form")
   }
 
   const handleSearchError = (error: string) => {
-    console.error("Search error:", error)
+    console.error("Local SearchForm error:", error)
+    setSearchErrorMsg(error)
+    setIsLoading(false)
   }
+
+  // Efecto para parsear la fecha del searchSummary a Date si es necesario en otros componentes
+  // o para la consistencia interna de currentDate.
+  const currentDateAsDateObject = searchSummary?.date ? new Date(searchSummary.date + "T00:00:00") : new Date()
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        {showResults && searchParameters ? (
+        {isLoading && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg shadow-xl">
+              <p className="text-lg font-semibold">Buscando viajes...</p>
+            </div>
+          </div>
+        )}
+        {showResults && searchSummary ? (
           <SearchResultsPage
-            origin={searchParameters.origin}
-            destination={searchParameters.destination}
-            initialDepartureDate={searchParameters.departureDate}
-            searchResults={searchResults}
-            onGoToHomeSearch={handleGoToHomeSearch}
+            searchSummary={searchSummary}
+            trips={trips}
+            isLoading={isLoading}
             onUpdateSearch={handleUpdateSearch}
+            onNewSearch={handleNewSearch}
+            searchErrorMsg={searchErrorMsg}
+            currentDate={currentDateAsDateObject}
+            onDateChange={(directionOrDate: 'prev' | 'next' | Date) => {
+              if (!searchSummary) return
+              let newDateToSearch: Date
+              const currentSummaryDate = new Date(searchSummary.date + "T00:00:00") // Asegurar parseo local
+
+              if (typeof directionOrDate === 'string') {
+                newDateToSearch = new Date(currentSummaryDate)
+                if (directionOrDate === 'prev') {
+                  newDateToSearch.setDate(currentSummaryDate.getDate() - 1)
+                } else {
+                  newDateToSearch.setDate(currentSummaryDate.getDate() + 1)
+                }
+              } else {
+                newDateToSearch = directionOrDate
+              }
+              // Llamar a handleUpdateSearch con el texto actual y la nueva fecha (objeto Date)
+              handleUpdateSearch(searchSummary.origin, searchSummary.destination, newDateToSearch)
+            }}
           />
         ) : (
           <section className="relative">
@@ -157,8 +226,9 @@ export default function Home() {
               <div className="container mx-auto px-4">
                 <SearchForm
                   onSearchSubmit={اصلیHandleSearchSubmit}
-                  onSearchStart={handleSearchStart}
-                  onSearchError={handleSearchError}
+                  initialOrigin={searchSummary?.origin}
+                  initialDestination={searchSummary?.destination}
+                  initialDate={searchSummary?.date ? new Date(searchSummary.date + "T00:00:00") : undefined}
                 />
               </div>
             </div>
@@ -183,4 +253,17 @@ export default function Home() {
       <Footer />
     </div>
   )
+}
+
+// Helper function para agrupar paradas por empresaId
+function groupParadasByEmpresaId(paradas: Parada[]): Map<string, Parada[]> {
+  const grouped = new Map<string, Parada[]>()
+  paradas.forEach(parada => {
+    if (typeof parada.empresaId === 'string') { // Asegurarse que empresaId es string y no undefined/null
+      const list = grouped.get(parada.empresaId) || []
+      list.push(parada)
+      grouped.set(parada.empresaId, list)
+    }
+  })
+  return grouped
 }

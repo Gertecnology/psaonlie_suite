@@ -25,19 +25,29 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format, addDays } from "date-fns"
 import { es } from "date-fns/locale"
 import { useDebounce } from "@/hooks/use-debounce"
-import { searchParadas, checkApiHealth, type Parada, type Trip } from "@/lib/api"
+import { searchParadas, checkApiHealth, type Parada } from "@/lib/api"
 
 interface SearchFormProps {
-  onSearchSubmit?: (results: Trip[], origin: Parada, destination: Parada, departureDate: Date) => void
+  onSearchSubmit?: (origin: Parada | null, destination: Parada | null, date: string) => void
   onSearchStart?: () => void
   onSearchError?: (error: string) => void
+  initialOrigin?: string
+  initialDestination?: string
+  initialDate?: Date
 }
 
-export function SearchForm({ onSearchSubmit, onSearchStart, onSearchError }: SearchFormProps) {
-  const [departureDate, setDepartureDate] = useState<Date | undefined>(new Date())
+export function SearchForm({
+  onSearchSubmit,
+  onSearchStart,
+  onSearchError,
+  initialOrigin,
+  initialDestination,
+  initialDate,
+}: SearchFormProps) {
+  const [departureDate, setDepartureDate] = useState<Date | undefined>(initialDate || new Date())
   const [returnDate, setReturnDate] = useState<Date | undefined>()
-  const [origin, setOrigin] = useState("")
-  const [destination, setDestination] = useState("")
+  const [origin, setOrigin] = useState(initialOrigin || "")
+  const [destination, setDestination] = useState(initialDestination || "")
   const [selectedOrigin, setSelectedOrigin] = useState<Parada | null>(null)
   const [selectedDestination, setSelectedDestination] = useState<Parada | null>(null)
 
@@ -166,78 +176,48 @@ export function SearchForm({ onSearchSubmit, onSearchStart, onSearchError }: Sea
     }
   }, [])
 
+  useEffect(() => {
+    if (initialOrigin) {
+      setOrigin(initialOrigin)
+      setSelectedOrigin(null)
+    }
+    if (initialDestination) {
+      setDestination(initialDestination)
+      setSelectedDestination(null)
+    }
+    if (initialDate) {
+      setDepartureDate(initialDate)
+    }
+  }, [initialOrigin, initialDestination, initialDate])
+
   const handleSearch = () => {
     if (!selectedOrigin || !selectedDestination || !departureDate) {
       // Mostrar validación visual
-      if (!selectedOrigin) {
-        setOrigin(""); // Limpiar para activar validación
-        setTimeout(() => (document.querySelector('input[placeholder="Elegir Localidad o Terminal"]') as HTMLInputElement)?.focus(), 100);
-        return;
+      if (!selectedOrigin && originRef.current) {
+        (originRef.current.querySelector('input') as HTMLInputElement)?.focus()
+      } else if (!selectedDestination && destinationRef.current) {
+        (destinationRef.current.querySelector('input') as HTMLInputElement)?.focus()
+      } else if (!departureDate) {
+        // Podrías añadir un estado para mostrar un mensaje de error específico para la fecha
       }
-      if (!selectedDestination) {
-        setDestination(""); // Limpiar para activar validación
-        return;
-      }
-      if (!departureDate) {
-        return;
-      }
-      return;
+      // Si onSearchError está disponible, podrías usarlo también.
+      // Ejemplo: if (onSearchError) onSearchError("Por favor, complete todos los campos.")
+      return
     }
 
-    // Llamar a los callbacks de búsqueda
     if (onSearchStart) {
-      onSearchStart();
+      onSearchStart()
     }
 
-    // Simular búsqueda (en un caso real, aquí se llamaría a la API de búsqueda de viajes)
-    setTimeout(() => {
-      // Datos de ejemplo para demostración, ajustados a la interfaz Trip
-      const resultados: Trip[] = [
-        {
-          id: "1",
-          empresaNombre: selectedOrigin.empresaNombre || "Empresa Ejemplo A", // Usar empresaNombre de Parada o un default
-          fechaSalida: format(departureDate, "yyyy-MM-dd"),
-          horaSalida: "08:00",
-          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"), // Asumir llegada el mismo día para el ejemplo
-          horaLlegada: "12:00",
-          tipoServicio: "Coche Cama",
-          asientosDisponibles: 25,
-          duracionViajeFormato: "4h aprox.",
-          precio: 250000,
-          moneda: "Gs",
-        },
-        {
-          id: "2",
-          empresaNombre: selectedDestination.empresaNombre || "NSA", // Usar empresaNombre de Parada o un default
-          fechaSalida: format(departureDate, "yyyy-MM-dd"),
-          horaSalida: "14:00",
-          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"), // Asumir llegada el mismo día
-          horaLlegada: "18:00",
-          tipoServicio: "Semi Cama",
-          asientosDisponibles: 15,
-          duracionViajeFormato: "4h aprox.",
-          precio: 350000,
-          moneda: "Gs",
-        },
-        {
-          id: "3",
-          empresaNombre: "La Santaniana",
-          fechaSalida: format(departureDate, "yyyy-MM-dd"),
-          horaSalida: "10:30",
-          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"),
-          horaLlegada: "15:00",
-          tipoServicio: "Ejecutivo",
-          asientosDisponibles: 20,
-          duracionViajeFormato: "4.5h aprox.",
-          precio: 300000,
-          moneda: "PYG",
-        }
-      ];
-
-      if (onSearchSubmit && selectedOrigin && selectedDestination && departureDate) {
-        onSearchSubmit(resultados, selectedOrigin, selectedDestination, departureDate);
+    if (onSearchSubmit) {
+      const formattedDate = format(departureDate, "yyyy-MM-dd")
+      onSearchSubmit(selectedOrigin, selectedDestination, formattedDate)
+    } else {
+      console.error("Error: onSearchSubmit no está definido en SearchForm")
+      if (onSearchError) {
+        onSearchError("Error de configuración del formulario de búsqueda.")
       }
-    }, 1500);
+    }
   }
 
   const swapCities = () => {
