@@ -22,18 +22,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { format } from "date-fns"
+import { format, addDays } from "date-fns"
 import { es } from "date-fns/locale"
 import { useDebounce } from "@/hooks/use-debounce"
-import { searchParadas, checkApiHealth, type Parada } from "@/lib/api"
+import { searchParadas, checkApiHealth, type Parada, type Trip } from "@/lib/api"
 
 interface SearchFormProps {
-  onSearchResults?: (results: any[]) => void
+  onSearchSubmit?: (results: Trip[], origin: Parada, destination: Parada, departureDate: Date) => void
   onSearchStart?: () => void
   onSearchError?: (error: string) => void
 }
 
-export function SearchForm({ onSearchResults, onSearchStart, onSearchError }: SearchFormProps) {
+export function SearchForm({ onSearchSubmit, onSearchStart, onSearchError }: SearchFormProps) {
   const [departureDate, setDepartureDate] = useState<Date | undefined>(new Date())
   const [returnDate, setReturnDate] = useState<Date | undefined>()
   const [origin, setOrigin] = useState("")
@@ -189,44 +189,53 @@ export function SearchForm({ onSearchResults, onSearchStart, onSearchError }: Se
       onSearchStart();
     }
 
-    // Simular búsqueda (en un caso real, aquí se llamaría a la API)
+    // Simular búsqueda (en un caso real, aquí se llamaría a la API de búsqueda de viajes)
     setTimeout(() => {
-      // Datos de ejemplo para demostración
-      const resultados = [
+      // Datos de ejemplo para demostración, ajustados a la interfaz Trip
+      const resultados: Trip[] = [
         {
           id: "1",
-          origen: selectedOrigin.descripcion,
-          destino: selectedDestination.descripcion,
+          empresaNombre: selectedOrigin.empresaNombre || "Empresa Ejemplo A", // Usar empresaNombre de Parada o un default
           fechaSalida: format(departureDate, "yyyy-MM-dd"),
-          fechaLlegada: format(departureDate, "yyyy-MM-dd"),
           horaSalida: "08:00",
+          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"), // Asumir llegada el mismo día para el ejemplo
           horaLlegada: "12:00",
-          duracion: "4h",
-          empresa: selectedOrigin.empresaNombre,
-          tipoServicio: "Convencional",
+          tipoServicio: "Coche Cama",
+          asientosDisponibles: 25,
+          duracionViajeFormato: "4h aprox.",
           precio: 250000,
           moneda: "Gs",
-          asientosDisponibles: 25
         },
         {
           id: "2",
-          origen: selectedOrigin.descripcion,
-          destino: selectedDestination.descripcion,
+          empresaNombre: selectedDestination.empresaNombre || "NSA", // Usar empresaNombre de Parada o un default
           fechaSalida: format(departureDate, "yyyy-MM-dd"),
-          fechaLlegada: format(departureDate, "yyyy-MM-dd"),
           horaSalida: "14:00",
+          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"), // Asumir llegada el mismo día
           horaLlegada: "18:00",
-          duracion: "4h",
-          empresa: "NSA",
           tipoServicio: "Semi Cama",
+          asientosDisponibles: 15,
+          duracionViajeFormato: "4h aprox.",
           precio: 350000,
           moneda: "Gs",
-          asientosDisponibles: 15
+        },
+        {
+          id: "3",
+          empresaNombre: "La Santaniana",
+          fechaSalida: format(departureDate, "yyyy-MM-dd"),
+          horaSalida: "10:30",
+          fechaLlegada: format(addDays(departureDate, 0), "yyyy-MM-dd"),
+          horaLlegada: "15:00",
+          tipoServicio: "Ejecutivo",
+          asientosDisponibles: 20,
+          duracionViajeFormato: "4.5h aprox.",
+          precio: 300000,
+          moneda: "PYG",
         }
       ];
 
-      if (onSearchResults) {
-        onSearchResults(resultados);
+      if (onSearchSubmit && selectedOrigin && selectedDestination && departureDate) {
+        onSearchSubmit(resultados, selectedOrigin, selectedDestination, departureDate);
       }
     }, 1500);
   }

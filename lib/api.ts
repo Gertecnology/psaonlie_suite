@@ -24,6 +24,20 @@ export interface Pasaje {
   asientosDisponibles: number
 }
 
+export interface Trip {
+  id: string;
+  empresaNombre: string; // Ejemplo: "CANINDEYU", "LA SAMPEDRANA S.A."
+  fechaSalida: string; // Formato: "YYYY-MM-DD"
+  horaSalida: string; // Formato: "HH:mm"
+  fechaLlegada: string; // Formato: "YYYY-MM-DD"
+  horaLlegada: string; // Formato: "HH:mm"
+  tipoServicio: string; // Ejemplo: "Coche Cama", "Común"
+  asientosDisponibles: number;
+  duracionViajeFormato: string; // Ejemplo: "1 hs. de viaje aprox.", "4h"
+  precio: number;
+  moneda: string; // Ejemplo: "PYG" o "Gs"
+}
+
 export async function searchParadas(searchTerm: string): Promise<Parada[]> {
   if (!searchTerm || searchTerm.length < 2) return []
 
