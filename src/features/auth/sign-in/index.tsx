@@ -2,7 +2,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -12,36 +11,17 @@ import { UserAuthForm } from './components/user-auth-form'
 export default function SignIn() {
   return (
     <AuthLayout>
-      <Card className='gap-4'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>Login</CardTitle>
-          <CardDescription>
-            Enter your email and password below to <br />
-            log into your account
+      <Card className='gap-4 border-[#4747F8] bg-white/95 shadow-2xl rounded-2xl'>
+        <CardHeader className="flex flex-col items-center justify-center text-center pb-2 pt-6">
+          <CardTitle className='text-2xl font-bold tracking-tight text-[#000066] mb-2'>Iniciar Sesión</CardTitle>
+          <CardDescription className="text-gray-600 text-base mb-2">
+            Ingresa tu correo y contraseña para <br />
+            acceder a tu cuenta
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0 pb-6">
           <UserAuthForm />
         </CardContent>
-        <CardFooter>
-          <p className='text-muted-foreground px-8 text-center text-sm'>
-            By clicking login, you agree to our{' '}
-            <a
-              href='/terms'
-              className='hover:text-primary underline underline-offset-4'
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href='/privacy'
-              className='hover:text-primary underline underline-offset-4'
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </CardFooter>
       </Card>
     </AuthLayout>
   )
