@@ -31,3 +31,19 @@ export async function login(email: string, password: string): Promise<AuthRespon
 
   return response.json();
 } 
+
+export async function logout(refreshToken: string) {
+  const response = await fetch(`${API_URL}/api/auth/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al cerrar sesión');
+  }
+
+  return response.json();
+}

@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,9 +10,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { useNavigate } from '@tanstack/react-router'
+import { logout } from '@/services/auth'
 
 export function ProfileDropdown() {
   const user = useCurrentUser()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken')
+    try {
+      if (refreshToken) {
+        await logout(refreshToken)
+      }
+    } catch (_e) {
+      // Puedes mostrar un toast si quieres
+    } finally {
+      localStorage.clear()
+      navigate({ to: '/sign-in', replace: true })
+    }
+  }
 
   return (
     <DropdownMenu modal={false}>
@@ -21,7 +37,7 @@ export function ProfileDropdown() {
         <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
           <Avatar className='h-8 w-8'>
             <AvatarImage src={user?.urlPerfil || ''} alt={`${user?.firstName} ${user?.lastName}`} />
-            <AvatarFallback>{user?.firstName.charAt(0)}{user?.lastName.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -35,7 +51,7 @@ export function ProfileDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           Cerrar sesión
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
