@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { type Company } from '../models/company.model'
 import { DataTableColumnHeader } from './data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
+import { Link } from '@tanstack/react-router'
 
 export const companyColumns: ColumnDef<Company>[] = [
   {
@@ -37,11 +38,16 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='Nombre' />
     ),
     cell: ({ row }) => {
+      const id = String(row.original.id)
       return (
         <div className='flex space-x-2'>
-          <span className='max-w-32 truncate font-medium sm:max-w-72 md:max-w-[31rem]'>
+          <Link
+            to="/companies/$id"
+            params={{ id }}
+            className='max-w-32 truncate font-medium text-blue-600 underline sm:max-w-72 md:max-w-[31rem] hover:text-blue-800'
+          >
             {row.getValue('nombre')}
-          </span>
+          </Link>
         </div>
       )
     },

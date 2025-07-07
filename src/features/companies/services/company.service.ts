@@ -80,4 +80,48 @@ export async function createCompany(data: CreateCompanyFormValues): Promise<Comp
   }
 
   return response.json()
+}
+
+// Obtener empresa por id
+export async function getCompanyById(id: string) {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/empresas/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error('Error al obtener la empresa')
+  }
+  const result = await response.json()
+  return result.data
+}
+
+// Obtener paradas homologadas paginadas
+export async function getParadasHomologadas(
+  empresaId: string,
+  page: number = 1,
+  limit: number = 10,
+  sortOrder: string = 'DESC',
+  descripcion?: string,
+  sortBy: string = 'descripcion'
+) {
+  const token = localStorage.getItem('token')
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    sortOrder,
+    sortBy,
+  })
+  if (descripcion) params.append('descripcion', descripcion)
+  const response = await fetch(`${API_URL}/empresas/${empresaId}/paradas-homologadas?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error('Error al obtener paradas homologadas')
+  }
+  const result = await response.json();
+  return result.data;
 } 
