@@ -44,7 +44,7 @@ export const companyColumns: ColumnDef<Company>[] = [
           <Link
             to="/companies/$id"
             params={{ id }}
-            className='max-w-32 truncate font-medium text-blue-600 underline sm:max-w-72 md:max-w-[31rem] hover:text-blue-800'
+            className='max-w-32 truncate font-medium cursor-pointer sm:max-w-72 md:max-w-[31rem] hover:text-blue-800'
           >
             {row.getValue('nombre')}
           </Link>
