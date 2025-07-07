@@ -8,6 +8,7 @@ import {
   IconSettings,
   IconTool,
   IconUserCog,
+  IconBuilding,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -49,6 +50,11 @@ export const sidebarData: SidebarData = {
           title: 'Destinos',
           url: '/tasks',
           icon: IconChecklist,
+        },
+        {
+          title: 'Empresas',
+          url: '/companies',
+          icon: IconBuilding,
         },
       ],
     },
