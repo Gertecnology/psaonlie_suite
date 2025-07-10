@@ -15,7 +15,7 @@ interface CompanyDetailsHeaderProps {
 
 export function CompanyDetailsHeader({ company, loading }: CompanyDetailsHeaderProps) {
   return (
-    <div className='flex-1 flex items-start gap-8 p-6'>
+    <div className='flex items-center gap-8 mb-6'>
       {/* Logo */}
       <div className='flex flex-col items-center'>
         {loading ? (

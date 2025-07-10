@@ -36,43 +36,41 @@ export function CompanyParadasTable({ empresaId }: CompanyParadasTableProps) {
   }, [empresaId, page, limit])
 
   return (
-    <div className='flex-1 flex flex-col p-6'>
-      <h3 className='font-bold text-lg mb-4'>Paradas homologadas</h3>
-      <div className='flex-1 border rounded-md overflow-hidden flex flex-col'>
-        <div className='flex-1 overflow-auto'>
-          <table className='min-w-full'>
-            <thead>
-              <tr className='bg-muted'>
-                <th className='px-4 py-2 text-left'>IdExterno</th>
-                <th className='px-4 py-2 text-left'>Descripción</th>
-                <th className='px-4 py-2 text-left'>Destino</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                [...Array(limit)].map((_, i) => (
-                  <tr key={i}>
-                    <td className='px-4 py-2'><Skeleton className='h-5 w-16' /></td>
-                    <td className='px-4 py-2'><Skeleton className='h-5 w-40' /></td>
-                    <td className='px-4 py-2'><Skeleton className='h-5 w-32' /></td>
-                  </tr>
-                ))
-              ) : (data?.items?.length ?? 0) > 0 ? (
-                data?.items?.map((parada) => (
-                  <tr key={parada.id}>
-                    <td className='px-4 py-2'>{parada.idExterno}</td>
-                    <td className='px-4 py-2'>{parada.descripcion}</td>
-                    <td className='px-4 py-2'>{parada.destinoId}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className='px-4 py-6 text-center text-muted-foreground'>No hay paradas homologadas.</td>
+    <div className='mt-8'>
+      <h3 className='font-bold text-lg mb-2'>Paradas homologadas</h3>
+      <div className='border rounded-md overflow-x-auto'>
+        <table className='min-w-full'>
+          <thead>
+            <tr className='bg-muted'>
+              <th className='px-4 py-2 text-left'>IdExterno</th>
+              <th className='px-4 py-2 text-left'>Descripción</th>
+              <th className='px-4 py-2 text-left'>Destino</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              [...Array(limit)].map((_, i) => (
+                <tr key={i}>
+                  <td className='px-4 py-2'><Skeleton className='h-5 w-16' /></td>
+                  <td className='px-4 py-2'><Skeleton className='h-5 w-40' /></td>
+                  <td className='px-4 py-2'><Skeleton className='h-5 w-32' /></td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            ) : (data?.items?.length ?? 0) > 0 ? (
+              data?.items?.map((parada) => (
+                <tr key={parada.id}>
+                  <td className='px-4 py-2'>{parada.idExterno}</td>
+                  <td className='px-4 py-2'>{parada.descripcion}</td>
+                  <td className='px-4 py-2'>{parada.destinoId}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={3} className='px-4 py-6 text-center text-muted-foreground'>No hay paradas homologadas.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
       {/* Paginación */}
       {data && data.totalPages > 1 && (

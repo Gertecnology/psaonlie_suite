@@ -47,7 +47,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Destinos',
-          url: '/tasks',
+          url: '/destinations',
           icon: IconChecklist,
         },
         {

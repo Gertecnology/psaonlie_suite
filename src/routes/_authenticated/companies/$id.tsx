@@ -32,16 +32,18 @@ function CompanyDetailsPage() {
   }, [id])
 
   return (
-    <div className='min-h-screen w-full bg-background flex flex-col p-0 sm:p-4'>
-      <div className='w-full max-w-6xl mx-auto flex flex-col gap-4 p-4 sm:p-8'>
-        <div className='flex items-center gap-4 mb-2'>
+    <div className='min-h-screen w-full bg-background flex flex-col'>
+      <div className='flex-1 w-full flex flex-col'>
+        <div className='flex items-center gap-4 p-4 sm:p-6 border-b'>
           <Button variant="outline" onClick={() => history.go(-1)}>
             ← Volver
           </Button>
           <h2 className='text-2xl font-bold'>Detalles de empresa</h2>
         </div>
-        <CompanyDetailsHeader company={company} loading={loading} />
-        {company && <CompanyParadasTable empresaId={company.id} />}
+        <div className='flex-1 flex flex-col'>
+          <CompanyDetailsHeader company={company} loading={loading} />
+          {company && <CompanyParadasTable empresaId={company.id} />}
+        </div>
       </div>
     </div>
   )
