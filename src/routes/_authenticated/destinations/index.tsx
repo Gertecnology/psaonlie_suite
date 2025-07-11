@@ -12,6 +12,7 @@ import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
+import { DataTableToolbar } from '@/features/destinations/components/data-table-toolbar';
 
 export default function DestinationsPage() {
   const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 });
@@ -20,9 +21,13 @@ export default function DestinationsPage() {
   const { open, isUpdate, data: editData, openDialog, close } = useDestinationDialog();
   const { open: openDelete, id: deleteId, close: closeDelete } = useDestinationDeleteDialog();
 
-  const fetchData = async () => {
+  const fetchData = async (params: Record<string, string> = {}) => {
     try {
-      const res = await getDestinations({ page: String(pagination.pageIndex + 1), limit: String(pagination.pageSize) });
+      const res = await getDestinations({
+        page: String(pagination.pageIndex + 1),
+        limit: String(pagination.pageSize),
+        ...params,
+      });
       setData(res as unknown as typeof data);
     } finally {
       // no-op
@@ -74,6 +79,15 @@ export default function DestinationsPage() {
             pageCount={data.totalPages}
             pagination={pagination}
             onPaginationChange={setPagination}
+            renderToolbar={(table) => (
+              <DataTableToolbar
+                table={table}
+                onFilterChange={(filters) => {
+                  setPagination((p) => ({ ...p, pageIndex: 0 }))
+                  fetchData(filters)
+                }}
+              />
+            )}
           />
         </div>
       </Main>

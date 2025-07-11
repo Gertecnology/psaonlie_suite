@@ -14,6 +14,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Table as TableType,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -33,6 +34,7 @@ interface DataTableProps {
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
+  renderToolbar?: (table: TableType<Destination>) => React.ReactNode
 }
 
 export function DataTable({
@@ -41,6 +43,7 @@ export function DataTable({
   pageCount,
   pagination,
   onPaginationChange,
+  renderToolbar,
 }: DataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -78,7 +81,7 @@ export function DataTable({
 
   return (
     <div className='space-y-4'>
-      <DataTableToolbar table={table} />
+      {renderToolbar ? renderToolbar(table as TableType<Destination>) : <DataTableToolbar table={table} />}
       <div className='rounded-md border'>
         <Table>
           <TableHeader>

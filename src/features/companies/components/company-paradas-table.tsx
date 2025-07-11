@@ -45,7 +45,6 @@ export function CompanyParadasTable({ empresaId }: CompanyParadasTableProps) {
               <tr className='bg-muted'>
                 <th className='px-4 py-2 text-left'>IdExterno</th>
                 <th className='px-4 py-2 text-left'>Descripción</th>
-                <th className='px-4 py-2 text-left'>Destino</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +53,6 @@ export function CompanyParadasTable({ empresaId }: CompanyParadasTableProps) {
                   <tr key={i}>
                     <td className='px-4 py-2'><Skeleton className='h-5 w-16' /></td>
                     <td className='px-4 py-2'><Skeleton className='h-5 w-40' /></td>
-                    <td className='px-4 py-2'><Skeleton className='h-5 w-32' /></td>
                   </tr>
                 ))
               ) : (data?.items?.length ?? 0) > 0 ? (
@@ -62,7 +60,6 @@ export function CompanyParadasTable({ empresaId }: CompanyParadasTableProps) {
                   <tr key={parada.id}>
                     <td className='px-4 py-2'>{parada.idExterno}</td>
                     <td className='px-4 py-2'>{parada.descripcion}</td>
-                    <td className='px-4 py-2'>{parada.destinoId}</td>
                   </tr>
                 ))
               ) : (
