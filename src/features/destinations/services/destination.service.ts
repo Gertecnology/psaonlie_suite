@@ -13,6 +13,16 @@ export async function getDestinations(params?: Record<string, string>): Promise<
   return result.data
 }
 
+export async function getDestinationById(id: string): Promise<Destination> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Error al obtener el destino')
+  const result = await response.json()
+  return result.data
+}
+
 export async function createDestination(data: DestinationFormValues): Promise<Destination> {
   const token = localStorage.getItem('token')
   const response = await fetch(`${API_URL}/destinos`, {

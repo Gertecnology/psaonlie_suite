@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { type Destination } from '../models/destination.model'
 import { DataTableColumnHeader } from './data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
+import { Link } from '@tanstack/react-router'
 
 export const destinationColumns: ColumnDef<Destination>[] = [
   {
@@ -35,7 +36,20 @@ export const destinationColumns: ColumnDef<Destination>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Nombre' />
     ),
-    cell: ({ row }) => <div>{row.getValue('nombre')}</div>,
+    cell: ({ row }) => {
+      const id = String(row.original.id)
+      return (
+        <div className='flex space-x-2'>
+          <Link
+            to="/destinations/$id"
+            params={{ id }}
+            className='max-w-32 truncate font-medium cursor-pointer sm:max-w-72 md:max-w-[31rem] hover:text-blue-800'
+          >
+            {row.getValue('nombre')}
+          </Link>
+        </div>
+      )
+    },
   },
   {
     accessorKey: 'activo',
@@ -55,14 +69,14 @@ export const destinationColumns: ColumnDef<Destination>[] = [
     },
   },
   {
-    accessorKey: 'paradasHomologadas',
+    accessorKey: 'cantidadParadas',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Cantidad de paradas' />
     ),
     cell: ({ row }) => {
       const cantidad = row.original.cantidadParadas || 0;
       return (
-        <div className='flex flex-wrap gap-1'>
+        <div className='text-start'>
           <Badge variant='secondary'>{cantidad}</Badge>
         </div>
       )

@@ -23,13 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { type Company } from '../models/company.model'
+import { type Destination } from '../models/destination.model'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
 interface DataTableProps {
-  columns: ColumnDef<Company>[]
-  data: Company[]
+  columns: ColumnDef<Destination>[]
+  data: Destination[]
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>

@@ -3,7 +3,7 @@ import { type Table } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableViewOptions } from '../components/data-table-view-options'
-import { type Company } from '../models/company.model'
+import { type Destination } from '../models/destination.model'
 import { DataTableFacetedFilter } from './data-table-faceted-filter'
 
 const statuses = [
@@ -12,7 +12,7 @@ const statuses = [
 ]
 
 interface DataTableToolbarProps {
-  table: Table<Company>
+  table: Table<Destination>
 }
 
 export function DataTableToolbar({ table }: DataTableToolbarProps) {

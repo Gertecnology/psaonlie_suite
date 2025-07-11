@@ -1,9 +1,9 @@
 import { IconPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { useCompanyDialog } from '../store/use-company-dialog'
+import { useDestinationDialog } from '../store/use-destination-dialog'
 
-export function CompanyPrimaryButtons() {
-  const { openDialog } = useCompanyDialog()
+export function DestinationPrimaryButtons() {
+  const { openDialog } = useDestinationDialog()
   return (
     <div className='flex gap-2'>
       <Button className='space-x-1' onClick={() => openDialog('create')}>

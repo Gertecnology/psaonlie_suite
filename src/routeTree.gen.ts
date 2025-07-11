@@ -40,6 +40,7 @@ import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
 import { Route as AuthenticatedCompaniesIdRouteImport } from './routes/_authenticated/companies/$id'
 
 const ClerkRouteRoute = ClerkRouteRouteImport.update({
@@ -204,6 +205,12 @@ const AuthenticatedSettingsAccountRoute =
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
+const AuthenticatedDestinationsIdRoute =
+  AuthenticatedDestinationsIdRouteImport.update({
+    id: '/destinations/$id',
+    path: '/destinations/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCompaniesIdRoute =
   AuthenticatedCompaniesIdRouteImport.update({
     id: '/companies/$id',
@@ -227,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/503': typeof errors503Route
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -257,6 +265,7 @@ export interface FileRoutesByTo {
   '/503': typeof errors503Route
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -292,6 +301,7 @@ export interface FileRoutesById {
   '/(errors)/503': typeof errors503Route
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/503'
     | '/'
     | '/companies/$id'
+    | '/destinations/$id'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/503'
     | '/'
     | '/companies/$id'
+    | '/destinations/$id'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -390,6 +402,7 @@ export interface FileRouteTypes {
     | '/(errors)/503'
     | '/_authenticated/'
     | '/_authenticated/companies/$id'
+    | '/_authenticated/destinations/$id'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
@@ -641,6 +654,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
+    '/_authenticated/destinations/$id': {
+      id: '/_authenticated/destinations/$id'
+      path: '/destinations/$id'
+      fullPath: '/destinations/$id'
+      preLoaderRoute: typeof AuthenticatedDestinationsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/companies/$id': {
       id: '/_authenticated/companies/$id'
       path: '/companies/$id'
@@ -678,6 +698,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCompaniesIdRoute: typeof AuthenticatedCompaniesIdRoute
+  AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedCompaniesIndexRoute: typeof AuthenticatedCompaniesIndexRoute
@@ -691,6 +712,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCompaniesIdRoute: AuthenticatedCompaniesIdRoute,
+  AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedCompaniesIndexRoute: AuthenticatedCompaniesIndexRoute,

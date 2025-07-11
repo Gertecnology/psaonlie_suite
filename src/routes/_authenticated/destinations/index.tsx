@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { destinationColumns } from '@/features/destinations/components/columns';
 import { DataTable } from '@/features/destinations/components/data-table';
-import { DestinationMutateDrawer } from '@/features/destinations/components/company-mutate-drawer';
+import { DestinationMutateDrawer } from '@/features/destinations/components/destination-mutate-drawer';
 import { useDestinationDialog, useDestinationDeleteDialog } from '@/features/destinations/store/use-destination-dialog';
 import { getDestinations, deleteDestination } from '@/features/destinations/services/destination.service';
 import { PaginationState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { createFileRoute } from '@tanstack/react-router';
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { ProfileDropdown } from '@/components/profile-dropdown';
+import { Search } from '@/components/search';
+import { ThemeSwitch } from '@/components/theme-switch';
 
 export default function DestinationsPage() {
   const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 });
@@ -43,18 +48,36 @@ export default function DestinationsPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Destinos</h2>
-        <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
-      </div>
-      <DataTable
-        columns={destinationColumns}
-        data={data.items}
-        pageCount={data.totalPages}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-      />
+    <>
+      <Header fixed>
+        <Search />
+        <div className='ml-auto flex items-center space-x-4'>
+          <ThemeSwitch />
+          <ProfileDropdown />
+        </div>
+      </Header>
+
+      <Main>
+        <div className='mb-2 flex flex-wrap items-center justify-between space-y-2'>
+          <div>
+            <h2 className='text-2xl font-bold tracking-tight'>Destinos</h2>
+            <p className='text-muted-foreground'>
+              Gestiona los destinos y sus paradas homologadas.
+            </p>
+          </div>
+          <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
+        </div>
+        <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
+          <DataTable
+            columns={destinationColumns}
+            data={data.items}
+            pageCount={data.totalPages}
+            pagination={pagination}
+            onPaginationChange={setPagination}
+          />
+        </div>
+      </Main>
+
       <DestinationMutateDrawer
         open={open}
         onClose={close}
@@ -75,7 +98,7 @@ export default function DestinationsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
