@@ -20,11 +20,10 @@ export function CompanyDialogs() {
       onOpenChange={closeDialog}
       handleConfirm={handleConfirm}
       className='max-w-md'
-      title={`¿Eliminar esta empresa: ${companyId}?`}
+      title={`¿Eliminar esta empresa?`}
       desc={
         <>
-          Estás a punto de eliminar una empresa con el ID{' '}
-          <strong>{companyId}</strong>. <br />
+          Estás a punto de eliminar esta empresa
           Esta acción no se puede deshacer.
         </>
       }
