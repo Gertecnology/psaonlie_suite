@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getParadasHomologadasSelector } from '../services/destination.service';
+import { getAllParadasHomologadas } from '../services/destination.service';
 import { X } from 'lucide-react';
 
 interface ParadaOption {
@@ -16,18 +16,23 @@ interface ParadasMultiselectProps {
 
 export function ParadasMultiselect({ value, onChange, label, error }: ParadasMultiselectProps) {
   const [options, setOptions] = useState<ParadaOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    getParadasHomologadasSelector()
-      .then(setOptions)
-      .finally(() => setLoading(false));
-  }, []);
+    if (input.length >= 2) {
+      setLoading(true);
+      getAllParadasHomologadas(input)
+        .then(setOptions)
+        .catch(() => setOptions([]))
+        .finally(() => setLoading(false));
+    } else {
+      setOptions([]);
+    }
+  }, [input]);
 
   const selectedOptions = options.filter((opt) => value.includes(opt.id));
-  const availableOptions = options.filter((opt) => !value.includes(opt.id) && opt.descripcion.toLowerCase().includes(input.toLowerCase()));
+  const availableOptions = options.filter((opt) => !value.includes(opt.id));
 
   return (
     <div>
@@ -50,9 +55,14 @@ export function ParadasMultiselect({ value, onChange, label, error }: ParadasMul
         onChange={(e) => setInput(e.target.value)}
         disabled={loading}
       />
-      <div className="max-h-40 overflow-y-auto border rounded bg-background">
+      <div
+        className="max-h-60 overflow-y-auto overscroll-contain border rounded bg-background"
+        onWheel={e => e.nativeEvent.stopImmediatePropagation()}
+      >
         {loading ? (
           <div className="p-2 text-muted-foreground text-sm">Cargando...</div>
+        ) : input.length < 2 ? (
+          <div className="p-2 text-muted-foreground text-sm">Escribe al menos 2 caracteres para buscar</div>
         ) : availableOptions.length === 0 ? (
           <div className="p-2 text-muted-foreground text-sm">No hay opciones</div>
         ) : (

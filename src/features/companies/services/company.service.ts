@@ -125,3 +125,4 @@ export async function getParadasHomologadas(
   const result = await response.json();
   return result.data;
 } 
+

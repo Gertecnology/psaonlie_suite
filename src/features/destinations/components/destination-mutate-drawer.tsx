@@ -21,7 +21,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { destinationFormSchema, DestinationFormValues } from '../models/destination.model'
-import { createDestination, updateDestination, getParadasHomologadasSelector } from '../services/destination.service'
+import { createDestination, updateDestination, getAllParadasHomologadas } from '../services/destination.service'
 import { MultiSelect } from '@/components/ui/multi-select'
 
 interface DestinationMutateDrawerProps {
@@ -45,8 +45,8 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
     if (open) {
       form.reset(initialData || { nombre: '', paradasHomologadasIds: [] });
       setLoadingParadas(true);
-      getParadasHomologadasSelector()
-        .then((opts) => setParadaOptions(opts.map((p) => ({ value: p.id, label: p.descripcion }))))
+      getAllParadasHomologadas()
+        .then((opts) => setParadaOptions(opts.map((p: { id: string; descripcion: string }) => ({ value: p.id, label: p.descripcion }))))
         .finally(() => setLoadingParadas(false));
     }
   }, [open, initialData, form]);

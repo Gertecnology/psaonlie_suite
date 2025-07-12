@@ -55,13 +55,19 @@ export async function deleteDestination(id: string): Promise<void> {
 }
 
 // Servicio para obtener paradas homologadas para el selector múltiple
-export async function getParadasHomologadasSelector(): Promise<{ id: string; descripcion: string }[]> {
+export async function getAllParadasHomologadas(descripcion?: string) {
   const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/paradas-homologadas`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const params = new URLSearchParams()
+  if (descripcion) params.append('descripcion', descripcion)
+  const url = `${API_URL}/empresas/paradas-homologadas/lista${params.toString() ? `?${params.toString()}` : ''}`
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   })
-  if (!response.ok) throw new Error('Error al obtener paradas homologadas')
+  if (!response.ok) {
+    throw new Error('Error al obtener paradas homologadas')
+  }
   const result = await response.json()
-  // Ajusta el mapeo según la respuesta real de tu API
-  return result.data.items.map((p: { id: string; descripcion: string }) => ({ id: p.id, descripcion: p.descripcion }))
-} 
+  return result.data
+}
