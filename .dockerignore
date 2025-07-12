@@ -1,0 +1,18 @@
+# Ignora node_modules para que no se copien al contexto de Docker
+node_modules
+
+# Ignora la carpeta de salida si usas Vite, React o Angular
+dist
+build
+
+# Ignora archivos temporales y de sistema
+*.log
+.DS_Store
+*.swp
+
+# Ignora configuración de editor
+.vscode
+.idea
+
+# Ignora repositorio Git
+.git
