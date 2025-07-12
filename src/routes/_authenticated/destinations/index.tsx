@@ -6,6 +6,7 @@ import { useDestinationDialog, useDestinationDeleteDialog } from '@/features/des
 import { getDestinations, deleteDestination } from '@/features/destinations/services/destination.service';
 import { PaginationState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { createFileRoute } from '@tanstack/react-router';
 import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
@@ -13,6 +14,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { DataTableToolbar } from '@/features/destinations/components/data-table-toolbar';
+import { toast } from 'sonner';
 
 export default function DestinationsPage() {
   const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 });
@@ -43,12 +45,11 @@ export default function DestinationsPage() {
     if (!deleteId) return;
     try {
       await deleteDestination(deleteId);
+      toast.success('Destino eliminado correctamente');
       closeDelete();
       fetchData();
     } catch (error) {
-      import('sonner').then(({ toast }) => {
-        toast.error('Error al eliminar destino', { description: error instanceof Error ? error.message : String(error) });
-      });
+      toast.error('Error al eliminar destino', { description: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -100,18 +101,22 @@ export default function DestinationsPage() {
         onSuccess={fetchData}
       />
       {/* Diálogo de confirmación de borrado */}
-      {openDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <div className="bg-white rounded shadow-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-2">¿Eliminar destino?</h3>
-            <p className="mb-4">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={closeDelete}>Cancelar</Button>
-              <Button variant="destructive" onClick={handleDelete}>Eliminar</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        destructive
+        open={openDelete}
+        onOpenChange={closeDelete}
+        handleConfirm={handleDelete}
+        className="max-w-md"
+        title="¿Eliminar destino?"
+        desc={
+          <>
+            Estás a punto de eliminar un destino.<br />
+            Esta acción no se puede deshacer.
+          </>
+        }
+        confirmText="Eliminar"
+        cancelBtnText="Cancelar"
+      />
     </>
   );
 }

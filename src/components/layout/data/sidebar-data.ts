@@ -1,12 +1,12 @@
 import {
-  IconBrowserCheck,
+ // IconBrowserCheck,
   IconChecklist,
   IconLayoutDashboard,
-  IconNotification,
-  IconPalette,
-  IconSettings,
-  IconTool,
-  IconUserCog,
+ // IconNotification,
+ // IconPalette,
+ // IconSettings,
+ // IconTool,
+ // IconUserCog,
   IconBuilding,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
@@ -57,7 +57,7 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
+    /*{
       title: 'Otros',
       items: [
         {
@@ -92,6 +92,6 @@ export const sidebarData: SidebarData = {
           ],
         },
       ],
-    },
+    },*/
   ],
 }
