@@ -18,7 +18,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {collapsed ? (
             <img src="/images/iconopasaje.ico" alt="Logo mini" className='w-8 h-8' />
           ) : (
-            <img src="/images/pasajeonline.svg" alt="Logo" className='w-40 h-10' />
+            <span className="w-40 h-10 flex items-center font-bold text-2xl select-none text-foreground">PasajeOnline</span>
           )}
         </button>
       </SidebarHeader>
