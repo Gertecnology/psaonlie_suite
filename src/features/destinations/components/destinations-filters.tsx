@@ -7,14 +7,11 @@ import { Label } from '@/components/ui/label'
 const ORDER_FIELDS = [
   { value: '', label: 'Sin orden' },
   { value: 'nombre', label: 'Nombre' },
-  { value: 'cantidadParadas', label: 'Cantidad de paradas' },
 ]
 
 export interface DestinationsFiltersValues {
   search: string
   isActive: string
-  startDate: string
-  endDate: string
   orderBy: string
   orderDirection: string
 }
@@ -22,37 +19,39 @@ export interface DestinationsFiltersValues {
 export function DestinationsFilters({ onFilter }: { onFilter: (values: DestinationsFiltersValues) => void }) {
   const [search, setSearch] = useState('')
   const [isActive, setIsActive] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
   const [orderBy, setOrderBy] = useState('')
   const [orderDirection, setOrderDirection] = useState('')
-
-  const handleSearch = () => {
-    onFilter({ search, isActive, startDate, endDate, orderBy, orderDirection })
-  }
 
   const handleReset = () => {
     setSearch('')
     setIsActive('')
-    setStartDate('')
-    setEndDate('')
     setOrderBy('')
     setOrderDirection('')
-    onFilter({ search: '', isActive: '', startDate: '', endDate: '', orderBy: '', orderDirection: '' })
+    onFilter({ search: '', isActive: '', orderBy: '', orderDirection: '' })
   }
 
   return (
-    <form
-      className='flex flex-wrap gap-4 items-end bg-muted/40 p-4 rounded-md mb-4'
-      onSubmit={e => { e.preventDefault(); handleSearch() }}
-    >
+    <form className='flex flex-wrap gap-4 items-end bg-muted/40 p-4 rounded-md mb-4' onSubmit={e => e.preventDefault()}>
       <div>
         <Label htmlFor='search'>Nombre</Label>
-        <Input id='search' value={search} onChange={e => setSearch(e.target.value)} placeholder='Buscar por nombre' />
+        <Input
+          id='search'
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value)
+            if (e.target.value.length >= 3 || e.target.value.length === 0) {
+              onFilter({ search: e.target.value, isActive, orderBy, orderDirection })
+            }
+          }}
+          placeholder='Buscar por nombre'
+        />
       </div>
       <div>
         <Label htmlFor='isActive'>Estado</Label>
-        <Select value={isActive} onValueChange={setIsActive}>
+        <Select value={isActive} onValueChange={value => {
+          setIsActive(value)
+          onFilter({ search, isActive: value, orderBy, orderDirection })
+        }}>
           <SelectTrigger id='isActive' className='w-32'>
             <SelectValue placeholder='Todos' />
           </SelectTrigger>
@@ -64,16 +63,11 @@ export function DestinationsFilters({ onFilter }: { onFilter: (values: Destinati
         </Select>
       </div>
       <div>
-        <Label htmlFor='startDate'>Fecha inicial</Label>
-        <Input id='startDate' type='date' value={startDate} onChange={e => setStartDate(e.target.value)} />
-      </div>
-      <div>
-        <Label htmlFor='endDate'>Fecha final</Label>
-        <Input id='endDate' type='date' value={endDate} onChange={e => setEndDate(e.target.value)} />
-      </div>
-      <div>
         <Label htmlFor='orderBy'>Ordenar por</Label>
-        <Select value={orderBy} onValueChange={setOrderBy}>
+        <Select value={orderBy} onValueChange={value => {
+          setOrderBy(value)
+          onFilter({ search, isActive, orderBy: value, orderDirection })
+        }}>
           <SelectTrigger id='orderBy' className='w-40'>
             <SelectValue placeholder='Sin orden' />
           </SelectTrigger>
@@ -87,7 +81,10 @@ export function DestinationsFilters({ onFilter }: { onFilter: (values: Destinati
       </div>
       <div>
         <Label htmlFor='orderDirection'>Dirección</Label>
-        <Select value={orderDirection} onValueChange={setOrderDirection}>
+        <Select value={orderDirection} onValueChange={value => {
+          setOrderDirection(value)
+          onFilter({ search, isActive, orderBy, orderDirection: value })
+        }}>
           <SelectTrigger id='orderDirection' className='w-28'>
             <SelectValue placeholder='--' />
           </SelectTrigger>
@@ -99,7 +96,6 @@ export function DestinationsFilters({ onFilter }: { onFilter: (values: Destinati
         </Select>
       </div>
       <div className='flex gap-2'>
-        <Button type='submit' variant='default'>Buscar</Button>
         <Button type='button' variant='outline' onClick={handleReset}>Limpiar</Button>
       </div>
     </form>

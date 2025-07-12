@@ -22,28 +22,26 @@ export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProp
   // Estados locales para los filtros
   const [search, setSearch] = useState('')
   const [isActive, setIsActive] = useState('all')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
   const [orderBy, setOrderBy] = useState('none')
   const [orderDirection, setOrderDirection] = useState('none')
 
   // Aplicar filtros a la tabla y notificar al padre para fetch remoto
-  const handleSearch = () => {
+  const handleSearch = (override?: Partial<{search: string, isActive: string, orderBy: string, orderDirection: string}>) => {
     const filters: Record<string, string> = {}
-    if (search) filters.search = search
-    if (isActive !== 'all') filters.isActive = isActive
-    if (startDate) filters.startDate = startDate
-    if (endDate) filters.endDate = endDate
-    if (orderBy !== 'none') filters.orderBy = orderBy
-    if (orderDirection !== 'none') filters.orderDirection = orderDirection
+    const s = override?.search ?? search
+    const ia = override?.isActive ?? isActive
+    const ob = override?.orderBy ?? orderBy
+    const od = override?.orderDirection ?? orderDirection
+    if (s) filters.search = s
+    if (ia !== 'all') filters.isActive = ia
+    if (ob !== 'none') filters.orderBy = ob
+    if (od !== 'none') filters.orderDirection = od
     if (onFilterChange) onFilterChange(filters)
   }
 
   const handleReset = () => {
     setSearch('')
     setIsActive('all')
-    setStartDate('')
-    setEndDate('')
     setOrderBy('none')
     setOrderDirection('none')
     if (onFilterChange) onFilterChange({})
@@ -52,16 +50,30 @@ export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProp
   return (
     <form
       className='w-full flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-x-4 mb-4'
-      onSubmit={e => { e.preventDefault(); handleSearch() }}
+      onSubmit={e => e.preventDefault()}
     >
       <div className='flex flex-1 gap-x-4 flex-wrap items-end'>
         <div className='flex flex-col flex-1 min-w-[120px]'>
           <Label htmlFor='search'>Nombre</Label>
-          <Input id='search' value={search} onChange={e => setSearch(e.target.value)} placeholder='Buscar por nombre' className='h-9' />
+          <Input
+            id='search'
+            value={search}
+            onChange={e => {
+              setSearch(e.target.value)
+              if (e.target.value.length >= 3 || e.target.value.length === 0) {
+                handleSearch({search: e.target.value})
+              }
+            }}
+            placeholder='Buscar por nombre'
+            className='h-9'
+          />
         </div>
         <div className='flex flex-col min-w-[110px]'>
           <Label htmlFor='isActive'>Estado</Label>
-          <Select value={isActive} onValueChange={setIsActive}>
+          <Select value={isActive} onValueChange={value => {
+            setIsActive(value)
+            handleSearch({isActive: value})
+          }}>
             <SelectTrigger id='isActive' className='h-9'>
               <SelectValue placeholder='Todos' />
             </SelectTrigger>
@@ -73,16 +85,11 @@ export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProp
           </Select>
         </div>
         <div className='flex flex-col min-w-[140px]'>
-          <Label htmlFor='startDate'>Fecha inicial</Label>
-          <Input id='startDate' type='date' value={startDate} onChange={e => setStartDate(e.target.value)} className='h-9' />
-        </div>
-        <div className='flex flex-col min-w-[140px]'>
-          <Label htmlFor='endDate'>Fecha final</Label>
-          <Input id='endDate' type='date' value={endDate} onChange={e => setEndDate(e.target.value)} className='h-9' />
-        </div>
-        <div className='flex flex-col min-w-[140px]'>
           <Label htmlFor='orderBy'>Ordenar por</Label>
-          <Select value={orderBy} onValueChange={setOrderBy}>
+          <Select value={orderBy} onValueChange={value => {
+            setOrderBy(value)
+            handleSearch({orderBy: value})
+          }}>
             <SelectTrigger id='orderBy' className='h-9'>
               <SelectValue placeholder='Sin orden' />
             </SelectTrigger>
@@ -95,7 +102,10 @@ export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProp
         </div>
         <div className='flex flex-col min-w-[110px]'>
           <Label htmlFor='orderDirection'>Dirección</Label>
-          <Select value={orderDirection} onValueChange={setOrderDirection}>
+          <Select value={orderDirection} onValueChange={value => {
+            setOrderDirection(value)
+            handleSearch({orderDirection: value})
+          }}>
             <SelectTrigger id='orderDirection' className='h-9'>
               <SelectValue placeholder='--' />
             </SelectTrigger>
@@ -108,7 +118,6 @@ export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProp
         </div>
       </div>
       <div className='flex gap-2 items-end ml-auto'>
-        <Button type='submit' variant='default' className='h-9'>Buscar</Button>
         <Button type='button' variant='outline' onClick={handleReset} className='h-9'>Limpiar</Button>
         <DataTableViewOptions table={table} />
       </div>
