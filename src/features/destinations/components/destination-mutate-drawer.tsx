@@ -21,8 +21,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { destinationFormSchema, DestinationFormValues } from '../models/destination.model'
-import { createDestination, updateDestination, getAllParadasHomologadas } from '../services/destination.service'
+import { createDestination, updateDestination, getAllParadasHomologadas, getDestinationById } from '../services/destination.service'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { toast } from 'sonner'
 
 interface DestinationMutateDrawerProps {
   open: boolean;
@@ -40,30 +41,58 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
 
   const [paradaOptions, setParadaOptions] = useState<{ value: string; label: string }[]>([]);
   const [loadingParadas, setLoadingParadas] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(false);
 
   useEffect(() => {
     if (open) {
-      form.reset(initialData || { nombre: '', paradasHomologadasIds: [] });
-      setLoadingParadas(true);
-      getAllParadasHomologadas()
-        .then((opts) => setParadaOptions(opts.map((p: { id: string; descripcion: string }) => ({ value: p.id, label: p.descripcion }))))
-        .finally(() => setLoadingParadas(false));
+      if (isUpdate && initialData?.id) {
+        setLoadingInitial(true);
+        (async () => {
+          const data = await getDestinationById(initialData.id || '');
+          const paradasHomologadasIds = Array.isArray(data.paradasHomologadas)
+            ? data.paradasHomologadas.map((p: { id: string }) => p.id)
+            : [];
+
+          // Construir opciones de paradas seleccionadas desde paradasHomologadas
+          const paradasSeleccionadasOptions = (data.paradasHomologadas || []).map((p: { id: string; nombre: string }) => ({ value: p.id, label: p.nombre }));
+          setLoadingParadas(true);
+          const opts = await getAllParadasHomologadas();
+          let paradaOptions = opts.map((p: { id: string; descripcion: string }) => ({ value: p.id, label: p.descripcion }));
+          // Combinar ambas listas, evitando duplicados
+          paradaOptions = [
+            ...paradasSeleccionadasOptions,
+            ...paradaOptions.filter((opt: { value: string; label: string }) =>
+              !paradasSeleccionadasOptions.some((sel: { value: string; label: string }) => sel.value === opt.value)
+            )
+          ];
+          setParadaOptions(paradaOptions);
+          form.reset({ nombre: data.nombre, paradasHomologadasIds });
+          setLoadingParadas(false);
+          setLoadingInitial(false);
+        })();
+      } else {
+        form.reset(initialData || { nombre: '', paradasHomologadasIds: [] });
+        setLoadingParadas(true);
+        getAllParadasHomologadas()
+          .then((opts) => setParadaOptions(opts.map((p: { id: string; descripcion: string }) => ({ value: p.id, label: p.descripcion }))))
+          .finally(() => setLoadingParadas(false));
+      }
     }
-  }, [open, initialData, form]);
+  }, [open, initialData, isUpdate, form]);
 
   const onSubmit = async (data: DestinationFormValues) => {
     try {
       if (isUpdate && initialData?.id) {
         await updateDestination(initialData.id, data);
+        toast.success('Destino editado correctamente');
       } else {
         await createDestination(data);
+        toast.success('Destino creado correctamente');
       }
       onSuccess?.();
       onClose();
     } catch (error) {
-      import('sonner').then(({ toast }) => {
-        toast.error('Error al guardar destino', { description: error instanceof Error ? error.message : String(error) });
-      });
+      toast.error('Error al guardar destino', { description: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -102,6 +131,7 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
                   <FormLabel>Paradas homologadas</FormLabel>
                   <FormControl>
                     <MultiSelect
+                      key={JSON.stringify(paradaOptions) + JSON.stringify(field.value)}
                       options={paradaOptions}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -113,7 +143,7 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
               )}
             />
             <SheetFooter>
-              <Button type="submit" className="w-full">{isUpdate ? 'Guardar cambios' : 'Crear destino'}</Button>
+              <Button type="submit" className="w-full" disabled={loadingInitial}>{isUpdate ? 'Guardar cambios' : 'Crear destino'}</Button>
               <SheetClose asChild>
                 <Button type="button" variant="outline" className="w-full mt-2">Cancelar</Button>
               </SheetClose>

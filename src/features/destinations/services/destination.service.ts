@@ -37,7 +37,7 @@ export async function createDestination(data: DestinationFormValues): Promise<De
 export async function updateDestination(id: string, data: DestinationFormValues): Promise<Destination> {
   const token = localStorage.getItem('token')
   const response = await fetch(`${API_URL}/destinos/${id}`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   })
