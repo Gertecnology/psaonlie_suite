@@ -1,0 +1,73 @@
+import { Destination, DestinationFormValues } from '../models/destination.model'
+
+const API_URL = import.meta.env.VITE_API_URL
+
+export async function getDestinations(params?: Record<string, string>): Promise<{ items: Destination[]; total: number; page: number; limit: number; totalPages: number }> {
+  const token = localStorage.getItem('token')
+  const query = params ? '?' + new URLSearchParams(params).toString() : ''
+  const response = await fetch(`${API_URL}/destinos${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Error al obtener destinos')
+  const result = await response.json()
+  return result.data
+}
+
+export async function getDestinationById(id: string): Promise<Destination> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Error al obtener el destino')
+  const result = await response.json()
+  return result.data
+}
+
+export async function createDestination(data: DestinationFormValues): Promise<Destination> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw new Error('Error al crear destino')
+  return (await response.json()).data
+}
+
+export async function updateDestination(id: string, data: DestinationFormValues): Promise<Destination> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw new Error('Error al actualizar destino')
+  return (await response.json()).data
+}
+
+export async function deleteDestination(id: string): Promise<void> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Error al eliminar destino')
+}
+
+// Servicio para obtener paradas homologadas para el selector múltiple
+export async function getAllParadasHomologadas(descripcion?: string) {
+  const token = localStorage.getItem('token')
+  const params = new URLSearchParams()
+  if (descripcion) params.append('descripcion', descripcion)
+  const url = `${API_URL}/empresas/paradas-homologadas/lista${params.toString() ? `?${params.toString()}` : ''}`
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error('Error al obtener paradas homologadas')
+  }
+  const result = await response.json()
+  return result.data
+}
