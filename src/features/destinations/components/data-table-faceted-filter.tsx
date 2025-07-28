@@ -28,15 +28,54 @@ interface DataTableFacetedFilterProps<TData, TValue> {
     value: string
     icon?: React.ComponentType<{ className?: string }>
   }[]
+  // Nuevas props para filtros externos
+  externalFilter?: {
+    value: string
+    onChange: (value: string) => void
+  }
+  isExternal?: boolean
 }
 
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
   options,
+  externalFilter,
+  isExternal = false,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
-  const selectedValues = new Set(column?.getFilterValue() as string[])
+  
+  // Para filtros externos, usar el valor del prop
+  // Para filtros de tabla, usar el valor de la columna
+  const selectedValues = isExternal 
+    ? new Set(externalFilter?.value && externalFilter.value !== 'none' ? [externalFilter.value] : [])
+    : new Set(column?.getFilterValue() as string[])
+
+  const handleValueChange = (value: string, isSelected: boolean) => {
+    if (isExternal && externalFilter) {
+      // Para filtros externos, cambiar el valor seleccionado
+      externalFilter.onChange(value)
+    } else if (column) {
+      // Para filtros de tabla, manejar múltiples valores
+      if (isSelected) {
+        selectedValues.delete(value)
+      } else {
+        selectedValues.add(value)
+      }
+      const filterValues = Array.from(selectedValues)
+      column.setFilterValue(
+        filterValues.length ? filterValues : undefined
+      )
+    }
+  }
+
+  const handleClear = () => {
+    if (isExternal && externalFilter) {
+      externalFilter.onChange('none')
+    } else if (column) {
+      column.setFilterValue(undefined)
+    }
+  }
 
   return (
     <Popover>
@@ -59,7 +98,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     variant='secondary'
                     className='rounded-sm px-1 font-normal'
                   >
-                    {selectedValues.size} selected
+                    {selectedValues.size} seleccionados
                   </Badge>
                 ) : (
                   options
@@ -83,24 +122,14 @@ export function DataTableFacetedFilter<TData, TValue>({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>No se encontraron resultados.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value)
                 return (
                   <CommandItem
                     key={option.value}
-                    onSelect={() => {
-                      if (isSelected) {
-                        selectedValues.delete(option.value)
-                      } else {
-                        selectedValues.add(option.value)
-                      }
-                      const filterValues = Array.from(selectedValues)
-                      column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      )
-                    }}
+                    onSelect={() => handleValueChange(option.value, isSelected)}
                   >
                     <div
                       className={cn(
@@ -116,7 +145,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <option.icon className='text-muted-foreground mr-2 h-4 w-4' />
                     )}
                     <span>{option.label}</span>
-                    {facets?.get(option.value) && (
+                    {!isExternal && facets?.get(option.value) && (
                       <span className='ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs'>
                         {facets.get(option.value)}
                       </span>
@@ -130,10 +159,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    onSelect={handleClear}
                     className='justify-center text-center'
                   >
-                    Clear filters
+                    Limpiar filtros
                   </CommandItem>
                 </CommandGroup>
               </>

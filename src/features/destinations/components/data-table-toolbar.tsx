@@ -1,16 +1,28 @@
+import { Cross2Icon } from '@radix-ui/react-icons'
 import { type Table } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableViewOptions } from '../components/data-table-view-options'
 import { type Destination } from '../models/destination.model'
-import { useState } from 'react'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DataTableFacetedFilter } from './data-table-faceted-filter'
+import { useState, useRef } from 'react'
 
-const ORDER_FIELDS = [
-  { value: 'none', label: 'Sin orden' },
-  { value: 'nombre', label: 'Nombre' },
-  { value: 'cantidadParadas', label: 'Cantidad de paradas' },
+const statuses = [
+  { label: 'Activo', value: 'true' },
+  { label: 'Inactivo', value: 'false' },
+]
+
+const orderFields = [
+  { label: 'Sin orden', value: 'none' },
+  { label: 'Nombre', value: 'nombre' },
+  { label: 'Fecha de creación', value: 'created_at' },
+  { label: 'Fecha de actualización', value: 'updated_at' },
+]
+
+const orderDirections = [
+  { label: '--', value: 'none' },
+  { label: 'ASC', value: 'ASC' },
+  { label: 'DESC', value: 'DESC' },
 ]
 
 interface DataTableToolbarProps {
@@ -19,108 +31,131 @@ interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({ table, onFilterChange }: DataTableToolbarProps) {
-  // Estados locales para los filtros
-  const [search, setSearch] = useState('')
-  const [isActive, setIsActive] = useState('all')
-  const [orderBy, setOrderBy] = useState('none')
-  const [orderDirection, setOrderDirection] = useState('none')
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  
+  // Estados locales para los filtros externos
+  const [orderBy, setOrderBy] = useState<string>('none')
+  const [orderDirection, setOrderDirection] = useState<string>('none')
 
-  // Aplicar filtros a la tabla y notificar al padre para fetch remoto
-  const handleSearch = (override?: Partial<{search: string, isActive: string, orderBy: string, orderDirection: string}>) => {
+  // Función para construir los filtros según la API
+  const buildFilters = () => {
     const filters: Record<string, string> = {}
-    const s = override?.search ?? search
-    const ia = override?.isActive ?? isActive
-    const ob = override?.orderBy ?? orderBy
-    const od = override?.orderDirection ?? orderDirection
-    if (s) filters.search = s
-    if (ia !== 'all') filters.isActive = ia
-    if (ob !== 'none') filters.orderBy = ob
-    if (od !== 'none') filters.orderDirection = od
-    if (onFilterChange) onFilterChange(filters)
+    
+    // Filtro de búsqueda
+    const searchValue = table.getColumn('nombre')?.getFilterValue() as string
+    if (searchValue) {
+      filters.search = searchValue
+    }
+
+    // Filtro de estado
+    const activeValue = table.getColumn('activo')?.getFilterValue() as string[]
+    if (activeValue && activeValue.length > 0) {
+      filters.isActive = activeValue[0]
+    }
+
+    // Filtro de ordenamiento
+    if (orderBy !== 'none') {
+      filters.orderBy = orderBy
+    }
+
+    // Filtro de dirección de ordenamiento (sortOrder para la API)
+    if (orderDirection !== 'none') {
+      filters.sortOrder = orderDirection
+    }
+
+    return filters
   }
 
-  const handleReset = () => {
-    setSearch('')
-    setIsActive('all')
+  // Función para manejar cambios en los filtros con debounce
+  const handleFilterChange = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      const filters = buildFilters()
+      if (onFilterChange) {
+        onFilterChange(filters)
+      }
+    }, 300)
+  }
+
+  // Función para manejar cambios en ordenamiento
+  const handleOrderByChange = (value: string) => {
+    setOrderBy(value)
+    handleFilterChange()
+  }
+
+  // Función para manejar cambios en dirección
+  const handleOrderDirectionChange = (value: string) => {
+    setOrderDirection(value)
+    handleFilterChange()
+  }
+
+  // Función para limpiar todos los filtros
+  const handleClearFilters = () => {
+    table.resetColumnFilters()
     setOrderBy('none')
     setOrderDirection('none')
-    if (onFilterChange) onFilterChange({})
+    if (onFilterChange) {
+      onFilterChange({})
+    }
   }
 
   return (
-    <form
-      className='w-full flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-x-4 mb-4'
-      onSubmit={e => e.preventDefault()}
-    >
-      <div className='flex flex-1 gap-x-4 flex-wrap items-end'>
-        <div className='flex flex-col flex-1 min-w-[120px]'>
-          <Label htmlFor='search'>Nombre</Label>
-          <Input
-            id='search'
-            value={search}
-            onChange={e => {
-              setSearch(e.target.value)
-              if (e.target.value.length >= 3 || e.target.value.length === 0) {
-                handleSearch({search: e.target.value})
-              }
+    <div className='flex items-center justify-between'>
+      <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
+        <Input
+          placeholder='Buscar por nombre...'
+          value={
+            (table.getColumn('nombre')?.getFilterValue() as string) ?? ''
+          }
+          onChange={(event) => {
+            const value = event.target.value
+            table.getColumn('nombre')?.setFilterValue(value)
+            handleFilterChange()
+          }}
+          className='h-8 w-[150px] lg:w-[250px]'
+        />
+        <div className='flex gap-x-2'>
+          {table.getColumn('activo') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('activo')}
+              title='Estado'
+              options={statuses}
+            />
+          )}
+          <DataTableFacetedFilter
+            title='Ordenar por'
+            options={orderFields}
+            isExternal={true}
+            externalFilter={{
+              value: orderBy,
+              onChange: handleOrderByChange
             }}
-            placeholder='Buscar por nombre'
-            className='h-9'
+          />
+          <DataTableFacetedFilter
+            title='Dirección'
+            options={orderDirections}
+            isExternal={true}
+            externalFilter={{
+              value: orderDirection,
+              onChange: handleOrderDirectionChange
+            }}
           />
         </div>
-        <div className='flex flex-col min-w-[110px]'>
-          <Label htmlFor='isActive'>Estado</Label>
-          <Select value={isActive} onValueChange={value => {
-            setIsActive(value)
-            handleSearch({isActive: value})
-          }}>
-            <SelectTrigger id='isActive' className='h-9'>
-              <SelectValue placeholder='Todos' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Todos</SelectItem>
-              <SelectItem value='true'>Activo</SelectItem>
-              <SelectItem value='false'>Inactivo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className='flex flex-col min-w-[140px]'>
-          <Label htmlFor='orderBy'>Ordenar por</Label>
-          <Select value={orderBy} onValueChange={value => {
-            setOrderBy(value)
-            handleSearch({orderBy: value})
-          }}>
-            <SelectTrigger id='orderBy' className='h-9'>
-              <SelectValue placeholder='Sin orden' />
-            </SelectTrigger>
-            <SelectContent>
-              {ORDER_FIELDS.map(f => (
-                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className='flex flex-col min-w-[110px]'>
-          <Label htmlFor='orderDirection'>Dirección</Label>
-          <Select value={orderDirection} onValueChange={value => {
-            setOrderDirection(value)
-            handleSearch({orderDirection: value})
-          }}>
-            <SelectTrigger id='orderDirection' className='h-9'>
-              <SelectValue placeholder='--' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='none'>--</SelectItem>
-              <SelectItem value='ASC'>ASC</SelectItem>
-              <SelectItem value='DESC'>DESC</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {(orderBy !== 'none' || orderDirection !== 'none') && (
+          <Button
+            variant='ghost'
+            onClick={handleClearFilters}
+            className='h-8 px-2 lg:px-3'
+          >
+            Limpiar
+            <Cross2Icon className='ml-2 h-4 w-4' />
+          </Button>
+        )}
       </div>
-      <div className='flex gap-2 items-end ml-auto'>
-        <Button type='button' variant='outline' onClick={handleReset} className='h-9'>Limpiar</Button>
-        <DataTableViewOptions table={table} />
-      </div>
-    </form>
+      <DataTableViewOptions table={table} />
+    </div>
   )
 }

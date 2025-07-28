@@ -65,7 +65,8 @@ export const destinationColumns: ColumnDef<Destination>[] = [
       )
     },
     filterFn: (row, id, value) => {
-      return value.includes(String(row.getValue(id)))
+      const rowValue = row.getValue(id)
+      return value.includes(String(rowValue))
     },
   },
   {
