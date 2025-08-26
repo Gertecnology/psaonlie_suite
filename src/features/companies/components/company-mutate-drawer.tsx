@@ -32,11 +32,12 @@ const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
   usuario: z.string().nullable().optional(),
   password: z.string().optional(),
-  agencia: z.string().nullable().optional(),
+  agenciaPrincipal: z.string().nullable().optional(),
   descripcion: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
   urlPerfil: z.string().nullable().optional(),
   activo: z.boolean(),
+  porcentajeVentas: z.string().nullable().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -68,11 +69,12 @@ export function CompanyMutateDrawer() {
       nombre: '',
       usuario: '',
       password: '',
-      agencia: '',
+      agenciaPrincipal: '',
       descripcion: '',
       url: '',
       urlPerfil: '',
       activo: true,
+      porcentajeVentas: '',
     },
   })
 
@@ -85,11 +87,12 @@ export function CompanyMutateDrawer() {
         nombre: '',
         usuario: '',
         password: '',
-        agencia: '',
+        agenciaPrincipal: '',
         descripcion: '',
         url: '',
         urlPerfil: '',
         activo: true,
+        porcentajeVentas: '',
       })
       setLogoPreview(null)
     }
@@ -253,15 +256,15 @@ export function CompanyMutateDrawer() {
             )}
             <FormField
               control={form.control}
-              name='agencia'
+              name='agenciaPrincipal'
               render={({ field }) => (
                 <FormItem className='space-y-1'>
-                  <FormLabel>Agencia</FormLabel>
+                  <FormLabel>Agencia Principal</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value ?? ''}
-                      placeholder='Ingresa una agencia'
+                      placeholder='Ingresa una agencia principal'
                     />
                   </FormControl>
                   <FormMessage />
@@ -296,6 +299,23 @@ export function CompanyMutateDrawer() {
                       {...field}
                       value={field.value ?? ''}
                       placeholder='Ingresa una URL'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='porcentajeVentas'
+              render={({ field }) => (
+                <FormItem className='space-y-1'>
+                  <FormLabel>Porcentaje de ventas</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder='Ingresa un porcentaje de ventas'
                     />
                   </FormControl>
                   <FormMessage />

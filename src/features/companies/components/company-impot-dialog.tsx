@@ -26,11 +26,11 @@ const formSchema = z.object({
   file: z
     .instanceof(FileList)
     .refine((files) => files.length > 0, {
-      message: 'Please upload a file',
+      message: 'Por favor, sube un archivo',
     })
     .refine(
       (files) => ['text/csv'].includes(files?.[0]?.type),
-      'Please upload csv format.'
+      'Por favor, sube un archivo en formato CSV.'
     ),
 })
 
@@ -56,7 +56,7 @@ export function TasksImportDialog({ open, onOpenChange }: Props) {
         size: file[0].size,
         type: file[0].type,
       }
-      showSubmittedData(fileDetails, 'You have imported the following file:')
+      showSubmittedData(fileDetails, 'Has importado el siguiente archivo:')
     }
     onOpenChange(false)
   }
@@ -71,9 +71,9 @@ export function TasksImportDialog({ open, onOpenChange }: Props) {
     >
       <DialogContent className='gap-2 sm:max-w-sm'>
         <DialogHeader className='text-left'>
-          <DialogTitle>Import Tasks</DialogTitle>
+          <DialogTitle>Importar Empresas</DialogTitle>
           <DialogDescription>
-            Import tasks quickly from a CSV file.
+            Importa empresas rápidamente desde un archivo CSV.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -83,7 +83,7 @@ export function TasksImportDialog({ open, onOpenChange }: Props) {
               name='file'
               render={() => (
                 <FormItem className='mb-2 space-y-1'>
-                  <FormLabel>File</FormLabel>
+                  <FormLabel>Archivo</FormLabel>
                   <FormControl>
                     <Input type='file' {...fileRef} className='h-8' />
                   </FormControl>
@@ -95,10 +95,10 @@ export function TasksImportDialog({ open, onOpenChange }: Props) {
         </Form>
         <DialogFooter className='gap-2'>
           <DialogClose asChild>
-            <Button variant='outline'>Close</Button>
+            <Button variant='outline'>Cerrar</Button>
           </DialogClose>
           <Button type='submit' form='task-import-form'>
-            Import
+            Importar
           </Button>
         </DialogFooter>
       </DialogContent>

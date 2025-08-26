@@ -6,6 +6,7 @@ import { DestinationParadasTable } from '@/features/destinations/components/dest
 import { Button } from '@/components/ui/button'
 import { useRouter } from '@tanstack/react-router'
 import { Destination } from '@/features/destinations/models/destination.model'
+import { PageLayout } from '@/components/layout'
 
 function DestinationDetailsPage() {
   const { id } = Route.useParams() as { id: string }
@@ -28,6 +29,11 @@ function DestinationDetailsPage() {
   }, [id])
 
   return (
+    <PageLayout
+      title="Destinos"
+      description="Gestiona los destinos de transporte."
+      showSearch={false}
+    >
     <div className='min-h-screen w-full bg-background flex flex-col'>
       <div className='flex-1 w-full flex flex-col'>
         <div className='flex items-center gap-4 p-4 sm:p-6 border-b'>
@@ -51,6 +57,7 @@ function DestinationDetailsPage() {
         </div>
       </div>
     </div>
+    </PageLayout>
   )
 }
 

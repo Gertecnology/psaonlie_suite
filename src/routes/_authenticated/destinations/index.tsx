@@ -8,13 +8,9 @@ import { PaginationState } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { createFileRoute } from '@tanstack/react-router';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { Search } from '@/components/search';
-import { ThemeSwitch } from '@/components/theme-switch';
 import { DataTableToolbar } from '@/features/destinations/components/data-table-toolbar';
 import { toast } from 'sonner';
+import { PageLayout } from '@/components/layout';
 
 export default function DestinationsPage() {
   const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 });
@@ -54,25 +50,14 @@ export default function DestinationsPage() {
   };
 
   return (
-    <>
-      <Header fixed>
-        <Search />
-        <div className='ml-auto flex items-center space-x-4'>
-          <ThemeSwitch />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
-      <Main>
-        <div className='mb-2 flex flex-wrap items-center justify-between space-y-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>Destinos</h2>
-            <p className='text-muted-foreground'>
-              Gestiona los destinos y sus paradas homologadas.
-            </p>
-          </div>
-          <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
-        </div>
+    <PageLayout
+      title="Destinos"
+      description="Gestiona los destinos de transporte y sus paradas homologadas."
+      showSearch={true}
+      actions={
+        <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
+      }
+    >
         <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>
           <DataTable
             columns={destinationColumns}
@@ -91,7 +76,6 @@ export default function DestinationsPage() {
             )}
           />
         </div>
-      </Main>
 
       <DestinationMutateDrawer
         open={open}
@@ -117,7 +101,7 @@ export default function DestinationsPage() {
         confirmText="Eliminar"
         cancelBtnText="Cancelar"
       />
-    </>
+    </PageLayout>
   );
 }
 

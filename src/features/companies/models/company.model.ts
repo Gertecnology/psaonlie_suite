@@ -3,13 +3,22 @@ import { z } from 'zod'
 export const companySchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, 'El nombre es requerido.'),
-  agencia: z.string().nullable().optional(),
+  agenciaPrincipal: z.string().nullable().optional(),
   usuario: z.string().nullable().optional(),
   descripcion: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
   activo: z.boolean(),
   urlPerfil: z.string().nullable().optional(),
   cantidadParadasHomologadas: z.number().optional(),
+  porcentajeVentas: z.string().nullable().optional(),
+  ventaHabilitada: z.string().nullable().optional(),
+  agencias: z.array(z.object({
+    id: z.string(),
+    nombre: z.string(),
+    codigo: z.string(),
+    boletosDisponibles: z.number(),
+    activo: z.boolean(),
+  })).nullable().optional(),
 })
 
 export const paginatedCompaniesSchema = z.object({
@@ -27,11 +36,15 @@ export const companyFormSchema = companySchema.omit({
 })
 
 export const createCompanySchema = companyFormSchema.extend({
+  nombre: z.string().min(1, 'El nombre es requerido.'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.'),
-  agencia: z.string().nullable().optional(),
+  agenciaPrincipal: z.string().nullable().optional(),
   usuario: z.string().nullable().optional(),
   descripcion: z.string().nullable().optional(),
-  url: z.string().nullable().optional(),
+   url: z.string().url({ message: 'URL inválida.' }).optional().or(z.literal('')),
+  urlPerfil: z.string().nullable().optional(),
+  porcentajeVentas: z.string().nullable().optional(),
+  instruccionesPago: z.string().nullable().optional(),
 })
 
 export type Company = z.infer<typeof companySchema>

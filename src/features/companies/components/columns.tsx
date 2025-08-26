@@ -76,16 +76,16 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='Usuario' />
     ),
     cell: ({ row }) => {
-      return <div>{row.getValue('usuario')}</div>
+      return <div>{row.getValue('usuario') ?? 'Sin usuario'}</div>
     },
   },
   {
-    accessorKey: 'agencia',
+    accessorKey: 'agenciaPrincipal',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Agencia' />
+      <DataTableColumnHeader column={column} title='Agencia Principal' />
     ),
     cell: ({ row }) => {
-      return <div>{row.getValue('agencia')}</div>
+      return <div>{row.getValue('agenciaPrincipal') ?? 'Sin agencia principal'}</div>
     },
   },
   {
@@ -94,7 +94,16 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='URL' />
     ),
     cell: ({ row }) => {
-      return <div>{row.getValue('url')}</div>
+      return <div>{row.getValue('url') ?? 'Sin URL'}</div>
+    },
+  },
+  {
+    accessorKey: 'porcentajeVentas',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Porcentaje de ventas' />
+    ),
+    cell: ({ row }) => {
+      return <div>{row.getValue('porcentajeVentas') ?? 'Sin porcentaje de ventas'}</div>
     },
   },
   {

@@ -5,6 +5,7 @@ import { CompanyDetailsHeader } from '@/features/companies/components/company-de
 import { CompanyParadasTable } from '@/features/companies/components/company-paradas-table'
 import { Button } from '@/components/ui/button'
 import { useRouter } from '@tanstack/react-router'
+import { PageLayout } from '@/components/layout'
 
 // Tipado explícito para la empresa
 interface Company {
@@ -32,6 +33,11 @@ function CompanyDetailsPage() {
   }, [id])
 
   return (
+    <PageLayout
+      title="Empresas"
+      description="Gestiona las empresas de transporte."
+      showSearch={false}
+    >
     <div className='min-h-screen w-full bg-background flex flex-col'>
       <div className='flex-1 w-full flex flex-col'>
         <div className='flex items-center gap-4 p-4 sm:p-6 border-b'>
@@ -46,6 +52,7 @@ function CompanyDetailsPage() {
         </div>
       </div>
     </div>
+    </PageLayout>
   )
 }
 
