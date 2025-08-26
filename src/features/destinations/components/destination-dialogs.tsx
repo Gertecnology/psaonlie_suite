@@ -1,21 +1,19 @@
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { useDestinationDeleteDialog } from '../store/use-destination-dialog'
-import { deleteDestination } from '../services/destination.service'
+import { useDeleteDestination } from '@/features/destinations'
 
 export function DestinationDialogs() {
   const { open: isOpen, id: destinationId, closeDialog } = useDestinationDeleteDialog()
+  const deleteDestination = useDeleteDestination()
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (destinationId) {
-      try {
-        await deleteDestination(destinationId)
-        closeDialog()
-        // Recargar la lista después de eliminar
-        window.location.reload()
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error al eliminar destino:', error)
-      }
+      deleteDestination.mutate(destinationId, {
+        onSuccess: () => {
+          closeDialog()
+          // El hook ya maneja la invalidación del cache y toast notifications
+        },
+      })
     }
   }
 
@@ -35,6 +33,7 @@ export function DestinationDialogs() {
       }
       confirmText='Eliminar'
       cancelBtnText='Cancelar'
+      isLoading={deleteDestination.isPending}
     />
   )
 }

@@ -71,3 +71,13 @@ export async function getAllParadasHomologadas(descripcion?: string) {
   const result = await response.json()
   return result.data
 }
+
+// Servicio para remover parada homologada
+export async function removeParadaHomologada(destinationId: string, paradaId: string): Promise<void> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/destinos/${destinationId}/paradas/${paradaId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Error al remover parada homologada')
+}

@@ -50,23 +50,41 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [input, setInput] = React.useState("");
 
+    // Sincronizar defaultValue con el estado interno solo cuando cambie realmente
     React.useEffect(() => {
-      onValueChange(selectedValues);
-    }, [selectedValues]);
+      if (JSON.stringify(defaultValue) !== JSON.stringify(selectedValues)) {
+        setSelectedValues(defaultValue);
+      }
+    }, [defaultValue]);
 
-    const toggleOption = (value: string) => {
-      setSelectedValues((prev) =>
-        prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    // Memoizar onValueChange para evitar re-renders
+    const handleValueChange = React.useCallback((values: string[]) => {
+      onValueChange(values);
+    }, [onValueChange]);
+
+    // Solo llamar onValueChange cuando selectedValues cambie realmente
+    React.useEffect(() => {
+      handleValueChange(selectedValues);
+    }, [selectedValues, handleValueChange]);
+
+    const toggleOption = React.useCallback((value: string) => {
+      setSelectedValues((prev) => {
+        const newValues = prev.includes(value) 
+          ? prev.filter((v) => v !== value) 
+          : [...prev, value];
+        return newValues;
+      });
+    }, []);
+
+    const handleClear = React.useCallback(() => setSelectedValues([]), []);
+
+    const filteredOptions = React.useMemo(() => {
+      return options.filter(
+        (opt) =>
+          !selectedValues.includes(opt.value) &&
+          opt.label.toLowerCase().includes(input.toLowerCase())
       );
-    };
-
-    const handleClear = () => setSelectedValues([]);
-
-    const filteredOptions = options.filter(
-      (opt) =>
-        !selectedValues.includes(opt.value) &&
-        opt.label.toLowerCase().includes(input.toLowerCase())
-    );
+    }, [options, selectedValues, input]);
 
     return (
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>

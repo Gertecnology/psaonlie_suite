@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-
 import { type Company } from '../models/company.model'
 
 interface CompanyDialogState {
