@@ -1,14 +1,19 @@
+import { useState } from 'react'
 import { Clock, MapPin, Users, DollarSign, Star, Bus } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import type { EmpresaServicios, Servicio } from '../models/sales.model'
 import { Button } from '@/components/ui/button'
+import { SeatSelector } from './seat-selector'
+import { useGetAsientos } from '../hooks/use-get-asientos'
+import type { EmpresaServicios, Servicio, Asiento, ParadaHomologada } from '../models/sales.model'
 
 interface ServiciosListProps {
   data: EmpresaServicios[]
   isLoading?: boolean
   className?: string
+  origen?: ParadaHomologada | null
+  destino?: ParadaHomologada | null
 }
 
 const getCalidadColor = (calidad: string) => {
@@ -51,69 +56,121 @@ const formatPrice = (price: string) => {
   }).format(numPrice)
 }
 
-function ServicioCard({ servicio }: { servicio: Servicio }) {
+function ServicioCard({ 
+  servicio, 
+  empresaId, 
+  origen, 
+  destino 
+}: { 
+  servicio: Servicio
+  empresaId: string
+  origen?: ParadaHomologada | null
+  destino?: ParadaHomologada | null
+}) {
+  const [showSeatSelector, setShowSeatSelector] = useState(false)
+  
+  // Only fetch seats when the dialog is open and we have the required data
+  const asientosParams = showSeatSelector && origen && destino ? {
+    servicioId: servicio.Id,
+    origenId: origen.id,
+    destinoId: destino.id,
+    empresaId: empresaId,
+  } : null
+
+  const { data: asientosData, isLoading: isLoadingAsientos, error: asientosError } = useGetAsientos(asientosParams)
+
+  const handleSeatSelect = (_asiento: Asiento) => {
+    // Here you would typically handle the seat selection logic
+    // For now, we'll just close the dialog
+    setShowSeatSelector(false)
+  }
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bus className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm">{servicio.Cod}</span>
+    <>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bus className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium text-sm">{servicio.Cod}</span>
+            </div>
+            <Badge className={getCalidadColor(servicio.Calidad)}>
+              {getCalidadLabel(servicio.Calidad)}
+            </Badge>
           </div>
-          <Badge className={getCalidadColor(servicio.Calidad)}>
-            {getCalidadLabel(servicio.Calidad)}
-          </Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Salida</p>
-              <p className="text-muted-foreground">{servicio.Embarque}</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Salida</p>
+                <p className="text-muted-foreground">{servicio.Embarque}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Llegada</p>
+                <p className="text-muted-foreground">{servicio.Desembarque}</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Llegada</p>
-              <p className="text-muted-foreground">{servicio.Desembarque}</p>
+          <Separator />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {servicio.Libres} asientos libres
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="font-bold text-lg">
+                {formatPrice(servicio.Tarifa)}
+              </span>
             </div>
           </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {servicio.Libres} asientos libres
-            </span>
-          </div>
           
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-bold text-lg">
-              {formatPrice(servicio.Tarifa)}
-            </span>
+          <div className="pt-2">
+            <Button 
+              className="w-full" 
+              size="sm"
+              onClick={() => setShowSeatSelector(true)}
+              disabled={!origen || !destino}
+            >
+              Seleccionar Asiento
+            </Button>
           </div>
-        </div>
-        
-        <div className="pt-2">
-          <Button className="w-full" size="sm">
-            Seleccionar
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <SeatSelector
+        asientosData={asientosData || null}
+        isLoading={isLoadingAsientos}
+        error={asientosError}
+        onSeatSelect={handleSeatSelect}
+        onClose={() => setShowSeatSelector(false)}
+        isOpen={showSeatSelector}
+      />
+    </>
   )
 }
 
-function EmpresaSection({ empresa }: { empresa: EmpresaServicios }) {
+function EmpresaSection({ 
+  empresa, 
+  origen, 
+  destino 
+}: { 
+  empresa: EmpresaServicios
+  origen?: ParadaHomologada | null
+  destino?: ParadaHomologada | null
+}) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -126,14 +183,20 @@ function EmpresaSection({ empresa }: { empresa: EmpresaServicios }) {
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {empresa.data.map((servicio) => (
-          <ServicioCard key={servicio.Id} servicio={servicio} />
+          <ServicioCard 
+            key={servicio.Id} 
+            servicio={servicio} 
+            empresaId={empresa.id}
+            origen={origen}
+            destino={destino}
+          />
         ))}
       </div>
     </div>
   )
 }
 
-export function ServiciosList({ data, isLoading, className }: ServiciosListProps) {
+export function ServiciosList({ data, isLoading, className, origen, destino }: ServiciosListProps) {
   if (isLoading) {
     return (
       <div className={className}>
@@ -188,7 +251,12 @@ export function ServiciosList({ data, isLoading, className }: ServiciosListProps
     <div className={className}>
       <div className="space-y-8">
         {data.map((empresa) => (
-          <EmpresaSection key={empresa.id} empresa={empresa} />
+          <EmpresaSection 
+            key={empresa.id} 
+            empresa={empresa} 
+            origen={origen}
+            destino={destino}
+          />
         ))}
       </div>
     </div>

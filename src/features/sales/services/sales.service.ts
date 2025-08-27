@@ -121,3 +121,38 @@ export async function getServiciosPorDestinos(params: ServiciosSearchParams): Pr
   const result: EmpresaServicios[] = await response.json()
   return result
 }
+
+// Service to consult available seats for a service
+export async function consultarAsientos(params: {
+  servicioId: string
+  origenId: string
+  destinoId: string
+  empresaId: string
+}) {
+  const { servicioId, origenId, destinoId, empresaId } = params
+
+  // Validate required parameters
+  if (!servicioId || !origenId || !destinoId || !empresaId) {
+    throw new Error('Todos los parámetros son requeridos: servicioId, origenId, destinoId, empresaId')
+  }
+
+  const response = await fetch(`${API_URL}/api/ventas/consultar-asientos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      servicioId,
+      origenId,
+      destinoId,
+      empresaId,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Error al consultar asientos disponibles')
+  }
+
+  const result = await response.json()
+  return result
+}

@@ -20,8 +20,7 @@ export function SalesPage() {
   const [showVuelta, setShowVuelta] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<SearchFilters>({
-    horaDesde: '08:00',
-    horaHasta: '22:00',
+
     asientosMinimos: 2,
   })
 
@@ -209,9 +208,11 @@ export function SalesPage() {
             )}
             
             <ServiciosList 
-              data={servicios || []} 
-              isLoading={isLoading}
-            />
+               data={servicios || []} 
+               isLoading={isLoading}
+               origen={searchData.origen}
+               destino={searchData.destino}
+             />
           </CardContent>
         </Card>
       )}
