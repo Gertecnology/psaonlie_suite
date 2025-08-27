@@ -1,4 +1,5 @@
-import { Destination, DestinationFormValues } from '../models/destination.model'
+import { Destination, DestinationFormValues, clientSchema } from '../models/destination.model'
+import { z } from 'zod'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -80,4 +81,17 @@ export async function removeParadaHomologada(destinationId: string, paradaId: st
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) throw new Error('Error al remover parada homologada')
+}
+
+
+// Servicio para crear clientes de una empresa
+export async function createClient(data: z.infer<typeof clientSchema>): Promise<Destination> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/clientes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw new Error('Error al crear cliente')
+  return (await response.json()).data
 }

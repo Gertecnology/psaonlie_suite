@@ -8,6 +8,7 @@ import {
  // IconTool,
  // IconUserCog,
   IconBuilding,
+  IconShoppingCart,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -55,6 +56,11 @@ export const sidebarData: SidebarData = {
           url: '/companies',
           icon: IconBuilding,
         },
+        {
+          title: 'Ventas',
+          url: '/sales',
+          icon: IconShoppingCart,
+        }
       ],
     },
     /*{
