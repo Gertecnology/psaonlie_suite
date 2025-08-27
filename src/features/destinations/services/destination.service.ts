@@ -85,13 +85,53 @@ export async function removeParadaHomologada(destinationId: string, paradaId: st
 
 
 // Servicio para crear clientes de una empresa
-export async function createClient(data: z.infer<typeof clientSchema>): Promise<Destination> {
+export async function createClient(data: z.infer<typeof clientSchema>): Promise<{
+  cliente: {
+    id: string
+    email: string
+    apellido: string
+    nombre: string
+    nombreCompleto: string
+    fechaNacimiento: string
+    sexo: string
+    nacionalidad: string
+    paisResidencia: string
+    telefono: string
+    ocupacion?: string
+    observaciones?: string
+    createdAt: string
+    updatedAt: string
+  }
+  clienteEmpresa: {
+    id: string
+    cliente: {
+      id: string
+      email: string
+      apellido: string
+      nombre: string
+    }
+    empresaId: string
+    empresaNombre: string
+    tipoDocumento: string
+    numeroDocumento: string
+    documentoCompleto: string
+    idExterno: string
+    sincronizado: boolean
+    ultimaSincronizacion: string
+    createdAt: string
+  }
+  sincronizado: boolean
+}> {
   const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/clientes`, {
+  const response = await fetch(`${API_URL}/api/clientes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   })
-  if (!response.ok) throw new Error('Error al crear cliente')
-  return (await response.json()).data
+  
+  if (!response.ok) {
+    throw new Error('Error al crear cliente')
+  }
+  
+  return await response.json()
 }

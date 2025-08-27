@@ -38,3 +38,4 @@ export const clientSchema = z.object({
 
 export type Destination = z.infer<typeof destinationSchema>
 export type DestinationFormValues = z.infer<typeof destinationFormSchema> 
+export type ClientFormValues = z.infer<typeof clientSchema> 

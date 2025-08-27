@@ -19,17 +19,23 @@ COPY . .
 # Copy .env file
 COPY .env .env
 
-# Set NODE_ENV to production before building
-ENV NODE_ENV=production
-
 # Build application
 RUN pnpm build
 
-# Remove devDependencies after build
-RUN pnpm prune --prod
+# Production stage
+FROM node:20-alpine AS production
 
-# Start the app
-CMD ["pnpm", "preview", "--host", "--port", "3002"]
+# Set working directory
+WORKDIR /app
+
+# Install serve globally
+RUN npm install -g serve
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
 
 # Expose port 3002
-EXPOSE 3002 
+EXPOSE 3002
+
+# Start the app using serve
+CMD ["serve", "-s", "dist", "-l", "3002"] 
