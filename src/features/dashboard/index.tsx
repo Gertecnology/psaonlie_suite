@@ -20,13 +20,13 @@ export default function Dashboard() {
         </div>
         
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <h3 className="font-semibold">Usuarios</h3>
+          <h3 className="font-semibold">Clientes registrados</h3>
           <p className="text-2xl font-bold">89</p>
         </div>
         
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <h3 className="font-semibold">Tareas</h3>
-          <p className="text-2xl font-bold">23</p>
+          <h3 className="font-semibold">Ganancias del mes</h3>
+          <p className="text-2xl font-bold">Gs. 1.500.000</p>
         </div>
       </div>
     </PageLayout>
