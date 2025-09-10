@@ -9,6 +9,7 @@ export const companySchema = z.object({
   url: z.string().nullable().optional(),
   activo: z.boolean(),
   urlPerfil: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   cantidadParadasHomologadas: z.number().optional(),
   porcentajeVentas: z.string().nullable().optional(),
   ventaHabilitada: z.string().nullable().optional(),
@@ -41,10 +42,9 @@ export const createCompanySchema = companyFormSchema.extend({
   agenciaPrincipal: z.string().nullable().optional(),
   usuario: z.string().nullable().optional(),
   descripcion: z.string().nullable().optional(),
-   url: z.string().url({ message: 'URL inválida.' }).optional().or(z.literal('')),
-  urlPerfil: z.string().nullable().optional(),
-  porcentajeVentas: z.string().nullable().optional(),
-  instruccionesPago: z.string().nullable().optional(),
+  url: z.string().url({ message: 'URL inválida.' }).optional().or(z.literal('')),
+  porcentajeVentas: z.number().optional(),
+  profileImage: z.instanceof(File).optional(),
 })
 
 export type Company = z.infer<typeof companySchema>

@@ -65,13 +65,36 @@ export async function deleteCompany(id: string): Promise<void> {
 // Service to create a company
 export async function createCompany(data: CreateCompanyFormValues): Promise<Company> {
   const token = localStorage.getItem('token')
+  
+  const formData = new FormData()
+  formData.append('nombre', data.nombre)
+  formData.append('password', data.password)
+  
+  if (data.agenciaPrincipal) {
+    formData.append('agenciaPrincipal', data.agenciaPrincipal)
+  }
+  if (data.usuario) {
+    formData.append('usuario', data.usuario)
+  }
+  if (data.descripcion) {
+    formData.append('descripcion', data.descripcion)
+  }
+  if (data.url) {
+    formData.append('url', data.url)
+  }
+  if (data.porcentajeVentas !== undefined) {
+    formData.append('porcentajeVentas', data.porcentajeVentas.toString())
+  }
+  if (data.profileImage) {
+    formData.append('profileImage', data.profileImage)
+  }
+  
   const response = await fetch(`${API_URL}/empresas`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(data),
+    body: formData,
   })
 
   if (!response.ok) {
@@ -124,5 +147,31 @@ export async function getParadasHomologadas(
   }
   const result = await response.json();
   return result.data;
-} 
+}
+
+// Service to update company logo
+export async function updateCompanyLogo(
+  id: string,
+  profileImage: File
+): Promise<{ imageUrl: string; message: string }> {
+  const token = localStorage.getItem('token')
+  
+  const formData = new FormData()
+  formData.append('profileImage', profileImage)
+  
+  const response = await fetch(`${API_URL}/empresas/${id}/logo`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || 'Error al actualizar el logo de la empresa')
+  }
+
+  return response.json()
+}
 
