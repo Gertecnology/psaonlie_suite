@@ -27,6 +27,7 @@ import { useCompanyDialog } from '../store/use-company-dialog'
 import { type CreateCompanyFormValues } from '../models/company.model'
 import { useCreateCompany } from '../hooks/use-create-company'
 import { useUpdateCompany } from '../hooks/use-update-company'
+import { useUpdateCompanyLogo } from '../hooks/use-update-company-logo'
 
 const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
@@ -46,6 +47,7 @@ export function CompanyMutateDrawer() {
   const { open, close, data: company } = useCompanyDialog()
   const createCompany = useCreateCompany()
   const updateCompany = useUpdateCompany()
+  const updateCompanyLogo = useUpdateCompanyLogo()
 
   const isUpdate = !!company && !!company.id
 
@@ -134,7 +136,71 @@ export function CompanyMutateDrawer() {
         ...updateData,
         porcentajeVentas: updateData.porcentajeVentas?.toString() || null,
       }
-      updateCompany.mutate({ id: company.id, data: updateDataWithStringPercent })
+
+      // Verificar si hay cambios en los datos (excluyendo el logo)
+      const hasDataChanges = Object.keys(updateDataWithStringPercent).some(key => {
+        const currentValue = company[key as keyof typeof company]
+        const newValue = updateDataWithStringPercent[key as keyof typeof updateDataWithStringPercent]
+        return currentValue !== newValue
+      })
+
+      // Verificar si se cambió el logo
+      const hasLogoChanged = !!profileImage
+
+      if (hasLogoChanged && hasDataChanges) {
+        // Caso 1: Se cambió tanto el logo como los datos - hacer 2 peticiones
+        updateCompany.mutate(
+          { id: company.id, data: updateDataWithStringPercent },
+          {
+            onSuccess: () => {
+              // Después de actualizar los datos, actualizar el logo
+              updateCompanyLogo.mutate(
+                { id: company.id, profileImage: profileImage! },
+                {
+                  onSuccess: () => {
+                    close()
+                  },
+                  onError: () => {
+                    close()
+                  }
+                }
+              )
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else if (hasLogoChanged && !hasDataChanges) {
+        // Caso 2: Solo se cambió el logo - hacer 1 petición
+        updateCompanyLogo.mutate(
+          { id: company.id, profileImage: profileImage! },
+          {
+            onSuccess: () => {
+              close()
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else if (!hasLogoChanged && hasDataChanges) {
+        // Caso 3: Solo se cambiaron los datos - hacer 1 petición
+        updateCompany.mutate(
+          { id: company.id, data: updateDataWithStringPercent },
+          {
+            onSuccess: () => {
+              close()
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else {
+        // Caso 4: No hay cambios - solo cerrar
+        close()
+      }
     } else {
       // Para creación, incluir el archivo si existe
       const createData: CreateCompanyFormValues = {
@@ -170,7 +236,6 @@ export function CompanyMutateDrawer() {
         },
       })
     }
-    close()
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -375,10 +440,16 @@ export function CompanyMutateDrawer() {
         </Form>
         <SheetFooter className='gap-2'>
           <SheetClose asChild>
-            <Button variant='outline'>Cerrar</Button>
+            <Button variant='outline' disabled={updateCompany.isPending || updateCompanyLogo.isPending}>
+              Cerrar
+            </Button>
           </SheetClose>
-          <Button form='company-form' type='submit'>
-            Guardar cambios
+          <Button 
+            form='company-form' 
+            type='submit'
+            disabled={updateCompany.isPending || updateCompanyLogo.isPending}
+          >
+            {updateCompany.isPending || updateCompanyLogo.isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </SheetFooter>
       </SheetContent>
