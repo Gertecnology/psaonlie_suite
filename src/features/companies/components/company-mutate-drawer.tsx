@@ -27,6 +27,7 @@ import { useCompanyDialog } from '../store/use-company-dialog'
 import { type CreateCompanyFormValues } from '../models/company.model'
 import { useCreateCompany } from '../hooks/use-create-company'
 import { useUpdateCompany } from '../hooks/use-update-company'
+import { useUpdateCompanyLogo } from '../hooks/use-update-company-logo'
 
 const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
@@ -35,9 +36,9 @@ const formSchema = z.object({
   agenciaPrincipal: z.string().nullable().optional(),
   descripcion: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
-  urlPerfil: z.string().nullable().optional(),
   activo: z.boolean(),
-  porcentajeVentas: z.string().nullable().optional(),
+  porcentajeVentas: z.number().optional(),
+  profileImage: z.instanceof(File).optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -46,11 +47,12 @@ export function CompanyMutateDrawer() {
   const { open, close, data: company } = useCompanyDialog()
   const createCompany = useCreateCompany()
   const updateCompany = useUpdateCompany()
+  const updateCompanyLogo = useUpdateCompanyLogo()
 
   const isUpdate = !!company && !!company.id
 
   // Estado para previsualización del logo
-  const [logoPreview, setLogoPreview] = useState<string | null>(company?.urlPerfil ?? null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const form = useForm<FormValues>({
@@ -72,40 +74,55 @@ export function CompanyMutateDrawer() {
       agenciaPrincipal: '',
       descripcion: '',
       url: '',
-      urlPerfil: '',
       activo: true,
-      porcentajeVentas: '',
+      porcentajeVentas: undefined,
+      profileImage: undefined,
     },
   })
 
   useEffect(() => {
-    if (isUpdate && company) {
-      form.reset(company)
-      setLogoPreview(company.urlPerfil ?? null)
-    } else {
-      form.reset({
-        nombre: '',
-        usuario: '',
-        password: '',
-        agenciaPrincipal: '',
-        descripcion: '',
-        url: '',
-        urlPerfil: '',
-        activo: true,
-        porcentajeVentas: '',
-      })
-      setLogoPreview(null)
+    if (open) {
+      if (isUpdate && company) {
+        form.reset({
+          nombre: company.nombre,
+          usuario: company.usuario,
+          password: '',
+          agenciaPrincipal: company.agenciaPrincipal,
+          descripcion: company.descripcion,
+          url: company.url,
+          activo: company.activo,
+          porcentajeVentas: company.porcentajeVentas ? parseFloat(company.porcentajeVentas) : undefined,
+          profileImage: undefined,
+        })
+        // Establecer el logo preview con la URL de la imagen de la empresa
+        setLogoPreview(company.imageUrl ?? null)
+      } else {
+        form.reset({
+          nombre: '',
+          usuario: '',
+          password: '',
+          agenciaPrincipal: '',
+          descripcion: '',
+          url: '',
+          activo: true,
+          porcentajeVentas: undefined,
+          profileImage: undefined,
+        })
+        setLogoPreview(null)
+      }
     }
   }, [open, isUpdate, company, form])
 
-  // Handler para seleccionar imagen y convertir a base64
+  // Handler para seleccionar imagen
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      form.setValue('profileImage', file)
+      
+      // Crear preview para mostrar la imagen
       const reader = new FileReader()
       reader.onloadend = () => {
         setLogoPreview(reader.result as string)
-        form.setValue('urlPerfil', reader.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -113,10 +130,87 @@ export function CompanyMutateDrawer() {
 
   const onSubmit = (data: FormValues) => {
     if (isUpdate && company?.id) {
-      const { password, ...updateData } = data
-      updateCompany.mutate({ id: company.id, data: updateData })
+      const { password, profileImage, ...updateData } = data
+      // Convertir porcentajeVentas a string para la actualización
+      const updateDataWithStringPercent = {
+        ...updateData,
+        porcentajeVentas: updateData.porcentajeVentas?.toString() || null,
+      }
+
+      // Verificar si hay cambios en los datos (excluyendo el logo)
+      const hasDataChanges = Object.keys(updateDataWithStringPercent).some(key => {
+        const currentValue = company[key as keyof typeof company]
+        const newValue = updateDataWithStringPercent[key as keyof typeof updateDataWithStringPercent]
+        return currentValue !== newValue
+      })
+
+      // Verificar si se cambió el logo
+      const hasLogoChanged = !!profileImage
+
+      if (hasLogoChanged && hasDataChanges) {
+        // Caso 1: Se cambió tanto el logo como los datos - hacer 2 peticiones
+        updateCompany.mutate(
+          { id: company.id, data: updateDataWithStringPercent },
+          {
+            onSuccess: () => {
+              // Después de actualizar los datos, actualizar el logo
+              updateCompanyLogo.mutate(
+                { id: company.id, profileImage: profileImage! },
+                {
+                  onSuccess: () => {
+                    close()
+                  },
+                  onError: () => {
+                    close()
+                  }
+                }
+              )
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else if (hasLogoChanged && !hasDataChanges) {
+        // Caso 2: Solo se cambió el logo - hacer 1 petición
+        updateCompanyLogo.mutate(
+          { id: company.id, profileImage: profileImage! },
+          {
+            onSuccess: () => {
+              close()
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else if (!hasLogoChanged && hasDataChanges) {
+        // Caso 3: Solo se cambiaron los datos - hacer 1 petición
+        updateCompany.mutate(
+          { id: company.id, data: updateDataWithStringPercent },
+          {
+            onSuccess: () => {
+              close()
+            },
+            onError: () => {
+              close()
+            }
+          }
+        )
+      } else {
+        // Caso 4: No hay cambios - solo cerrar
+        close()
+      }
     } else {
-      createCompany.mutate(data as CreateCompanyFormValues, {
+      // Para creación, incluir el archivo si existe
+      const createData: CreateCompanyFormValues = {
+        ...data,
+        password: data.password || '',
+        url: data.url || undefined,
+        profileImage: data.profileImage || undefined,
+      }
+      
+      createCompany.mutate(createData, {
         onSuccess: () => {
           // toast de éxito con duración
           import('sonner').then(({ toast }) => {
@@ -142,7 +236,6 @@ export function CompanyMutateDrawer() {
         },
       })
     }
-    close()
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -153,7 +246,7 @@ export function CompanyMutateDrawer() {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent className='flex flex-col overflow-y-auto'>
         <SheetHeader className='text-left'>
           <SheetTitle>
             {isUpdate ? 'Actualizar' : 'Crear'} Empresa
@@ -198,8 +291,6 @@ export function CompanyMutateDrawer() {
                   onChange={handleLogoChange}
                 />
               </div>
-              {/* Campo oculto para urlPerfil */}
-              <input type='hidden' {...form.register('urlPerfil')} />
               {/* Campo de nombre */}
               <div className='flex-1'>
                 <FormField
@@ -314,8 +405,11 @@ export function CompanyMutateDrawer() {
                   <FormControl>
                     <Input
                       {...field}
+                      type='number'
+                      step='0.01'
                       value={field.value ?? ''}
                       placeholder='Ingresa un porcentaje de ventas'
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -346,10 +440,16 @@ export function CompanyMutateDrawer() {
         </Form>
         <SheetFooter className='gap-2'>
           <SheetClose asChild>
-            <Button variant='outline'>Cerrar</Button>
+            <Button variant='outline' disabled={updateCompany.isPending || updateCompanyLogo.isPending}>
+              Cerrar
+            </Button>
           </SheetClose>
-          <Button form='company-form' type='submit'>
-            Guardar cambios
+          <Button 
+            form='company-form' 
+            type='submit'
+            disabled={updateCompany.isPending || updateCompanyLogo.isPending}
+          >
+            {updateCompany.isPending || updateCompanyLogo.isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </SheetFooter>
       </SheetContent>
