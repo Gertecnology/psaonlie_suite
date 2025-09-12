@@ -161,7 +161,7 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
   },
   {
     id: 'actions',
-    header: 'Acciones',
+    header: 'Facturas',
     cell: ({ row }) => {
       const venta = row.original
       return (
