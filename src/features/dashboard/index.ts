@@ -24,6 +24,8 @@ export * from './components/ventas-columns'
 export * from './components/cliente-search'
 export * from './components/empresa-search'
 export * from './components/date-range-filter'
+export * from './components/invoice-modal'
+export * from './services/invoice.service'
 
 // Export Dashboard component as default
 export { default } from './index.tsx'

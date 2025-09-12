@@ -1,6 +1,8 @@
 import { type ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
+import { FileText } from 'lucide-react'
 import { type Venta } from '../models/sales.model'
 import { DataTableColumnHeader } from '@/features/companies/components/data-table-column-header'
 
@@ -41,7 +43,11 @@ const getEstadoPagoBadgeVariant = (estado: string) => {
   }
 }
 
-export const ventasColumns: ColumnDef<Venta>[] = [
+interface VentasColumnsProps {
+  onInvoiceClick?: (venta: Venta) => void
+}
+
+export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -153,4 +159,27 @@ export const ventasColumns: ColumnDef<Venta>[] = [
       return value.includes(String(row.getValue(id)))
     },
   },
+  {
+    id: 'actions',
+    header: 'Acciones',
+    cell: ({ row }) => {
+      const venta = row.original
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => props?.onInvoiceClick?.(venta)}
+          className="h-8 w-8 p-0"
+        >
+          <FileText className="h-4 w-4" />
+          <span className="sr-only">Ver factura</span>
+        </Button>
+      )
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
 ]
+
+// Mantener compatibilidad con el export anterior
+export const ventasColumns = createVentasColumns()

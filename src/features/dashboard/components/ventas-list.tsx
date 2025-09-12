@@ -1,13 +1,14 @@
 import React from 'react'
 import { type PaginationState } from '@tanstack/react-table'
 import { useVentasList } from '../hooks/use-ventas-list'
-import { VentasSearchParams } from '../models/sales.model'
+import { VentasSearchParams, type Venta } from '../models/sales.model'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Filter, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { VentasDataTable } from './ventas-data-table'
-import { ventasColumns } from './ventas-columns'
+import { createVentasColumns } from './ventas-columns'
+import { InvoiceModal } from './invoice-modal'
 
 interface VentasListProps {
   className?: string
@@ -23,6 +24,7 @@ export function VentasList({ className }: VentasListProps) {
   const [empresaId, setEmpresaId] = React.useState<string | null>(null)
   const [fechaDesde, setFechaDesde] = React.useState<Date | null>(null)
   const [fechaHasta, setFechaHasta] = React.useState<Date | null>(null)
+  const [selectedInvoice, setSelectedInvoice] = React.useState<Venta | null>(null)
 
   const searchParams: VentasSearchParams = {
     page: pagination.pageIndex + 1,
@@ -55,6 +57,20 @@ export function VentasList({ className }: VentasListProps) {
     // Reset pagination when filter changes
     setPagination(prev => ({ ...prev, pageIndex: 0 }))
   }
+
+  const handleInvoiceClick = (venta: Venta) => {
+    setSelectedInvoice(venta)
+  }
+
+  const handleCloseInvoice = () => {
+    setSelectedInvoice(null)
+  }
+
+  // Crear las columnas con el callback para el modal de factura
+  const columns = React.useMemo(() => 
+    createVentasColumns({ onInvoiceClick: handleInvoiceClick }), 
+    []
+  )
 
   if (error) {
     return (
@@ -143,7 +159,7 @@ export function VentasList({ className }: VentasListProps) {
       <CardContent>
         {ventasData && (
           <VentasDataTable
-            columns={ventasColumns}
+            columns={columns}
             data={ventasData.data}
             pageCount={ventasData.totalPages}
             pagination={pagination}
@@ -158,6 +174,15 @@ export function VentasList({ className }: VentasListProps) {
           />
         )}
       </CardContent>
+      
+      {/* Modal de Factura */}
+      {selectedInvoice && (
+        <InvoiceModal
+          isOpen={!!selectedInvoice}
+          onClose={handleCloseInvoice}
+          venta={selectedInvoice}
+        />
+      )}
     </Card>
   )
 }
