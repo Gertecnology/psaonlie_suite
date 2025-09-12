@@ -1,14 +1,13 @@
 import {
- // IconBrowserCheck,
   IconChecklist,
   IconLayoutDashboard,
- // IconNotification,
- // IconPalette,
- // IconSettings,
- // IconTool,
- // IconUserCog,
+  //IconSettings,
+ //IconTool,
+ //IconUserCog,
   IconBuilding,
   IconShoppingCart,
+  //IconCurrencyDollar,
+  IconUsers,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -57,6 +56,11 @@ export const sidebarData: SidebarData = {
           icon: IconBuilding,
         },
         {
+          title: 'Clientes',
+          url: '/clients',
+          icon: IconUsers,
+        },
+        {
           title: 'Ventas',
           url: '/sales',
           icon: IconShoppingCart,
@@ -71,29 +75,9 @@ export const sidebarData: SidebarData = {
           icon: IconSettings,
           items: [
             {
-              title: 'Perfil',
-              url: '/settings',
-              icon: IconUserCog,
-            },
-            {
-              title: 'Cuenta',
-              url: '/settings/account',
-              icon: IconTool,
-            },
-            {
-              title: 'Apariencia',
-              url: '/settings/appearance',
-              icon: IconPalette,
-            },
-            {
-              title: 'Notificaciones',
-              url: '/settings/notifications',
-              icon: IconNotification,
-            },
-            {
-              title: 'Mostrar',
-              url: '/settings/display',
-              icon: IconBrowserCheck,
+              title: 'Cargos por servicio',
+              url: '/settings/service-charges',
+              icon: IconCurrencyDollar,
             },
           ],
         },
