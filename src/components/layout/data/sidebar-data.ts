@@ -1,12 +1,12 @@
 import {
   IconChecklist,
   IconLayoutDashboard,
-  IconSettings,
- IconTool,
- IconUserCog,
+  //IconSettings,
+ //IconTool,
+ //IconUserCog,
   IconBuilding,
   IconShoppingCart,
-  IconCurrencyDollar,
+  //IconCurrencyDollar,
   IconUsers,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
@@ -67,7 +67,7 @@ export const sidebarData: SidebarData = {
         }
       ],
     },
-    {
+    /*{
       title: 'Otros',
       items: [
         {
@@ -79,19 +79,9 @@ export const sidebarData: SidebarData = {
               url: '/settings/service-charges',
               icon: IconCurrencyDollar,
             },
-            {
-              title: 'Perfil',
-              url: '/settings',
-              icon: IconUserCog,
-            },
-            {
-              title: 'Cuenta',
-              url: '/settings/account',
-              icon: IconTool,
-            },
           ],
         },
       ],
-    },
+    },*/
   ],
 }
