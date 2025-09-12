@@ -33,6 +33,13 @@ interface VentasDataTableProps {
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
+  onClienteFilter?: (clienteId: string | null) => void
+  onEmpresaFilter?: (empresaId: string | null) => void
+  onDateRangeFilter?: (fechaDesde: Date | null, fechaHasta: Date | null) => void
+  clienteId?: string | null
+  empresaId?: string | null
+  fechaDesde?: Date | null
+  fechaHasta?: Date | null
 }
 
 export function VentasDataTable({
@@ -41,6 +48,13 @@ export function VentasDataTable({
   pageCount,
   pagination,
   onPaginationChange,
+  onClienteFilter,
+  onEmpresaFilter,
+  onDateRangeFilter,
+  clienteId,
+  empresaId,
+  fechaDesde,
+  fechaHasta,
 }: VentasDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -78,7 +92,16 @@ export function VentasDataTable({
 
   return (
     <div className='space-y-4'>
-      <VentasTableToolbar table={table} />
+      <VentasTableToolbar 
+        table={table} 
+        onClienteFilter={onClienteFilter} 
+        onEmpresaFilter={onEmpresaFilter}
+        onDateRangeFilter={onDateRangeFilter}
+        clienteId={clienteId}
+        empresaId={empresaId}
+        fechaDesde={fechaDesde}
+        fechaHasta={fechaHasta}
+      />
       <div className='rounded-md border'>
         <Table>
           <TableHeader>

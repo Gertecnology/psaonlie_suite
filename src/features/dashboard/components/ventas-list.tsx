@@ -19,14 +19,42 @@ export function VentasList({ className }: VentasListProps) {
     pageSize: 20,
   })
 
+  const [clienteId, setClienteId] = React.useState<string | null>(null)
+  const [empresaId, setEmpresaId] = React.useState<string | null>(null)
+  const [fechaDesde, setFechaDesde] = React.useState<Date | null>(null)
+  const [fechaHasta, setFechaHasta] = React.useState<Date | null>(null)
+
   const searchParams: VentasSearchParams = {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     sortBy: 'fechaVenta',
-    sortOrder: 'DESC'
+    sortOrder: 'DESC',
+    clienteId: clienteId || undefined,
+    empresaId: empresaId || undefined,
+    fechaVentaDesde: fechaDesde?.toISOString(),
+    fechaVentaHasta: fechaHasta?.toISOString(),
   }
 
   const { data: ventasData, isLoading, error, refetch } = useVentasList(searchParams)
+
+  const handleClienteFilter = (newClienteId: string | null) => {
+    setClienteId(newClienteId)
+    // Reset pagination when filter changes
+    setPagination(prev => ({ ...prev, pageIndex: 0 }))
+  }
+
+  const handleEmpresaFilter = (newEmpresaId: string | null) => {
+    setEmpresaId(newEmpresaId)
+    // Reset pagination when filter changes
+    setPagination(prev => ({ ...prev, pageIndex: 0 }))
+  }
+
+  const handleDateRangeFilter = (newFechaDesde: Date | null, newFechaHasta: Date | null) => {
+    setFechaDesde(newFechaDesde)
+    setFechaHasta(newFechaHasta)
+    // Reset pagination when filter changes
+    setPagination(prev => ({ ...prev, pageIndex: 0 }))
+  }
 
   if (error) {
     return (
@@ -120,6 +148,13 @@ export function VentasList({ className }: VentasListProps) {
             pageCount={ventasData.totalPages}
             pagination={pagination}
             onPaginationChange={setPagination}
+            onClienteFilter={handleClienteFilter}
+            onEmpresaFilter={handleEmpresaFilter}
+            onDateRangeFilter={handleDateRangeFilter}
+            clienteId={clienteId}
+            empresaId={empresaId}
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
           />
         )}
       </CardContent>
