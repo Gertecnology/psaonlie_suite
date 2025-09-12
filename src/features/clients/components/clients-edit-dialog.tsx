@@ -60,13 +60,13 @@ export function ClientsEditDialog() {
             />
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='edit-documento' className='text-right'>
-              Documento
+            <Label htmlFor='edit-nacionalidad' className='text-right'>
+              Nacionalidad
             </Label>
             <Input 
-              id='edit-documento' 
+              id='edit-nacionalidad' 
               className='col-span-3' 
-              defaultValue={selectedClient?.cliente.numeroDocumento}
+              defaultValue={selectedClient?.cliente.nacionalidad}
             />
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
