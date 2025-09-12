@@ -63,31 +63,6 @@ export default function Dashboard() {
             </div>
           </>
         )}
-
-        {/* Fallback cards when no data is available */}
-        {(!statistics || !clients) && !isLoading && !error && (
-          <>
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-              <h3 className="font-semibold">Empresas Activas</h3>
-              <p className="text-2xl font-bold">12</p>
-            </div>
-            
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-              <h3 className="font-semibold">Destinos</h3>
-              <p className="text-2xl font-bold">45</p>
-            </div>
-            
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-              <h3 className="font-semibold">Clientes registrados</h3>
-              <p className="text-2xl font-bold">89</p>
-            </div>
-            
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-              <h3 className="font-semibold">Ganancias del mes</h3>
-              <p className="text-2xl font-bold">Gs. 1.500.000</p>
-            </div>
-          </>
-        )}
       </div>
 
       {/* Sales List */}
