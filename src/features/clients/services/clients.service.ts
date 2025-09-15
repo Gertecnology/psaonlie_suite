@@ -1,4 +1,4 @@
-import { ClientesListResponse, ClientesSearchParams, ClienteConEstadisticas } from '../models/clients.model'
+import { ClientesListResponse, ClientesSearchParams, ClienteConEstadisticas, CreateClientFormValues, UpdateClientFormValues } from '../models/clients.model'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -50,5 +50,52 @@ export async function getClienteById(id: string): Promise<ClienteConEstadisticas
 
   const data = await response.json()
   return data.data
+}
+
+export async function createClient(data: CreateClientFormValues): Promise<ClienteConEstadisticas> {
+  const response = await fetch(`${API_URL}/api/clientes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Error al crear el cliente')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+export async function updateClient(id: string, data: UpdateClientFormValues): Promise<ClienteConEstadisticas> {
+  const response = await fetch(`${API_URL}/api/clientes/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Error al actualizar el cliente')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+export async function deleteClient(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/clientes/${id}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Error al eliminar el cliente')
+  }
 }
 

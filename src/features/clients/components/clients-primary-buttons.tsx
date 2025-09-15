@@ -1,12 +1,12 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useClientsContext } from '../context/clients-context'
+import { useClientDialog } from '../store/use-client-dialog'
 
 export function ClientsPrimaryButtons() {
-  const { setIsCreateDialogOpen } = useClientsContext()
+  const { openDialog } = useClientDialog()
 
   return (
-    <Button onClick={() => setIsCreateDialogOpen(true)}>
+    <Button onClick={() => openDialog('create')}>
       <Plus className='mr-2 h-4 w-4' />
       Nuevo Cliente
     </Button>
