@@ -36,7 +36,7 @@ export function ClientsViewDialog() {
 
   return (
     <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-      <DialogContent className='sm:max-w-[500px]'>
+      <DialogContent className='w-[95vw] max-w-[500px] sm:w-full'>
         <DialogHeader>
           <DialogTitle>Detalles del Cliente</DialogTitle>
           <DialogDescription>
@@ -44,7 +44,7 @@ export function ClientsViewDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className='space-y-4 py-4'>
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
               <h4 className='font-medium text-sm text-muted-foreground'>Nombre Completo</h4>
               <p className='text-sm'>{selectedClient.cliente.nombre} {selectedClient.cliente.apellido}</p>
@@ -55,7 +55,7 @@ export function ClientsViewDialog() {
             </div>
           </div>
           
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
               <h4 className='font-medium text-sm text-muted-foreground'>Teléfono</h4>
               <p className='text-sm'>{selectedClient.cliente.telefono || 'No especificado'}</p>
@@ -66,7 +66,7 @@ export function ClientsViewDialog() {
             </div>
           </div>
 
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
               <h4 className='font-medium text-sm text-muted-foreground'>Fecha de Registro</h4>
               <p className='text-sm'>{formatDate(selectedClient.cliente.createdAt)}</p>
@@ -79,7 +79,7 @@ export function ClientsViewDialog() {
 
           <div className='border-t pt-4'>
             <h4 className='font-medium text-sm text-muted-foreground mb-2'>Estadísticas de Ventas</h4>
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <div>
                 <h5 className='font-medium text-sm text-muted-foreground'>Total de Ventas</h5>
                 <p className='text-lg font-semibold'>{selectedClient.estadisticasVentas.totalVentas}</p>
@@ -89,7 +89,7 @@ export function ClientsViewDialog() {
                 <p className='text-lg font-semibold'>{formatCurrency(selectedClient.estadisticasVentas.montoTotalPagado)}</p>
               </div>
             </div>
-            <div className='grid grid-cols-3 gap-4 mt-2'>
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2'>
               <div>
                 <h5 className='font-medium text-sm text-muted-foreground'>Ventas Pagadas</h5>
                 <p className='text-sm'>{selectedClient.estadisticasVentas.ventasPagadas}</p>

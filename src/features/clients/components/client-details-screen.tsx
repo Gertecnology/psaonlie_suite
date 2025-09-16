@@ -215,7 +215,7 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
               </div>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {/* Columna izquierda */}
               <div className="space-y-4">
                 <div>
@@ -291,7 +291,7 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
                 <User className="h-4 w-4 inline mr-2" />
                 Información Adicional
               </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {client.cliente.fechaNacimiento && (
                   <div>
                     <span className="text-sm text-muted-foreground">Fecha de Nacimiento:</span>
@@ -369,22 +369,23 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transacción</TableHead>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>Ruta</TableHead>
-                      <TableHead>Fecha Viaje</TableHead>
-                      <TableHead>Asientos</TableHead>
-                      <TableHead>Importe</TableHead>
-                      <TableHead>Método Pago</TableHead>
-                      <TableHead>Estado Pago</TableHead>
-                      <TableHead>Estado Venta</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="min-w-[800px] px-4 sm:px-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[120px]">Transacción</TableHead>
+                        <TableHead className="min-w-[100px]">Empresa</TableHead>
+                        <TableHead className="min-w-[150px]">Ruta</TableHead>
+                        <TableHead className="min-w-[120px]">Fecha Viaje</TableHead>
+                        <TableHead className="min-w-[100px]">Asientos</TableHead>
+                        <TableHead className="min-w-[100px]">Importe</TableHead>
+                        <TableHead className="min-w-[120px]">Método Pago</TableHead>
+                        <TableHead className="min-w-[100px]">Estado Pago</TableHead>
+                        <TableHead className="min-w-[100px]">Estado Venta</TableHead>
+                        <TableHead className="min-w-[100px]">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {ventas.map((venta) => (
                       <TableRow key={venta.id}>
@@ -451,7 +452,8 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </div>
 
               {/* Paginación */}
