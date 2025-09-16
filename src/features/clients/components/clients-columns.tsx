@@ -1,7 +1,7 @@
 import { type ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, ShoppingCart } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,11 @@ import {
 import { ClienteConEstadisticas } from '../models/clients.model'
 import { useClientDialog } from '../store/use-client-dialog'
 import { useClientsContext } from '../context/clients-context'
+
+interface ClientRowActionsProps {
+  client: ClienteConEstadisticas
+  onViewDetails?: (client: ClienteConEstadisticas) => void
+}
 
 export const columns: ColumnDef<ClienteConEstadisticas>[] = [
   {
@@ -84,18 +89,20 @@ export const columns: ColumnDef<ClienteConEstadisticas>[] = [
   {
     id: 'actions',
     header: 'Acciones',
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const client = row.original
-      return <ClientRowActions client={client} />
+      const onViewDetails = (table.options.meta as unknown as { onViewClientDetails?: (client: ClienteConEstadisticas) => void })?.onViewClientDetails
+      return <ClientRowActions client={client} onViewDetails={onViewDetails} />
     },
     enableSorting: false,
     enableHiding: false,
   },
 ]
 
-function ClientRowActions({ client }: { client: ClienteConEstadisticas }) {
+// eslint-disable-next-line react-refresh/only-export-components
+function ClientRowActions({ client, onViewDetails }: ClientRowActionsProps) {
   const { openDialog } = useClientDialog()
-  const { setSelectedClient, setIsViewDialogOpen, setIsDeleteDialogOpen } = useClientsContext()
+  const { setSelectedClient, setIsDeleteDialogOpen } = useClientsContext()
 
   return (
     <DropdownMenu>
@@ -107,15 +114,14 @@ function ClientRowActions({ client }: { client: ClienteConEstadisticas }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuItem
-          onClick={() => {
-            setSelectedClient(client)
-            setIsViewDialogOpen(true)
-          }}
-        >
-          <Eye className='mr-2 h-4 w-4' />
-          Ver detalles
-        </DropdownMenuItem>
+        {onViewDetails && (
+          <DropdownMenuItem
+            onClick={() => onViewDetails(client)}
+          >
+            <ShoppingCart className='mr-2 h-4 w-4' />
+            Ver detalles
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => openDialog('edit', client)}

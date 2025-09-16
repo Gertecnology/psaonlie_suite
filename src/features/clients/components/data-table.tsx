@@ -33,6 +33,7 @@ interface DataTableProps {
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
+  onViewClientDetails?: (client: ClienteConEstadisticas) => void
 }
 
 export function DataTable({
@@ -41,6 +42,7 @@ export function DataTable({
   pageCount,
   pagination,
   onPaginationChange,
+  onViewClientDetails,
 }: DataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -54,6 +56,9 @@ export function DataTable({
     data,
     columns,
     pageCount,
+    meta: {
+      onViewClientDetails,
+    },
     state: {
       sorting,
       columnVisibility,

@@ -40,14 +40,14 @@ const formSchema = z.object({
   apellido: z.string().min(1, 'El apellido es requerido'),
   nombre: z.string().min(1, 'El nombre es requerido'),
   empresaId: z.string().min(1, 'La empresa es requerida'),
-  tipoDocumento: z.string().optional(),
-  numeroDocumento: z.string().optional(),
-  fechaNacimiento: z.string().optional(),
-  sexo: z.string().optional(),
-  nacionalidad: z.string().optional(),
-  paisResidencia: z.string().optional(),
-  telefono: z.string().optional(),
-  ocupacion: z.string().optional(),
+  tipoDocumento: z.string().min(1, 'El tipo de documento es requerido'),
+  numeroDocumento: z.string().min(1, 'El número de documento es requerido'),
+  fechaNacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
+  sexo: z.string().min(1, 'El sexo es requerido'),
+  nacionalidad: z.string().min(1, 'La nacionalidad es requerida'),
+  paisResidencia: z.string().min(1, 'El país de residencia es requerido'),
+  telefono: z.string().min(1, 'El teléfono es requerido'),
+  ocupacion: z.string().min(1, 'La ocupación es requerida'),
   observaciones: z.string().optional(),
 })
 
@@ -201,7 +201,7 @@ export function ClientMutateDrawer() {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className='flex flex-col overflow-y-auto'>
+      <SheetContent className='flex flex-col overflow-y-auto w-[800px] sm:w-[900px] lg:w-[1000px]'>
         <SheetHeader className='text-left'>
           <SheetTitle>
             {isUpdate ? 'Actualizar' : 'Crear'} Cliente
@@ -217,18 +217,18 @@ export function ClientMutateDrawer() {
           <form
             id='client-form'
             onSubmit={form.handleSubmit(onSubmit)}
-            className='flex-1 space-y-5 px-4'
+            className='flex-1 space-y-6 px-4'
           >
             {/* Selección de Empresa */}
-            <div className='space-y-3'>
+            <div className='space-y-4'>
               <h3 className='text-lg font-semibold'>Seleccionar Empresa</h3>
               
               <FormField
                 control={form.control}
                 name='empresaId'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Empresa</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Empresa <span className='text-destructive'>*</span></FormLabel>
                     <FormControl>
                       <EmpresaSearch
                         empresas={empresas}
@@ -245,16 +245,16 @@ export function ClientMutateDrawer() {
             </div>
 
             {/* Información del Cliente */}
-            <div className={`space-y-3 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`space-y-4 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
               <h3 className='text-lg font-semibold'>Información del Cliente</h3>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='nombre'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Nombre</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Nombre <span className='text-destructive'>*</span></FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -270,8 +270,8 @@ export function ClientMutateDrawer() {
                   control={form.control}
                   name='apellido'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Apellido</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Apellido <span className='text-destructive'>*</span></FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -289,8 +289,8 @@ export function ClientMutateDrawer() {
                 control={form.control}
                 name='email'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Email</FormLabel>
+                  <FormItem className='space-y-2'>
+                    <FormLabel>Email <span className='text-destructive'>*</span></FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
@@ -304,25 +304,21 @@ export function ClientMutateDrawer() {
                 )}
               />
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='tipoDocumento'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Tipo de Documento</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Tipo de Documento <span className='text-destructive'>*</span></FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                         disabled={!empresaId || isLoadingTiposDocumento}
                       >
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={
-                              isLoadingTiposDocumento 
-                                ? 'Cargando tipos...' 
-                                : 'Selecciona el tipo'
-                            } />
+                          <SelectTrigger className='w-full'>
+                            <SelectValue placeholder='Selecciona tipo' />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -351,8 +347,8 @@ export function ClientMutateDrawer() {
                   control={form.control}
                   name='numeroDocumento'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Número de Documento</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Nro de Documento <span className='text-destructive'>*</span></FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
@@ -368,15 +364,15 @@ export function ClientMutateDrawer() {
             </div>
 
             {/* Información Adicional */}
-            <div className={`space-y-3 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`space-y-4 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
               <h3 className='text-lg font-semibold'>Información Adicional</h3>
 
               <FormField
                 control={form.control}
                 name='fechaNacimiento'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Fecha de Nacimiento</FormLabel>
+                  <FormItem className='space-y-2'>
+                    <FormLabel>Fecha de Nacimiento <span className='text-destructive'>*</span></FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
@@ -389,21 +385,21 @@ export function ClientMutateDrawer() {
                 )}
               />
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='sexo'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Sexo</FormLabel>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Sexo <span className='text-destructive'>*</span></FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                         disabled={!empresaId}
                       >
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecciona el sexo' />
+                          <SelectTrigger className='w-full'>
+                            <SelectValue placeholder='Selecciona sexo' />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -420,15 +416,37 @@ export function ClientMutateDrawer() {
                   control={form.control}
                   name='nacionalidad'
                   render={({ field }) => (
-                    <FormItem className='space-y-1'>
-                      <FormLabel>Nacionalidad</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder='Ej: PY' 
-                          disabled={!empresaId}
-                        />
-                      </FormControl>
+                    <FormItem className='space-y-2'>
+                      <FormLabel>Nacionalidad <span className='text-destructive'>*</span></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={!empresaId}
+                      >
+                        <FormControl>
+                          <SelectTrigger className='w-full'>
+                            <SelectValue placeholder='Nacionalidad' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='Paraguaya'>Paraguaya</SelectItem>
+                          <SelectItem value='Argentina'>Argentina</SelectItem>
+                          <SelectItem value='Brasileña'>Brasileña</SelectItem>
+                          <SelectItem value='Uruguaya'>Uruguaya</SelectItem>
+                          <SelectItem value='Chilena'>Chilena</SelectItem>
+                          <SelectItem value='Boliviana'>Boliviana</SelectItem>
+                          <SelectItem value='Peruana'>Peruana</SelectItem>
+                          <SelectItem value='Colombiana'>Colombiana</SelectItem>
+                          <SelectItem value='Venezolana'>Venezolana</SelectItem>
+                          <SelectItem value='Ecuatoriana'>Ecuatoriana</SelectItem>
+                          <SelectItem value='Mexicana'>Mexicana</SelectItem>
+                          <SelectItem value='Estadounidense'>Estadounidense</SelectItem>
+                          <SelectItem value='Española'>Española</SelectItem>
+                          <SelectItem value='Italiana'>Italiana</SelectItem>
+                          <SelectItem value='Alemana'>Alemana</SelectItem>
+                          <SelectItem value='Otro'>Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -439,8 +457,8 @@ export function ClientMutateDrawer() {
                 control={form.control}
                 name='paisResidencia'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>País de Residencia</FormLabel>
+                  <FormItem className='space-y-2'>
+                    <FormLabel>País de Residencia <span className='text-destructive'>*</span></FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
@@ -457,8 +475,8 @@ export function ClientMutateDrawer() {
                 control={form.control}
                 name='telefono'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Teléfono</FormLabel>
+                  <FormItem className='space-y-2'>
+                    <FormLabel>Teléfono <span className='text-destructive'>*</span></FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
@@ -475,15 +493,38 @@ export function ClientMutateDrawer() {
                 control={form.control}
                 name='ocupacion'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Ocupación</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder='Ej: Ingeniero' 
-                        disabled={!empresaId}
-                      />
-                    </FormControl>
+                  <FormItem className='space-y-2'>
+                    <FormLabel>Ocupación <span className='text-destructive'>*</span></FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={!empresaId}
+                    >
+                      <FormControl>
+                        <SelectTrigger className='w-full'>
+                          <SelectValue placeholder='Selecciona ocupación' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='Estudiante'>Estudiante</SelectItem>
+                        <SelectItem value='Empleado'>Empleado</SelectItem>
+                        <SelectItem value='Profesional'>Profesional</SelectItem>
+                        <SelectItem value='Empresario'>Empresario</SelectItem>
+                        <SelectItem value='Docente'>Docente</SelectItem>
+                        <SelectItem value='Médico'>Médico</SelectItem>
+                        <SelectItem value='Ingeniero'>Ingeniero</SelectItem>
+                        <SelectItem value='Abogado'>Abogado</SelectItem>
+                        <SelectItem value='Contador'>Contador</SelectItem>
+                        <SelectItem value='Comerciante'>Comerciante</SelectItem>
+                        <SelectItem value='Técnico'>Técnico</SelectItem>
+                        <SelectItem value='Obrero'>Obrero</SelectItem>
+                        <SelectItem value='Agricultor'>Agricultor</SelectItem>
+                        <SelectItem value='Jubilado'>Jubilado</SelectItem>
+                        <SelectItem value='Ama de casa'>Ama de casa</SelectItem>
+                        <SelectItem value='Desempleado'>Desempleado</SelectItem>
+                        <SelectItem value='Otro'>Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -493,7 +534,7 @@ export function ClientMutateDrawer() {
                 control={form.control}
                 name='observaciones'
                 render={({ field }) => (
-                  <FormItem className='space-y-1'>
+                  <FormItem className='space-y-2'>
                     <FormLabel>Observaciones</FormLabel>
                     <FormControl>
                       <Input 
@@ -509,7 +550,7 @@ export function ClientMutateDrawer() {
             </div>
           </form>
         </Form>
-        <SheetFooter className='gap-2'>
+        <SheetFooter className='gap-4 pt-4'>
           <SheetClose asChild>
             <Button variant='outline' disabled={createClient.isPending || updateClient.isPending}>
               Cerrar
