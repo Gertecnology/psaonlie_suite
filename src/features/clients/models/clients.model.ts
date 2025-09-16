@@ -58,8 +58,29 @@ export const clientesSearchParamsSchema = z.object({
   sortOrder: z.enum(['ASC', 'DESC']).default('DESC'),
 })
 
+// Schema para crear/actualizar cliente según la API
+export const createClientSchema = z.object({
+  email: z.string().email('Email inválido'),
+  apellido: z.string().min(1, 'El apellido es requerido'),
+  nombre: z.string().min(1, 'El nombre es requerido'),
+  empresaId: z.string().optional(),
+  tipoDocumento: z.string().optional(),
+  numeroDocumento: z.string().optional(),
+  fechaNacimiento: z.string().optional(),
+  sexo: z.string().optional(),
+  nacionalidad: z.string().optional(),
+  paisResidencia: z.string().optional(),
+  telefono: z.string().optional(),
+  ocupacion: z.string().optional(),
+  observaciones: z.string().optional(),
+})
+
+export const updateClientSchema = createClientSchema.partial()
+
 export type Cliente = z.infer<typeof clienteSchema>
 export type EstadisticasVentas = z.infer<typeof estadisticasVentasSchema>
 export type ClienteConEstadisticas = z.infer<typeof clienteConEstadisticasSchema>
 export type ClientesListResponse = z.infer<typeof clientesListResponseSchema>
 export type ClientesSearchParams = z.infer<typeof clientesSearchParamsSchema>
+export type CreateClientFormValues = z.infer<typeof createClientSchema>
+export type UpdateClientFormValues = z.infer<typeof updateClientSchema>

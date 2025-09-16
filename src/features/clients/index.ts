@@ -14,7 +14,7 @@ export * from './hooks/use-clients'
 export * from './context/clients-context'
 
 // Export components
-export * from './components/clients-table'
+export * from './components/data-table'
 export * from './components/clients-columns'
 export * from './components/clients-dialogs'
 export * from './components/clients-primary-buttons'

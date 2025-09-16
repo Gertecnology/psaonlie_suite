@@ -2,6 +2,8 @@ import * as React from 'react'
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type OnChangeFn,
+  type PaginationState,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -13,36 +15,64 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ClienteConEstadisticas } from '../models/clients.model'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { type ClienteConEstadisticas } from '../models/clients.model'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
-interface ClientsTableProps {
-  data: ClienteConEstadisticas[]
+interface DataTableProps {
   columns: ColumnDef<ClienteConEstadisticas>[]
+  data: ClienteConEstadisticas[]
+  pageCount: number
+  pagination: PaginationState
+  onPaginationChange: OnChangeFn<PaginationState>
+  onViewClientDetails?: (client: ClienteConEstadisticas) => void
 }
 
-export function ClientsTable({ data, columns }: ClientsTableProps) {
+export function DataTable({
+  columns,
+  data,
+  pageCount,
+  pagination,
+  onPaginationChange,
+  onViewClientDetails,
+}: DataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    meta: {
+      onViewClientDetails,
+    },
     state: {
       sorting,
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination,
     },
     enableRowSelection: true,
+    manualPagination: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: onPaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -66,7 +96,7 @@ export function ClientsTable({ data, columns }: ClientsTableProps) {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   )
@@ -85,7 +115,7 @@ export function ClientsTable({ data, columns }: ClientsTableProps) {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
