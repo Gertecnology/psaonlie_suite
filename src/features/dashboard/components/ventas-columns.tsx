@@ -98,6 +98,21 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
     },
   },
   {
+    accessorKey: 'empresaNombre',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Empresa' />
+    ),
+    cell: ({ row }) => {
+      const venta = row.original
+      return (
+        <div className='flex flex-col'>
+          <div className='font-medium'>{venta.empresaNombre}</div>
+          <div className='text-sm text-muted-foreground'>{venta.empresaBoleto}</div>
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: 'origenNombre',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Origen' />
@@ -134,12 +149,49 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
     },
   },
   {
+    accessorKey: 'porcentajeComisionSnapshot',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='% Ganancia' />
+    ),
+    cell: ({ row }) => {
+      const porcentaje = row.getValue('porcentajeComisionSnapshot') as number
+      return (
+        <div className='flex items-center gap-1'>
+          <div className='font-medium'>{porcentaje}%</div>
+          <div className='text-sm text-muted-foreground'>
+            ({formatCurrency(row.original.comisionTotal)})
+          </div>
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: 'serviceChargeMontoTotal',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Service Charge' />
     ),
     cell: ({ row }) => {
       return <div className='font-medium'>{formatCurrency(row.getValue('serviceChargeMontoTotal'))}</div>
+    },
+  },
+  {
+    accessorKey: 'numerosBoleto',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='N° Boleto' />
+    ),
+    cell: ({ row }) => {
+      const numerosBoleto = row.getValue('numerosBoleto') as string
+      const totalBoletos = row.original.totalBoletos
+      return (
+        <div className='flex flex-col'>
+          <div className='font-medium'>{numerosBoleto || '-'}</div>
+          {totalBoletos > 0 && (
+            <div className='text-sm text-muted-foreground'>
+              {totalBoletos} boleto{totalBoletos > 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )
     },
   },
   {
