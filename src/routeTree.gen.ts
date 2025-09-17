@@ -43,6 +43,7 @@ import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authenticated/sales/seats'
 import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
 import { Route as AuthenticatedCompaniesIdRouteImport } from './routes/_authenticated/companies/$id'
 
@@ -225,6 +226,11 @@ const AuthenticatedSettingsAccountRoute =
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
+const AuthenticatedSalesSeatsRoute = AuthenticatedSalesSeatsRouteImport.update({
+  id: '/sales/seats',
+  path: '/sales/seats',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDestinationsIdRoute =
   AuthenticatedDestinationsIdRouteImport.update({
     id: '/destinations/$id',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/_authenticated/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
+    | '/sales/seats'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
+    | '/sales/seats'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/companies/$id'
     | '/_authenticated/destinations/$id'
+    | '/_authenticated/sales/seats'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
@@ -713,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
+    '/_authenticated/sales/seats': {
+      id: '/_authenticated/sales/seats'
+      path: '/sales/seats'
+      fullPath: '/sales/seats'
+      preLoaderRoute: typeof AuthenticatedSalesSeatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/destinations/$id': {
       id: '/_authenticated/destinations/$id'
       path: '/destinations/$id'
@@ -761,6 +780,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCompaniesIdRoute: typeof AuthenticatedCompaniesIdRoute
   AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
+  AuthenticatedSalesSeatsRoute: typeof AuthenticatedSalesSeatsRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
@@ -777,6 +797,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCompaniesIdRoute: AuthenticatedCompaniesIdRoute,
   AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
+  AuthenticatedSalesSeatsRoute: AuthenticatedSalesSeatsRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,

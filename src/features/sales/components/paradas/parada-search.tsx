@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useGetParadasHomologadas } from '../hooks/use-get-paradas-homologadas'
-import type { ParadaHomologada } from '../models/sales.model'
+import { useGetParadasHomologadas } from '../../hooks/use-get-paradas-homologadas'
+import type { ParadaHomologada } from '../../models/sales.model'
 
 interface ParadaSearchProps {
   value: ParadaHomologada | null
