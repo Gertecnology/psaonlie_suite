@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { PDFReport, usePDFReport } from '@/utils/pdf-report'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Download, FileText, Building2 } from 'lucide-react'
 import { useGetCompanies } from '@/features/companies/hooks/use-get-companies'
 import { useVentasList } from '../hooks/use-ventas-list'
-import { type Venta, type VentasSearchParams } from '../models/sales.model'
+import { type VentasSearchParams } from '../models/sales.model'
 
 interface CompanySalesReportProps {
   onDownload?: () => void
@@ -17,8 +16,6 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
   const [dateRange, setDateRange] = useState<'currentMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'lastYear'>('currentMonth')
-  
-  const { componentRef } = usePDFReport()
   
   // Obtener todas las empresas
   const { data: companiesData, isLoading: companiesLoading } = useGetCompanies(1, 1000)
@@ -110,41 +107,6 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
     })
   }
 
-  const getEstadoPagoBadge = (estado: string) => {
-    const variants = {
-      PAGADO: 'bg-green-100 text-green-800',
-      PENDIENTE: 'bg-yellow-100 text-yellow-800',
-      EXPIRADO: 'bg-red-100 text-red-800',
-      CANCELADO: 'bg-gray-100 text-gray-800',
-      FALLIDO: 'bg-red-100 text-red-800',
-      REEMBOLSADO: 'bg-blue-100 text-blue-800',
-    } as const
-
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${variants[estado as keyof typeof variants] || 'bg-gray-100 text-gray-800'}`}>
-        {estado}
-      </span>
-    )
-  }
-
-  const getEstadoVentaBadge = (estado: string) => {
-    const variants = {
-      CONFIRMADO: 'bg-green-100 text-green-800',
-      RESERVADO: 'bg-yellow-100 text-yellow-800',
-      EXPIRADO: 'bg-red-100 text-red-800',
-      CANCELADO: 'bg-gray-100 text-gray-800',
-      ANULADO: 'bg-red-100 text-red-800',
-      PENDIENTE_PAGO: 'bg-yellow-100 text-yellow-800',
-      PAGO_APROBADO: 'bg-green-100 text-green-800',
-    } as const
-
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${variants[estado as keyof typeof variants] || 'bg-gray-100 text-gray-800'}`}>
-        {estado}
-      </span>
-    )
-  }
-
   const getDateRangeLabel = () => {
     switch (dateRange) {
       case 'currentMonth':
@@ -180,103 +142,7 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
   const totalVentas = ventasData?.data.length || 0
   const totalImporte = ventasData?.data.reduce((sum, venta) => sum + venta.importeTotal, 0) || 0
 
-  const columns = [
-    {
-      key: 'numeroTransaccion',
-      label: 'Transacción',
-      width: '120px',
-      render: (value: unknown) => (
-        <span className="font-mono text-xs">{String(value)}</span>
-      )
-    },
-    {
-      key: 'empresaNombre',
-      label: 'Empresa',
-      width: '150px',
-      render: (value: unknown, row: unknown) => (
-        <div>
-          <div className="font-medium">{String(value)}</div>
-          <div className="text-xs text-gray-600">{(row as Venta).empresaBoleto}</div>
-        </div>
-      )
-    },
-    {
-      key: 'ruta',
-      label: 'Ruta',
-      width: '200px',
-      render: (_value: unknown, row: unknown) => (
-        <div>
-          <div className="font-medium">{(row as Venta).origenNombre} → {(row as Venta).destinoNombre}</div>
-          <div className="text-xs text-gray-600">{(row as Venta).servicioId}</div>
-        </div>
-      )
-    },
-    {
-      key: 'fechaViaje',
-      label: 'Fecha Viaje',
-      width: '120px',
-      render: (value: unknown) => formatDate(String(value))
-    },
-    {
-      key: 'asientos',
-      label: 'Asientos',
-      width: '100px',
-      render: (_value: unknown, row: unknown) => (
-        <div className="flex flex-wrap gap-1">
-          {(row as Venta).asientosOriginales.map((asiento: string, index: number) => (
-            <span key={index} className="bg-gray-100 px-2 py-1 rounded text-xs">
-              {asiento}
-            </span>
-          ))}
-        </div>
-      )
-    },
-    {
-      key: 'importeTotal',
-      label: 'Importe',
-      width: '100px',
-      render: (value: unknown) => (
-        <span className="font-medium">{formatCurrency(Number(value))}</span>
-      )
-    },
-    {
-      key: 'metodoPago',
-      label: 'Método Pago',
-      width: '100px'
-    },
-    {
-      key: 'estadoPago',
-      label: 'Estado Pago',
-      width: '100px',
-      render: (value: unknown) => getEstadoPagoBadge(String(value))
-    },
-    {
-      key: 'estadoVenta',
-      label: 'Estado Venta',
-      width: '100px',
-      render: (value: unknown) => getEstadoVentaBadge(String(value))
-    }
-  ]
-
   const selectedCompany = companiesData?.items.find(c => c.id === selectedCompanyId)
-  
-  const companyInfo = {
-    name: selectedCompany?.nombre || 'PasajeOnline',
-    ruc: 'RUC 80007518-8',
-    phone: '(021) 728-3500',
-    address: 'Sistema Integrado de Gestión de Boletos',
-    timbrado: 'N/A'
-  }
-
-  const reportInfo = {
-    reportNumber: `REP-${Date.now().toString().slice(-8)}`,
-    date: new Date().toISOString(),
-    transactionId: `TXN${Date.now().toString().slice(-8)}`
-  }
-
-  const summary = {
-    total: totalImporte
-  }
 
   const handleDownload = () => {
     const printWindow = window.open('', '_blank')
@@ -495,20 +361,6 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
                       </Button>
                     </div>
 
-                    {/* Componente de reporte (oculto visualmente pero disponible para impresión) */}
-                    <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', visibility: 'hidden' }}>
-                      <PDFReport
-                        ref={componentRef}
-                        title="REPORTE DE VENTAS POR EMPRESA"
-                        subtitle={`${selectedCompany?.nombre ? `Empresa: ${selectedCompany.nombre}` : 'Todas las Empresas'} - ${getDateRangeSubtitle()}`}
-                        companyInfo={companyInfo}
-                        reportInfo={reportInfo}
-                        data={ventasData.data}
-                        columns={columns}
-                        summary={summary}
-                        footer="PASAJE ONLINE - Sistema Integrado de Gestión de Boletos"
-                      />
-                    </div>
 
                     {totalVentas === 0 && (
                       <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
