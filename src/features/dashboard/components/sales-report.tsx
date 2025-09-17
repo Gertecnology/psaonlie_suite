@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Download, FileText } from 'lucide-react'
 import { type Venta } from '../models/sales.model'
 
 interface SalesReportProps {
@@ -7,14 +10,180 @@ interface SalesReportProps {
   title?: string
   subtitle?: string
   onDownload?: () => void
+  onDateRangeChange?: (startDate: string, endDate: string) => void
 }
 
 export function SalesReport({ 
   data, 
   title = "REPORTE DE VENTAS", 
   subtitle,
-  onDownload 
+  onDownload,
+  onDateRangeChange
 }: SalesReportProps) {
+  const [dateRange, setDateRange] = useState<'currentMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'lastYear'>('currentMonth')
+
+  // Notificar al componente padre cuando cambie el período
+  useEffect(() => {
+    if (!onDateRangeChange) return
+
+    const getDateRangeForEffect = () => {
+      const { year: currentYear, month: currentMonth } = getCurrentDateInParaguay()
+      
+      switch (dateRange) {
+        case 'currentMonth':
+          return {
+            startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
+            endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+          }
+        case 'lastMonth': {
+          const { year: lastMonthYear, month: lastMonth } = getPreviousMonth(currentYear, currentMonth)
+          return {
+            startDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-01`,
+            endDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-${getLastDayOfMonth(lastMonthYear, lastMonth)}`
+          }
+        }
+        case 'last3Months': {
+          const threeMonthsAgo = currentMonth <= 3 ? currentMonth + 9 : currentMonth - 3
+          const threeMonthsAgoYear = currentMonth <= 3 ? currentYear - 1 : currentYear
+          return {
+            startDate: `${threeMonthsAgoYear}-${String(threeMonthsAgo).padStart(2, '0')}-01`,
+            endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+          }
+        }
+        case 'last6Months': {
+          const sixMonthsAgo = currentMonth <= 6 ? currentMonth + 6 : currentMonth - 6
+          const sixMonthsAgoYear = currentMonth <= 6 ? currentYear - 1 : currentYear
+          return {
+            startDate: `${sixMonthsAgoYear}-${String(sixMonthsAgo).padStart(2, '0')}-01`,
+            endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+          }
+        }
+        case 'lastYear':
+          return {
+            startDate: `${currentYear - 1}-${String(currentMonth).padStart(2, '0')}-01`,
+            endDate: `${currentYear - 1}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear - 1, currentMonth)}`
+          }
+        default:
+          return {
+            startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
+            endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+          }
+      }
+    }
+
+    const { startDate, endDate } = getDateRangeForEffect()
+    // console.log(`Período seleccionado: ${dateRange}`)
+    // console.log(`Fechas calculadas: ${startDate} - ${endDate}`)
+    onDateRangeChange(startDate, endDate)
+  }, [dateRange, onDateRangeChange])
+
+  // Función para obtener el último día del mes
+  const getLastDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 0).getDate()
+  }
+
+  // Función para obtener el mes anterior
+  const getPreviousMonth = (year: number, month: number) => {
+    if (month === 1) {
+      return { year: year - 1, month: 12 }
+    }
+    return { year, month: month - 1 }
+  }
+
+  // Función para obtener la fecha actual en Paraguay
+  const getCurrentDateInParaguay = () => {
+    const now = new Date()
+    const result = {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1, // getMonth() es 0-indexado
+      day: now.getDate()
+    }
+    // console.log(`Fecha actual detectada: ${result.year}-${result.month}-${result.day}`)
+    return result
+  }
+  
+  // Calcular fechas según el rango seleccionado
+  const getDateRange = () => {
+    const { year: currentYear, month: currentMonth } = getCurrentDateInParaguay()
+    
+    switch (dateRange) {
+      case 'currentMonth':
+        return {
+          startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
+          endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+        }
+      case 'lastMonth': {
+        const { year: lastMonthYear, month: lastMonth } = getPreviousMonth(currentYear, currentMonth)
+        return {
+          startDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-01`,
+          endDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-${getLastDayOfMonth(lastMonthYear, lastMonth)}`
+        }
+      }
+      case 'last3Months': {
+        const threeMonthsAgo = currentMonth <= 3 ? currentMonth + 9 : currentMonth - 3
+        const threeMonthsAgoYear = currentMonth <= 3 ? currentYear - 1 : currentYear
+        return {
+          startDate: `${threeMonthsAgoYear}-${String(threeMonthsAgo).padStart(2, '0')}-01`,
+          endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+        }
+      }
+      case 'last6Months': {
+        const sixMonthsAgo = currentMonth <= 6 ? currentMonth + 6 : currentMonth - 6
+        const sixMonthsAgoYear = currentMonth <= 6 ? currentYear - 1 : currentYear
+        return {
+          startDate: `${sixMonthsAgoYear}-${String(sixMonthsAgo).padStart(2, '0')}-01`,
+          endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+        }
+      }
+      case 'lastYear':
+        return {
+          startDate: `${currentYear - 1}-${String(currentMonth).padStart(2, '0')}-01`,
+          endDate: `${currentYear - 1}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear - 1, currentMonth)}`
+        }
+      default:
+        return {
+          startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
+          endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
+        }
+    }
+  }
+
+  const getDateRangeLabel = () => {
+    switch (dateRange) {
+      case 'currentMonth':
+        return 'Mes Actual'
+      case 'lastMonth':
+        return 'Mes Anterior'
+      case 'last3Months':
+        return 'Últimos 3 Meses'
+      case 'last6Months':
+        return 'Últimos 6 Meses'
+      case 'lastYear':
+        return 'Último Año'
+      default:
+        return 'Mes Actual'
+    }
+  }
+
+  const getDateRangeSubtitle = () => {
+    const { startDate, endDate } = getDateRange()
+    
+    // Parsear las fechas correctamente para evitar problemas de zona horaria
+    const startParts = startDate.split('-')
+    const endParts = endDate.split('-')
+    
+    const startFormatted = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2])).toLocaleDateString('es-PY', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+    const endFormatted = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2])).toLocaleDateString('es-PY', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+    return `Del ${startFormatted} al ${endFormatted}`
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-PY', {
@@ -51,7 +220,7 @@ export function SalesReport({
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Reporte de Ventas - ${new Date().toLocaleDateString('es-PY', { month: 'long', year: 'numeric' })}</title>
+          <title>Reporte de Ventas - ${getDateRangeLabel()}</title>
           <style>
             @page { size: A4; margin: 0.5in; }
             body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; }
@@ -87,7 +256,7 @@ export function SalesReport({
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
               <div class="report-title">${title}</div>
-              <div class="report-subtitle">${subtitle}</div>
+              <div class="report-subtitle">${subtitle || getDateRangeSubtitle()}</div>
             </div>
             <div class="report-info">
               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-PY', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
@@ -167,17 +336,47 @@ export function SalesReport({
 
   return (
     <div className="space-y-4">
-      {/* Botón de descarga */}
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleDownload}
-          disabled={!data || data.length === 0}
-          className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Descargar PDF
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Reporte General de Ventas
+          </CardTitle>
+          <CardDescription>
+            Genera un reporte general de ventas para el período seleccionado
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Selector de Rango de Fechas */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Período</label>
+            <Select value={dateRange} onValueChange={(value: 'currentMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'lastYear') => setDateRange(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="currentMonth">Mes Actual</SelectItem>
+                <SelectItem value="lastMonth">Mes Anterior</SelectItem>
+                <SelectItem value="last3Months">Últimos 3 Meses</SelectItem>
+                <SelectItem value="last6Months">Últimos 6 Meses</SelectItem>
+                <SelectItem value="lastYear">Último Año</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Botón de descarga */}
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleDownload}
+              disabled={!data || data.length === 0}
+              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Descargar PDF
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

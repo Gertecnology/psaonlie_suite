@@ -24,12 +24,29 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
   const getLastDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate()
   }
+
+  // Función para obtener el mes anterior
+  const getPreviousMonth = (year: number, month: number) => {
+    if (month === 1) {
+      return { year: year - 1, month: 12 }
+    }
+    return { year, month: month - 1 }
+  }
+
+  // Función para obtener la fecha actual en Paraguay
+  const getCurrentDateInParaguay = () => {
+    const now = new Date()
+    // Paraguay está en UTC-3, pero vamos a usar la fecha local del navegador
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1, // getMonth() es 0-indexado
+      day: now.getDate()
+    }
+  }
   
   // Calcular fechas según el rango seleccionado
   const getDateRange = () => {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth() + 1 // getMonth() es 0-indexado
+    const { year: currentYear, month: currentMonth } = getCurrentDateInParaguay()
     
     switch (dateRange) {
       case 'currentMonth':
@@ -38,8 +55,7 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
           endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${getLastDayOfMonth(currentYear, currentMonth)}`
         }
       case 'lastMonth': {
-        const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1
-        const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear
+        const { year: lastMonthYear, month: lastMonth } = getPreviousMonth(currentYear, currentMonth)
         return {
           startDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-01`,
           endDate: `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-${getLastDayOfMonth(lastMonthYear, lastMonth)}`
@@ -125,12 +141,16 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
   }
 
   const getDateRangeSubtitle = () => {
-    const startFormatted = new Date(startDate).toLocaleDateString('es-PY', { 
+    // Parsear las fechas correctamente para evitar problemas de zona horaria
+    const startParts = startDate.split('-')
+    const endParts = endDate.split('-')
+    
+    const startFormatted = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2])).toLocaleDateString('es-PY', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     })
-    const endFormatted = new Date(endDate).toLocaleDateString('es-PY', { 
+    const endFormatted = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2])).toLocaleDateString('es-PY', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 

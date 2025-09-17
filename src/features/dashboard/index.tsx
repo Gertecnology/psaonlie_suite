@@ -7,7 +7,7 @@ import { CompanySalesReport } from './components/company-sales-report'
 import { StatisticsSearchParams } from './models/statistics.model'
 import { useVentasList } from './hooks/use-ventas-list'
 import { VentasSearchParams } from './models/sales.model'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, FileText, Building2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -16,6 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 export default function Dashboard() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
   const [activeReportTab, setActiveReportTab] = useState('general')
+  const [reportDateRange, setReportDateRange] = useState<{startDate: string, endDate: string}>({
+    startDate: '',
+    endDate: ''
+  })
   
   // Example usage of the statistics hook
   const statisticsParams: StatisticsSearchParams = {
@@ -26,18 +30,14 @@ export default function Dashboard() {
     // agruparPor: 'dia' // or 'semana', 'mes'
   }
 
-  // Parámetros para obtener las ventas del mes actual para el reporte
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  
+  // Parámetros para obtener las ventas para el reporte
   const ventasParams: VentasSearchParams = {
     page: 1,
-    limit: 1000, // Obtener todas las ventas del mes
+    limit: 1000,
     sortBy: 'fechaVenta',
     sortOrder: 'DESC',
-    fechaVentaDesde: `${year}-${month}-01`,
-    fechaVentaHasta: `${year}-${month}-30`,
+    fechaVentaDesde: reportDateRange.startDate || undefined,
+    fechaVentaHasta: reportDateRange.endDate || undefined,
   }
 
   const { data: statistics, isLoading: statisticsLoading, error: statisticsError } = useSalesStatistics(statisticsParams)
@@ -46,6 +46,10 @@ export default function Dashboard() {
 
   const isLoading = statisticsLoading || clientsLoading
   const error = statisticsError || clientsError
+
+  const handleDateRangeChange = useCallback((startDate: string, endDate: string) => {
+    setReportDateRange({ startDate, endDate })
+  }, [])
 
   return (
     <PageLayout
@@ -83,14 +87,12 @@ export default function Dashboard() {
               </TabsList>
               
               <TabsContent value="general" className="mt-4">
-                {ventasData && (
-                  <SalesReport 
-                    data={ventasData.data}
-                    title="REPORTE DE VENTAS DEL MES"
-                    subtitle={`Ventas realizadas en ${now.toLocaleDateString('es-PY', { month: 'long', year: 'numeric' })}`}
-                    onDownload={() => setIsReportDialogOpen(false)}
-                  />
-                )}
+                <SalesReport 
+                  data={ventasData?.data || []}
+                  title="REPORTE DE VENTAS"
+                  onDownload={() => setIsReportDialogOpen(false)}
+                  onDateRangeChange={handleDateRangeChange}
+                />
               </TabsContent>
               
               <TabsContent value="company" className="mt-4">
