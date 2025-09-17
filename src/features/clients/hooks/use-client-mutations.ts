@@ -8,7 +8,7 @@ export function useCreateClient() {
   return useMutation({
     mutationFn: (data: CreateClientFormValues) => createClient(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] })
+      queryClient.invalidateQueries({ queryKey: ['clientes-list'] })
     },
   })
 }
@@ -17,10 +17,10 @@ export function useUpdateClient() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateClientFormValues }) => 
-      updateClient(id, data),
+    mutationFn: ({ email, data }: { email: string; data: UpdateClientFormValues }) => 
+      updateClient(email, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] })
+      queryClient.invalidateQueries({ queryKey: ['clientes-list'] })
     },
   })
 }
@@ -31,7 +31,7 @@ export function useDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => deleteClient(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] })
+      queryClient.invalidateQueries({ queryKey: ['clientes-list'] })
     },
   })
 }

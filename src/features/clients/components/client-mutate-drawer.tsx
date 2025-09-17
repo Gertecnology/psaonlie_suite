@@ -62,7 +62,7 @@ export function ClientMutateDrawer() {
   const { data: empresasData, isLoading: isLoadingEmpresas } = useEmpresasList()
   const empresas = empresasData?.data || []
 
-  const isUpdate = !!client && !!client.cliente.id
+  const isUpdate = !!client && !!client.cliente.email
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -135,9 +135,22 @@ export function ClientMutateDrawer() {
   }, [empresaId, form])
 
   const onSubmit = (data: FormValues) => {
-    if (isUpdate && client?.cliente.id) {
+    if (isUpdate && client?.cliente.email) {
+      // Filtrar solo los campos que acepta la API de actualización
+      const updateData = {
+        apellido: data.apellido,
+        nombre: data.nombre,
+        fechaNacimiento: data.fechaNacimiento,
+        sexo: data.sexo,
+        nacionalidad: data.nacionalidad,
+        paisResidencia: data.paisResidencia,
+        telefono: data.telefono,
+        ocupacion: data.ocupacion,
+        observaciones: data.observaciones,
+      }
+      
       updateClient.mutate(
-        { id: client.cliente.id, data },
+        { email: client.cliente.email, data: updateData },
         {
           onSuccess: () => {
             close()
@@ -201,7 +214,7 @@ export function ClientMutateDrawer() {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className='flex flex-col overflow-y-auto w-[800px] sm:w-[900px] lg:w-[1000px]'>
+      <SheetContent className='flex flex-col overflow-y-auto w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px]'>
         <SheetHeader className='text-left'>
           <SheetTitle>
             {isUpdate ? 'Actualizar' : 'Crear'} Cliente
@@ -217,7 +230,7 @@ export function ClientMutateDrawer() {
           <form
             id='client-form'
             onSubmit={form.handleSubmit(onSubmit)}
-            className='flex-1 space-y-6 px-4'
+            className='flex-1 space-y-6 px-2 sm:px-4'
           >
             {/* Selección de Empresa */}
             <div className='space-y-4'>
@@ -248,7 +261,7 @@ export function ClientMutateDrawer() {
               <div className={`space-y-4 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
               <h3 className='text-lg font-semibold'>Información del Cliente</h3>
 
-              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='nombre'
@@ -304,7 +317,7 @@ export function ClientMutateDrawer() {
                 )}
               />
 
-              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='tipoDocumento'
@@ -385,7 +398,7 @@ export function ClientMutateDrawer() {
                 )}
               />
 
-              <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
                   name='sexo'

@@ -75,7 +75,18 @@ export const createClientSchema = z.object({
   observaciones: z.string().optional(),
 })
 
-export const updateClientSchema = createClientSchema.partial()
+// Schema para actualizar cliente según la API (solo campos básicos, sin empresaId, tipoDocumento, numeroDocumento)
+export const updateClientSchema = z.object({
+  apellido: z.string().optional(),
+  nombre: z.string().optional(),
+  fechaNacimiento: z.string().optional(),
+  sexo: z.string().optional(),
+  nacionalidad: z.string().optional(),
+  paisResidencia: z.string().optional(),
+  telefono: z.string().optional(),
+  ocupacion: z.string().optional(),
+  observaciones: z.string().optional(),
+})
 
 export type Cliente = z.infer<typeof clienteSchema>
 export type EstadisticasVentas = z.infer<typeof estadisticasVentasSchema>

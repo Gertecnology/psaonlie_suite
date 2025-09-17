@@ -70,8 +70,8 @@ export async function createClient(data: CreateClientFormValues): Promise<Client
   return result.data
 }
 
-export async function updateClient(id: string, data: UpdateClientFormValues): Promise<ClienteConEstadisticas> {
-  const response = await fetch(`${API_URL}/api/clientes/${id}`, {
+export async function updateClient(email: string, data: UpdateClientFormValues): Promise<ClienteConEstadisticas> {
+  const response = await fetch(`${API_URL}/api/clientes/${email}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
