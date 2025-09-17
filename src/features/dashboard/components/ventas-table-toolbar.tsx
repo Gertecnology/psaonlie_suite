@@ -41,40 +41,55 @@ export function VentasTableToolbar({
   const isFiltered = table.getState().columnFilters.length > 0 || clienteId || empresaId || fechaDesde || fechaHasta
 
   return (
-    <div className='flex items-center justify-between'>
-      <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-        <div className='flex gap-x-2'>
-          {onClienteFilter && (
-            <ClienteSearch
-              onClienteSelect={onClienteFilter}
-              selectedClienteId={clienteId}
-              placeholder="Filtrar por cliente..."
-              className="w-[200px]"
-            />
-          )}
-          {onEmpresaFilter && (
-            <EmpresaSearch
-              onEmpresaSelect={onEmpresaFilter}
-              selectedEmpresaId={empresaId}
-              placeholder="Filtrar por empresa..."
-              className="w-[200px]"
-            />
-          )}
+    <div className='flex flex-col gap-4'>
+      {/* Filtros principales - Desktop en línea, móvil apilado */}
+      <div className='flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between'>
+        <div className='flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-2'>
+          {/* Filtros de búsqueda */}
+          <div className='flex flex-col gap-2 xl:flex-row xl:gap-2'>
+            {onClienteFilter && (
+              <ClienteSearch
+                onClienteSelect={onClienteFilter}
+                selectedClienteId={clienteId}
+                placeholder="Filtrar por cliente..."
+                className="w-full xl:w-[200px]"
+              />
+            )}
+            {onEmpresaFilter && (
+              <EmpresaSearch
+                onEmpresaSelect={onEmpresaFilter}
+                selectedEmpresaId={empresaId}
+                placeholder="Filtrar por empresa..."
+                className="w-full xl:w-[200px]"
+              />
+            )}
+          </div>
+          
+          {/* Filtro de estado */}
           {table.getColumn('estadoPago') && (
-            <DataTableFacetedFilter
-              column={table.getColumn('estadoPago')}
-              title='Estado'
-              options={estadosPago}
-            />
+            <div className="w-full xl:w-auto">
+              <DataTableFacetedFilter
+                column={table.getColumn('estadoPago')}
+                title='Estado'
+                options={estadosPago}
+              />
+            </div>
           )}
+
+          {/* Filtros de fecha en la misma línea en desktop */}
           {onDateRangeFilter && (
-            <DateRangeFilter
-              onDateRangeChange={onDateRangeFilter}
-              fechaDesde={fechaDesde}
-              fechaHasta={fechaHasta}
-            />
+            <div className='w-full xl:w-auto'>
+              <DateRangeFilter
+                onDateRangeChange={onDateRangeFilter}
+                fechaDesde={fechaDesde}
+                fechaHasta={fechaHasta}
+                className="w-full xl:w-auto"
+              />
+            </div>
           )}
         </div>
+
+        {/* Botón limpiar filtros */}
         {isFiltered && (
           <Button
             variant='ghost'
@@ -90,14 +105,18 @@ export function VentasTableToolbar({
                 onDateRangeFilter(null, null)
               }
             }}
-            className='h-8 px-2 lg:px-3'
+            className='h-8 px-2 lg:px-3 w-full xl:w-auto'
           >
             Limpiar filtros
             <Cross2Icon className='ml-2 h-4 w-4' />
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+
+      {/* Opciones de vista */}
+      <div className='flex justify-end'>
+        <DataTableViewOptions table={table} />
+      </div>
     </div>
   )
 }

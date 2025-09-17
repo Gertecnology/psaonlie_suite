@@ -34,16 +34,18 @@ export function DateRangeFilter({
   }, [onDateRangeChange, fechaDesde])
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4", className)}>
       {/* Filtro Fecha Desde */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-muted-foreground">Fecha venta desde:</span>
+      <div className="flex flex-col gap-1 xl:flex-row xl:items-center xl:gap-2">
+        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          Desde:
+        </span>
         <Popover open={openDesde} onOpenChange={setOpenDesde}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "h-8 w-[140px] justify-start text-left font-normal",
+                "h-8 w-full xl:w-[140px] justify-start text-left font-normal",
                 !fechaDesde && "text-muted-foreground"
               )}
             >
@@ -64,14 +66,16 @@ export function DateRangeFilter({
       </div>
 
       {/* Filtro Fecha Hasta */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-muted-foreground">Fecha venta hasta:</span>
+      <div className="flex flex-col gap-1 xl:flex-row xl:items-center xl:gap-2">
+        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          Hasta:
+        </span>
         <Popover open={openHasta} onOpenChange={setOpenHasta}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "h-8 w-[140px] justify-start text-left font-normal",
+                "h-8 w-full xl:w-[140px] justify-start text-left font-normal",
                 !fechaHasta && "text-muted-foreground"
               )}
             >
