@@ -48,28 +48,29 @@ export function ParadaSearch({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-1", className)}>
       {label && (
         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
           {label}
         </label>
       )}
       
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              {value ? value.nombre : placeholder}
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
+      <div className="relative">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between h-9"
+            >
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate">{value ? value.nombre : placeholder}</span>
+              </div>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
         
         <PopoverContent className="w-full p-0" align="start">
           <Command>
@@ -123,18 +124,19 @@ export function ParadaSearch({
             </CommandList>
           </Command>
         </PopoverContent>
-      </Popover>
-      
-      {value && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClear}
-          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-        >
-          Limpiar selección
-        </Button>
-      )}
+        </Popover>
+        
+        {value && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClear}
+            className="absolute -bottom-6 left-0 h-5 px-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Limpiar
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

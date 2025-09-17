@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react'
-import { Search, Filter, RotateCcw } from 'lucide-react'
+import { Search, Filter, RotateCcw, Calendar as CalendarIcon, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Calendar } from '@/components/ui/calendar'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ParadaSearch } from './parada-search'
-import { DateFilters } from './date-filters'
 import { ServiciosList } from './servicios-list'
 import { useGetServicios } from '../hooks/use-get-servicios'
 import type { SearchFormData, SearchFilters } from '../models/sales.model'
@@ -69,18 +72,18 @@ export function SalesPage() {
   const canSearch = searchData.origen && searchData.destino && searchData.fechaIda
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Search Form */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Search className="h-5 w-5" />
             Buscar Pasajes
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Origin and Destination */}
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="space-y-4">
+          {/* Main Search Row */}
+          <div className="grid gap-3 lg:grid-cols-4 md:grid-cols-2">
             <ParadaSearch
               value={searchData.origen}
               onValueChange={(origen) => setSearchData(prev => ({ ...prev, origen }))}
@@ -94,31 +97,120 @@ export function SalesPage() {
               placeholder="Seleccionar destino..."
               label="Destino"
             />
+
+            {/* Compact Date Filters */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Fechas</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal text-sm h-9"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {searchData.fechaIda ? format(searchData.fechaIda, "dd/MM", { locale: es }) : "Fecha de Ida"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={searchData.fechaIda || undefined}
+                        onSelect={(date) => setSearchData(prev => ({ ...prev, fechaIda: date || null }))}
+                        disabled={(date) => date < new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {searchData.fechaIda && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchData(prev => ({ ...prev, fechaIda: null }))}
+                    className="h-9 w-9 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {showVuelta && (
+                  <>
+                    <div className="flex-1">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal text-sm h-9"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {searchData.fechaVuelta ? format(searchData.fechaVuelta, "dd/MM", { locale: es }) : "Fecha de Vuelta"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={searchData.fechaVuelta || undefined}
+                            onSelect={(date) => setSearchData(prev => ({ ...prev, fechaVuelta: date || null }))}
+                            disabled={(date) => {
+                              const minDate = searchData.fechaIda || new Date()
+                              return date < minDate
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    {searchData.fechaVuelta && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchData(prev => ({ ...prev, fechaVuelta: null }))}
+                        className="h-9 w-9 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-end gap-2">
+              <Button 
+                onClick={handleSearch}
+                disabled={!canSearch}
+                className="flex-1 h-9"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
           </div>
 
-          <Separator />
-
-          {/* Date Filters */}
-          <DateFilters
-            fechaIda={searchData.fechaIda}
-            fechaVuelta={searchData.fechaVuelta}
-            onFechaIdaChange={(fechaIda) => setSearchData(prev => ({ ...prev, fechaIda }))}
-            onFechaVueltaChange={(fechaVuelta) => setSearchData(prev => ({ ...prev, fechaVuelta }))}
-            onVueltaToggle={setShowVuelta}
-            showVuelta={showVuelta}
-          />
-
-          <Separator />
-
-          {/* Action Buttons */}
+          {/* Secondary Controls Row */}
           <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="vuelta"
+                checked={showVuelta}
+                onCheckedChange={(checked) => setShowVuelta(checked === true)}
+              />
+              <label htmlFor="vuelta" className="text-sm font-medium">
+                Incluir vuelta
+              </label>
+            </div>
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
+                className="h-8"
               >
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-1" />
                 Filtros
               </Button>
               
@@ -126,62 +218,53 @@ export function SalesPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleClear}
+                className="h-8"
               >
-                <RotateCcw className="h-4 w-4 mr-2" />
+                <RotateCcw className="h-4 w-4 mr-1" />
                 Limpiar
               </Button>
             </div>
-
-            <Button 
-              onClick={handleSearch}
-              disabled={!canSearch}
-              className="min-w-[120px]"
-            >
-              <Search className="h-4 w-4 mr-2" />
-              Buscar
-            </Button>
           </div>
 
           {/* Advanced Filters */}
           {showFilters && (
-            <>
-              <Separator />
-              <div className="space-y-4">
+            <div className="pt-2 border-t">
+              <div className="space-y-3">
                 <h4 className="text-sm font-medium">Filtros Avanzados</h4>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="space-y-1">
                     <label className="text-sm font-medium">Hora desde</label>
                     <input
                       type="time"
                       value={filters.horaDesde}
                       onChange={(e) => setFilters(prev => ({ ...prev, horaDesde: e.target.value }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-sm font-medium">Hora hasta</label>
                     <input
                       type="time"
                       value={filters.horaHasta}
                       onChange={(e) => setFilters(prev => ({ ...prev, horaHasta: e.target.value }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-sm font-medium">Asientos mínimos</label>
                     <input
                       type="number"
                       min="1"
                       value={filters.asientosMinimos}
                       onChange={(e) => setFilters(prev => ({ ...prev, asientosMinimos: parseInt(e.target.value) || 1 }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
                     />
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </CardContent>
       </Card>
