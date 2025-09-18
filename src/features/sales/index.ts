@@ -13,12 +13,16 @@ export * from './components/asientos'
 export { useGetParadasHomologadas } from './hooks/use-get-paradas-homologadas'
 export { useGetServicios } from './hooks/use-get-servicios'
 export { useGetAsientos } from './hooks/use-get-asientos'
+export { useBloquearAsientos } from './hooks/use-bloquear-asientos'
+export { useLiberarBloqueo } from './hooks/use-liberar-bloqueo'
 
 // Services
 export { 
   searchParadasHomologadas, 
   getServiciosPorDestinos,
-  consultarAsientos
+  consultarAsientos,
+  bloquearAsientos,
+  liberarBloqueo
 } from './services/sales.service'
 
 // Models
@@ -33,5 +37,9 @@ export type {
   ConfiguracionBus,
   ServicioInfo,
   AsientosResponse,
-  ConsultarAsientosRequest
+  ConsultarAsientosRequest,
+  BloquearAsientosRequest,
+  BloquearAsientosResponse,
+  LiberarBloqueoRequest,
+  LiberarBloqueoResponse
 } from './models/sales.model'

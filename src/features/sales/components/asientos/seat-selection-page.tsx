@@ -21,11 +21,12 @@ interface SeatSelectionSearch {
   destino?: string
   fecha?: string
   hora?: string
+  serviceCharge?: string
 }
 
 export function SeatSelectionPage() {
   const [search, setSearch] = useState<SeatSelectionSearch | null>(null)
-  const [selectedSeat, setSelectedSeat] = useState<Asiento | null>(null)
+  const [selectedSeats, setSelectedSeats] = useState<Asiento[]>([])
 
   useEffect(() => {
     // Get search parameters from URL
@@ -40,6 +41,7 @@ export function SeatSelectionPage() {
       destino: urlParams.get('destino') || undefined,
       fecha: urlParams.get('fecha') || undefined,
       hora: urlParams.get('hora') || undefined,
+      serviceCharge: urlParams.get('serviceCharge') || undefined,
     }
     setSearch(searchData)
   }, [])
@@ -54,18 +56,31 @@ export function SeatSelectionPage() {
   const { data: asientosData, isLoading, error } = useGetAsientos(consultarAsientosRequest)
 
   const handleSeatSelect = (asiento: Asiento) => {
-    setSelectedSeat(asiento)
+    setSelectedSeats(prev => {
+      // Si el asiento ya está seleccionado, lo removemos
+      if (prev.some(seat => seat.numero === asiento.numero)) {
+        return prev.filter(seat => seat.numero !== asiento.numero)
+      }
+      
+      // Si ya tenemos 2 asientos seleccionados, no permitimos más
+      if (prev.length >= 2) {
+        return prev
+      }
+      
+      // Agregamos el nuevo asiento
+      return [...prev, asiento]
+    })
   }
 
   const handleConfirmSelection = () => {
-    if (selectedSeat && search) {
+    if (selectedSeats.length > 0 && search) {
       // Navigate to checkout or next step
       const checkoutParams = new URLSearchParams({
         ...search,
-        asientoId: selectedSeat.numero,
-        precio: selectedSeat.precio.toString(),
-        tipo: selectedSeat.tipo,
-        piso: selectedSeat.piso.toString(),
+        asientosIds: selectedSeats.map(seat => seat.numero).join(','),
+        precios: selectedSeats.map(seat => seat.precio.toString()).join(','),
+        tipos: selectedSeats.map(seat => seat.tipo).join(','),
+        pisos: selectedSeats.map(seat => seat.piso.toString()).join(','),
       })
       window.location.href = `/sales/checkout?${checkoutParams.toString()}`
     }
@@ -157,7 +172,8 @@ export function SeatSelectionPage() {
                 <SeatGrid 
                   asientos={asientosData.asientos} 
                   onSeatSelect={handleSeatSelect}
-                  selectedSeat={selectedSeat}
+                  selectedSeats={selectedSeats}
+                  configuracionBus={asientosData.configuracionBus}
                 />
                 <div className="mt-6">
                   <SeatLegend />
@@ -169,37 +185,87 @@ export function SeatSelectionPage() {
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Service Info */}
-            <ServiceInfo servicioInfo={asientosData.servicioInfo} />
+            <ServiceInfo servicioInfo={asientosData.servicioInfo} empresaNombre={search.empresa} serviceCharge={search.serviceCharge} />
 
-            {/* Selected Seat Info */}
-            {selectedSeat && (
+            {/* Selected Seats Info */}
+            {selectedSeats.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    Asiento Seleccionado
+                    Asientos Seleccionados ({selectedSeats.length}/2)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Asiento {selectedSeat.numero}</span>
-                      <Badge variant="outline">Piso {selectedSeat.piso}</Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <p>{selectedSeat.tipo === 'VENTANA' ? 'Ventana' : selectedSeat.tipo}</p>
-                      <p>{selectedSeat.calidad}</p>
-                    </div>
+                    {selectedSeats.map((seat, _index) => (
+                      <div key={seat.numero} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-base text-gray-900">Asiento {seat.numero}</span>
+                            <Badge variant="outline" className="text-xs bg-white text-gray-700 border-gray-300">Piso {seat.piso}</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600">{seat.calidad}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold text-gray-900">
+                            {new Intl.NumberFormat('es-PY', {
+                              style: 'currency',
+                              currency: 'PYG',
+                              minimumFractionDigits: 0,
+                            }).format(seat.precio)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                     <Separator />
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Precio</span>
-                      <span className="text-lg font-bold">
-                        {new Intl.NumberFormat('es-PY', {
-                          style: 'currency',
-                          currency: 'PYG',
-                          minimumFractionDigits: 0,
-                        }).format(selectedSeat.precio)}
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Subtotal</span>
+                        <span className="text-sm font-medium">
+                          {new Intl.NumberFormat('es-PY', {
+                            style: 'currency',
+                            currency: 'PYG',
+                            minimumFractionDigits: 0,
+                          }).format(selectedSeats.reduce((total, seat) => total + seat.precio, 0))}
+                        </span>
+                      </div>
+                      {search.serviceCharge && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Cargo por servicio ({search.serviceCharge}%)</span>
+                          <span className="text-sm font-medium">
+                            {new Intl.NumberFormat('es-PY', {
+                              style: 'currency',
+                              currency: 'PYG',
+                              minimumFractionDigits: 0,
+                            }).format(
+                              Math.round(
+                                selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 
+                                (parseFloat(search.serviceCharge) / 100)
+                              )
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Total</span>
+                        <span className="text-lg font-bold">
+                          {new Intl.NumberFormat('es-PY', {
+                            style: 'currency',
+                            currency: 'PYG',
+                            minimumFractionDigits: 0,
+                          }).format(
+                            selectedSeats.reduce((total, seat) => total + seat.precio, 0) +
+                            (search.serviceCharge ? 
+                              Math.round(
+                                selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 
+                                (parseFloat(search.serviceCharge) / 100)
+                              ) : 0
+                            )
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -209,11 +275,14 @@ export function SeatSelectionPage() {
             {/* Action Button */}
             <Button 
               onClick={handleConfirmSelection}
-              disabled={!selectedSeat}
+              disabled={selectedSeats.length === 0}
               className="w-full"
               size="lg"
             >
-              {selectedSeat ? 'Continuar con Asiento ' + selectedSeat.numero : 'Selecciona un Asiento'}
+              {selectedSeats.length > 0 
+                ? `Continuar con ${selectedSeats.length} asiento${selectedSeats.length > 1 ? 's' : ''}` 
+                : 'Selecciona al menos un asiento'
+              }
             </Button>
           </div>
         </div>

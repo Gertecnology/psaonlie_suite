@@ -1,13 +1,14 @@
 import { cn } from '@/lib/utils'
-import type { Asiento } from '../../models/sales.model'
+import type { Asiento, ConfiguracionBus } from '../../models/sales.model'
 
 interface SeatGridProps {
   asientos: Asiento[]
   onSeatSelect: (asiento: Asiento) => void
-  selectedSeat?: Asiento | null
+  selectedSeats?: Asiento[]
+  configuracionBus: ConfiguracionBus
 }
 
-const getSeatTypeColor = (tipo: string, disponible: boolean, isSelected: boolean = false) => {
+const getSeatTypeColor = (disponible: boolean, isSelected: boolean = false) => {
   if (isSelected) {
     return 'bg-green-500 text-white border-green-600 shadow-lg'
   }
@@ -16,46 +17,32 @@ const getSeatTypeColor = (tipo: string, disponible: boolean, isSelected: boolean
     return 'bg-gray-300 text-gray-500 cursor-not-allowed'
   }
   
-  switch (tipo) {
-    case 'VENTANA':
-      return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300'
-    case 'PASILLO':
-      return 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300'
-    case 'CENTRO':
-      return 'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-300'
-    default:
-      return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300'
-  }
+  // Todos los asientos son de tipo ventana según los datos
+  return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300'
 }
 
-const getSeatTypeLabel = (tipo: string) => {
-  switch (tipo) {
-    case 'VENTANA':
-      return 'Ventana'
-    case 'PASILLO':
-      return 'Pasillo'
-    case 'CENTRO':
-      return 'Centro'
-    default:
-      return tipo
-  }
+const getSeatTypeLabel = (_tipo: string) => {
+  // Todos los asientos son de tipo ventana según los datos
+  return 'Ventana'
 }
 
 function FloorGrid({ 
   floorSeats, 
   piso, 
   onSeatSelect, 
-  selectedSeat 
+  selectedSeats,
+  columnas
 }: { 
   floorSeats: Asiento[]
   piso: number
   onSeatSelect: (asiento: Asiento) => void
-  selectedSeat?: Asiento | null
+  selectedSeats?: Asiento[]
+  columnas: number
 }) {
-  // Group seats by row (assuming 4 columns)
+  // Group seats by row using the actual column configuration
   const rows: Asiento[][] = []
-  for (let i = 0; i < floorSeats.length; i += 4) {
-    rows.push(floorSeats.slice(i, i + 4))
+  for (let i = 0; i < floorSeats.length; i += columnas) {
+    rows.push(floorSeats.slice(i, i + columnas))
   }
 
   return (
@@ -71,7 +58,7 @@ function FloorGrid({
         {rows.map((row, rowIndex) => (
           <div key={rowIndex} className="flex gap-2 justify-center">
             {row.map((asiento) => {
-              const isSelected = selectedSeat?.numero === asiento.numero
+              const isSelected = selectedSeats?.some(seat => seat.numero === asiento.numero) || false
               return (
                 <button
                   key={asiento.numero}
@@ -80,7 +67,7 @@ function FloorGrid({
                   className={cn(
                     "w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium",
                     "transition-all duration-200",
-                    getSeatTypeColor(asiento.tipo, asiento.disponible, isSelected),
+                    getSeatTypeColor(asiento.disponible, isSelected),
                     asiento.disponible && !isSelected && "cursor-pointer hover:scale-105 hover:shadow-md",
                     isSelected && "ring-2 ring-green-400 ring-offset-2"
                   )}
@@ -97,12 +84,12 @@ function FloorGrid({
   )
 }
 
-export function SeatGrid({ asientos, onSeatSelect, selectedSeat }: SeatGridProps) {
+export function SeatGrid({ asientos, onSeatSelect, selectedSeats, configuracionBus }: SeatGridProps) {
   // Separate seats by floor
   const piso1 = asientos.filter(asiento => asiento.piso === 1)
   const piso2 = asientos.filter(asiento => asiento.piso === 2)
 
-  const hasTwoFloors = piso2.length > 0
+  const hasTwoFloors = configuracionBus.pisos > 1
 
   if (hasTwoFloors) {
     return (
@@ -111,13 +98,15 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeat }: SeatGridProps
           floorSeats={piso1} 
           piso={1} 
           onSeatSelect={onSeatSelect}
-          selectedSeat={selectedSeat}
+          selectedSeats={selectedSeats}
+          columnas={configuracionBus.columnas}
         />
         <FloorGrid 
           floorSeats={piso2} 
           piso={2} 
           onSeatSelect={onSeatSelect}
-          selectedSeat={selectedSeat}
+          selectedSeats={selectedSeats}
+          columnas={configuracionBus.columnas}
         />
       </div>
     )
@@ -130,7 +119,8 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeat }: SeatGridProps
           floorSeats={piso1} 
           piso={1} 
           onSeatSelect={onSeatSelect}
-          selectedSeat={selectedSeat}
+          selectedSeats={selectedSeats}
+          columnas={configuracionBus.columnas}
         />
       </div>
     </div>

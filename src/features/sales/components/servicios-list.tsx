@@ -56,11 +56,17 @@ const formatPrice = (price: string) => {
 function ServicioCard({ 
   servicio, 
   empresaId, 
+  empresaNombre,
+  empresaLogo,
+  serviceCharge,
   origen, 
   destino 
 }: { 
   servicio: Servicio
   empresaId: string
+  empresaNombre: string
+  empresaLogo?: string
+  serviceCharge?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
 }) {
@@ -73,11 +79,12 @@ function ServicioCard({
       origenId: origen.id,
       destinoId: destino.id,
       empresaId: empresaId,
-      empresa: servicio.Emp || 'Empresa',
+      empresa: empresaNombre,
       origen: origen.nombre,
       destino: destino.nombre,
       fecha: servicio.Fec || new Date().toISOString().split('T')[0],
       hora: servicio.Embarque || '00:00',
+      ...(serviceCharge && { serviceCharge }),
     })
 
     // Navigate to seats page
@@ -89,8 +96,20 @@ function ServicioCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bus className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm">{servicio.Cod}</span>
+            {empresaLogo ? (
+              <img 
+                src={empresaLogo} 
+                alt={`Logo ${empresaNombre}`}
+                className="h-6 w-6 object-contain rounded"
+                onError={(e) => {
+                  // Fallback to Bus icon if image fails to load
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                }}
+              />
+            ) : null}
+            <Bus className={`h-4 w-4 text-muted-foreground ${empresaLogo ? 'hidden' : ''}`} />
+            <span className="font-medium text-sm">{empresaNombre}</span>
           </div>
           <Badge className={getCalidadColor(servicio.Calidad)}>
             {getCalidadLabel(servicio.Calidad)}
@@ -175,6 +194,9 @@ function EmpresaSection({
             key={servicio.Id} 
             servicio={servicio} 
             empresaId={empresa.id}
+            empresaNombre={empresa.empresa}
+            empresaLogo={empresa.imageUrl}
+            serviceCharge={empresa.serviceCharge?.porcentaje}
             origen={origen}
             destino={destino}
           />

@@ -6,9 +6,11 @@ import type { ServicioInfo } from '../../models/sales.model'
 
 interface ServiceInfoProps {
   servicioInfo: ServicioInfo
+  empresaNombre?: string
+  serviceCharge?: string
 }
 
-export function ServiceInfo({ servicioInfo }: ServiceInfoProps) {
+export function ServiceInfo({ servicioInfo, empresaNombre, serviceCharge }: ServiceInfoProps) {
   return (
     <Card>
       <CardHeader>
@@ -21,7 +23,7 @@ export function ServiceInfo({ servicioInfo }: ServiceInfoProps) {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Empresa</p>
-            <p className="font-medium">{servicioInfo.empresa}</p>
+            <p className="font-medium">{empresaNombre || servicioInfo.empresa}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Parados</p>
@@ -57,6 +59,21 @@ export function ServiceInfo({ servicioInfo }: ServiceInfoProps) {
               </div>
             )}
           </div>
+          
+          {serviceCharge && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Cargo por Servicio</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Tarifa</span>
+                  <Badge variant="secondary">
+                    {serviceCharge}%
+                  </Badge>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -5,7 +5,8 @@ export type {
   ParadaHomologada,
   Servicio,
   EmpresaServicios,
-  ServiciosSearchParams
+  ServiciosSearchParams,
+  ServiceCharge
 } from '../services/sales.service'
 
 // Additional types for the sales page
@@ -74,4 +75,35 @@ export interface ConsultarAsientosRequest {
   origenId: string
   destinoId: string
   empresaId: string
+}
+
+// Interface for bloquear asientos request
+export interface BloquearAsientosRequest {
+  servicioId: string
+  origenId: string
+  destinoId: string
+  asientos: string[]
+  empresaId: string
+}
+
+// Interface for bloquear asientos response
+export interface BloquearAsientosResponse {
+  exitoso: boolean
+  codigoReferencia: string
+  nroConexion: string
+  tiempoExpiracion: string
+  asientosBloqueados: string[]
+  asientosNoDisponibles: string[]
+  mensaje: string
+}
+
+// Interface for liberar bloqueo request
+export interface LiberarBloqueoRequest {
+  codigoReferencia: string
+}
+
+// Interface for liberar bloqueo response
+export interface LiberarBloqueoResponse {
+  exitoso: boolean
+  mensaje: string
 }
