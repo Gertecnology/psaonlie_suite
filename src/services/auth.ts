@@ -79,3 +79,19 @@ export async function refreshToken(refreshToken: string): Promise<RefreshTokenRe
 
   return response.json();
 }
+
+export async function forgotPassword(email: string) {
+  const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al enviar el correo de recuperación');
+  }
+
+  return response.json();
+}
