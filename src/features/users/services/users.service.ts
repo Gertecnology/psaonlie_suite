@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { 
   User, 
   UsersResponse, 
@@ -5,10 +6,32 @@ import {
   UpdateUserRequest, 
   UsersQueryParams 
 } from '../models/user'
+import { refreshToken } from '@/services/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 class UsersService {
+  private async attemptTokenRefresh(): Promise<boolean> {
+    try {
+      const storedRefreshToken = localStorage.getItem('refreshToken')
+      if (!storedRefreshToken) {
+        return false
+      }
+
+      const data = await refreshToken(storedRefreshToken)
+      
+      // Actualizar tokens en localStorage
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      
+      return true
+    } catch (error) {
+      console.error('Error al renovar token:', error)
+      return false
+    }
+  }
+
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('accessToken')
     return {
@@ -26,7 +49,8 @@ class UsersService {
 
   private async request<T>(
     endpoint: string, 
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retryCount: number = 0
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
     
@@ -39,13 +63,25 @@ class UsersService {
     })
 
     if (!response.ok) {
+      if (response.status === 401 && retryCount === 0) {
+        // Intentar renovar el token una vez
+        const refreshSuccess = await this.attemptTokenRefresh()
+        if (refreshSuccess) {
+          // Reintentar la petición con el nuevo token
+          return this.request<T>(endpoint, options, retryCount + 1)
+        } else {
+          // Si no se puede renovar, limpiar todo y redirigir
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('user')
+          localStorage.removeItem('refreshToken')
+          throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        }
+      }
+      
       if (response.status === 401) {
-        // Token expirado o inválido
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
-        localStorage.removeItem('refreshToken')
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
+      
       throw new Error(`Error ${response.status}: ${response.statusText}`)
     }
 
@@ -55,7 +91,8 @@ class UsersService {
   private async requestWithFormData<T>(
     endpoint: string,
     formData: FormData,
-    method: 'POST' | 'PUT' = 'POST'
+    method: 'POST' | 'PUT' = 'POST',
+    retryCount: number = 0
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
     
@@ -66,13 +103,25 @@ class UsersService {
     })
 
     if (!response.ok) {
+      if (response.status === 401 && retryCount === 0) {
+        // Intentar renovar el token una vez
+        const refreshSuccess = await this.attemptTokenRefresh()
+        if (refreshSuccess) {
+          // Reintentar la petición con el nuevo token
+          return this.requestWithFormData<T>(endpoint, formData, method, retryCount + 1)
+        } else {
+          // Si no se puede renovar, limpiar todo y redirigir
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('user')
+          localStorage.removeItem('refreshToken')
+          throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        }
+      }
+      
       if (response.status === 401) {
-        // Token expirado o inválido
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
-        localStorage.removeItem('refreshToken')
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
+      
       throw new Error(`Error ${response.status}: ${response.statusText}`)
     }
 

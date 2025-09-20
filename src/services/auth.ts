@@ -48,17 +48,33 @@ export async function logout(refreshToken: string) {
   return response.json();
 }
 
-export async function forgotPassword(email: string) {
-  const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    urlPerfil?: string;
+    roles: string[];
+  };
+}
+
+export async function refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+  const response = await fetch(`${API_URL}/api/auth/refresh-token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ refreshToken }),
   });
 
   if (!response.ok) {
-    throw new Error('Error al enviar el correo de recuperación');
+    if (response.status === 401) {
+      throw new Error('Refresh token inválido o expirado');
+    }
+    throw new Error('Error al renovar el token');
   }
 
   return response.json();
