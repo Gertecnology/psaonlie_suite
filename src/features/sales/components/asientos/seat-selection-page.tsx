@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Users, Info, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Users, Info, CheckCircle, Lock, Unlock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,8 @@ import { SeatGrid } from './seat-grid'
 import { ServiceInfo } from './service-info'
 import { SeatLegend } from './seat-legend'
 import { useGetAsientos } from '../../hooks/use-get-asientos'
+import { useBloquearAsientos } from '../../hooks/use-bloquear-asientos'
+import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
 import type { Asiento, ConsultarAsientosRequest } from '../../models/sales.model'
 
 interface SeatSelectionSearch {
@@ -22,11 +24,19 @@ interface SeatSelectionSearch {
   fecha?: string
   hora?: string
   serviceCharge?: string
+  codigoReferencia?: string
+  asientosBloqueados?: string
+  preciosBloqueados?: string
+  tiposBloqueados?: string
+  pisosBloqueados?: string
 }
 
 export function SeatSelectionPage() {
   const [search, setSearch] = useState<SeatSelectionSearch | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<Asiento[]>([])
+  const [blockedSeats, setBlockedSeats] = useState<Asiento[]>([])
+  const [blockReferenceCode, setBlockReferenceCode] = useState<string | null>(null)
+  const [isBlockingSeats, setIsBlockingSeats] = useState(false)
 
   useEffect(() => {
     // Get search parameters from URL
@@ -42,8 +52,36 @@ export function SeatSelectionPage() {
       fecha: urlParams.get('fecha') || undefined,
       hora: urlParams.get('hora') || undefined,
       serviceCharge: urlParams.get('serviceCharge') || undefined,
+      codigoReferencia: urlParams.get('codigoReferencia') || undefined,
+      asientosBloqueados: urlParams.get('asientosBloqueados') || undefined,
+      preciosBloqueados: urlParams.get('preciosBloqueados') || undefined,
+      tiposBloqueados: urlParams.get('tiposBloqueados') || undefined,
+      pisosBloqueados: urlParams.get('pisosBloqueados') || undefined,
     }
     setSearch(searchData)
+
+    // Si hay asientos bloqueados en la URL, restaurarlos
+    if (searchData.asientosBloqueados && searchData.preciosBloqueados && 
+        searchData.tiposBloqueados && searchData.pisosBloqueados) {
+      const asientosIds = searchData.asientosBloqueados.split(',')
+      const precios = searchData.preciosBloqueados.split(',').map(Number)
+      const tipos = searchData.tiposBloqueados.split(',') as ('VENTANA' | 'PASILLO' | 'CENTRO')[]
+      const pisos = searchData.pisosBloqueados.split(',').map(Number)
+
+      const asientosBloqueadosData: Asiento[] = asientosIds.map((id, index) => ({
+        numero: id,
+        disponible: true,
+        precio: precios[index],
+        tipo: tipos[index],
+        piso: pisos[index],
+        calidad: 'Estándar',
+      }))
+
+      setBlockedSeats(asientosBloqueadosData)
+      if (searchData.codigoReferencia) {
+        setBlockReferenceCode(searchData.codigoReferencia)
+      }
+    }
   }, [])
 
   const consultarAsientosRequest: ConsultarAsientosRequest | null = search ? {
@@ -54,8 +92,15 @@ export function SeatSelectionPage() {
   } : null
 
   const { data: asientosData, isLoading, error } = useGetAsientos(consultarAsientosRequest)
+  const bloquearAsientosMutation = useBloquearAsientos()
+  const liberarBloqueoMutation = useLiberarBloqueo()
 
   const handleSeatSelect = (asiento: Asiento) => {
+    // Si ya hay asientos bloqueados, no permitir cambios
+    if (blockedSeats.length > 0) {
+      return
+    }
+
     setSelectedSeats(prev => {
       // Si el asiento ya está seleccionado, lo removemos
       if (prev.some(seat => seat.numero === asiento.numero)) {
@@ -72,22 +117,76 @@ export function SeatSelectionPage() {
     })
   }
 
-  const handleConfirmSelection = () => {
-    if (selectedSeats.length > 0 && search) {
-      // Navigate to checkout or next step
-      const checkoutParams = new URLSearchParams({
-        ...search,
-        asientosIds: selectedSeats.map(seat => seat.numero).join(','),
-        precios: selectedSeats.map(seat => seat.precio.toString()).join(','),
-        tipos: selectedSeats.map(seat => seat.tipo).join(','),
-        pisos: selectedSeats.map(seat => seat.piso.toString()).join(','),
-      })
-      window.location.href = `/sales/checkout?${checkoutParams.toString()}`
+  const handleConfirmSelection = async () => {
+    if (selectedSeats.length > 0 && search && !blockedSeats.length) {
+      setIsBlockingSeats(true)
+      
+      try {
+        const result = await bloquearAsientosMutation.mutateAsync({
+          servicioId: search.servicioId,
+          origenId: search.origenId,
+          destinoId: search.destinoId,
+          empresaId: search.empresaId,
+          asientos: selectedSeats.map(seat => seat.numero),
+        })
+
+        if (result.exitoso) {
+          setBlockedSeats(selectedSeats)
+          setBlockReferenceCode(result.codigoReferencia)
+          setSelectedSeats([])
+        } else {
+          // TODO: Show error message to user
+        }
+      } catch (_error) {
+        // TODO: Show error message to user
+      } finally {
+        setIsBlockingSeats(false)
+      }
     }
   }
 
-  const handleGoBack = () => {
+  const handleReleaseSeats = async () => {
+    if (blockReferenceCode) {
+      try {
+        await liberarBloqueoMutation.mutateAsync(blockReferenceCode)
+        setBlockedSeats([])
+        setBlockReferenceCode(null)
+      } catch (_error) {
+        // TODO: Show error message to user
+      }
+    }
+  }
+
+  const handleGoBack = async () => {
+    // Si hay asientos bloqueados, liberarlos antes de volver
+    if (blockReferenceCode) {
+      await handleReleaseSeats()
+    }
     window.location.href = '/sales'
+  }
+
+  const handleContinueToCheckout = () => {
+    if (blockedSeats.length > 0 && search) {
+      // Navigate to checkout with blocked seats info
+      const checkoutParams = new URLSearchParams({
+        servicioId: search.servicioId,
+        origenId: search.origenId,
+        destinoId: search.destinoId,
+        empresaId: search.empresaId,
+        empresa: search.empresa || '',
+        origen: search.origen || '',
+        destino: search.destino || '',
+        fecha: search.fecha || '',
+        hora: search.hora || '',
+        serviceCharge: search.serviceCharge || '',
+        asientosIds: blockedSeats.map(seat => seat.numero).join(','),
+        precios: blockedSeats.map(seat => seat.precio.toString()).join(','),
+        tipos: blockedSeats.map(seat => seat.tipo).join(','),
+        pisos: blockedSeats.map(seat => seat.piso.toString()).join(','),
+        codigoReferencia: blockReferenceCode || '',
+      })
+      window.location.href = `/sales/checkout?${checkoutParams.toString()}`
+    }
   }
 
   if (!search || !search.servicioId) {
@@ -119,7 +218,7 @@ export function SeatSelectionPage() {
           <div>
             <h1 className="text-2xl font-bold">Selección de Asientos</h1>
             <p className="text-muted-foreground">
-              {search.origen} → {search.destino} • {search.fecha} {search.hora}
+              {search.origen} → {search.destino} • {search.fecha?.split('T')[0]} {search.hora}
             </p>
           </div>
         </div>
@@ -173,6 +272,7 @@ export function SeatSelectionPage() {
                   asientos={asientosData.asientos} 
                   onSeatSelect={handleSeatSelect}
                   selectedSeats={selectedSeats}
+                  blockedSeats={blockedSeats}
                   configuracionBus={asientosData.configuracionBus}
                 />
                 <div className="mt-6">
@@ -188,22 +288,41 @@ export function SeatSelectionPage() {
             <ServiceInfo servicioInfo={asientosData.servicioInfo} empresaNombre={search.empresa} serviceCharge={search.serviceCharge} />
 
             {/* Selected Seats Info */}
-            {selectedSeats.length > 0 && (
+            {(selectedSeats.length > 0 || blockedSeats.length > 0) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    Asientos Seleccionados ({selectedSeats.length}/2)
+                    {blockedSeats.length > 0 ? (
+                      <>
+                        <Lock className="h-4 w-4 text-blue-600" />
+                        Asientos Confirmados ({blockedSeats.length}/2)
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        Asientos Seleccionados ({selectedSeats.length}/2)
+                      </>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {selectedSeats.map((seat, _index) => (
-                      <div key={seat.numero} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                    {(blockedSeats.length > 0 ? blockedSeats : selectedSeats).map((seat, _index) => (
+                      <div key={seat.numero} className={`flex items-center justify-between p-3 rounded-lg border ${
+                        blockedSeats.length > 0 
+                          ? 'bg-blue-50 border-blue-200' 
+                          : 'bg-green-50 border-green-200'
+                      }`}>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-base text-gray-900">Asiento {seat.numero}</span>
                             <Badge variant="outline" className="text-xs bg-white text-gray-700 border-gray-300">Piso {seat.piso}</Badge>
+                            {blockedSeats.length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Lock className="h-3 w-3 mr-1" />
+                                Bloqueado
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-gray-600">{seat.calidad}</p>
                         </div>
@@ -227,7 +346,7 @@ export function SeatSelectionPage() {
                             style: 'currency',
                             currency: 'PYG',
                             minimumFractionDigits: 0,
-                          }).format(selectedSeats.reduce((total, seat) => total + seat.precio, 0))}
+                          }).format((blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0))}
                         </span>
                       </div>
                       {search.serviceCharge && (
@@ -240,7 +359,7 @@ export function SeatSelectionPage() {
                               minimumFractionDigits: 0,
                             }).format(
                               Math.round(
-                                selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 
+                                (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) * 
                                 (parseFloat(search.serviceCharge) / 100)
                               )
                             )}
@@ -256,10 +375,10 @@ export function SeatSelectionPage() {
                             currency: 'PYG',
                             minimumFractionDigits: 0,
                           }).format(
-                            selectedSeats.reduce((total, seat) => total + seat.precio, 0) +
+                            (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) +
                             (search.serviceCharge ? 
                               Math.round(
-                                selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 
+                                (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) * 
                                 (parseFloat(search.serviceCharge) / 100)
                               ) : 0
                             )
@@ -272,18 +391,50 @@ export function SeatSelectionPage() {
               </Card>
             )}
 
-            {/* Action Button */}
-            <Button 
-              onClick={handleConfirmSelection}
-              disabled={selectedSeats.length === 0}
-              className="w-full"
-              size="lg"
-            >
-              {selectedSeats.length > 0 
-                ? `Continuar con ${selectedSeats.length} asiento${selectedSeats.length > 1 ? 's' : ''}` 
-                : 'Selecciona al menos un asiento'
-              }
-            </Button>
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              {blockedSeats.length > 0 ? (
+                <>
+                  <Button 
+                    onClick={handleContinueToCheckout}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Continuar al Checkout
+                  </Button>
+                  <Button 
+                    onClick={handleReleaseSeats}
+                    variant="outline"
+                    className="w-full"
+                    disabled={liberarBloqueoMutation.isPending}
+                  >
+                    <Unlock className="h-4 w-4 mr-2" />
+                    {liberarBloqueoMutation.isPending ? 'Liberando...' : 'Liberar Asientos'}
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  onClick={handleConfirmSelection}
+                  disabled={selectedSeats.length === 0 || isBlockingSeats}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isBlockingSeats ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Confirmando asientos...
+                    </>
+                  ) : selectedSeats.length > 0 ? (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Confirmar asientos ({selectedSeats.length})
+                    </>
+                  ) : (
+                    'Selecciona al menos un asiento'
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}

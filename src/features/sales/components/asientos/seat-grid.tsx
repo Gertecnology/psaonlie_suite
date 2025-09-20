@@ -5,10 +5,15 @@ interface SeatGridProps {
   asientos: Asiento[]
   onSeatSelect: (asiento: Asiento) => void
   selectedSeats?: Asiento[]
+  blockedSeats?: Asiento[]
   configuracionBus: ConfiguracionBus
 }
 
-const getSeatTypeColor = (disponible: boolean, isSelected: boolean = false) => {
+const getSeatTypeColor = (disponible: boolean, isSelected: boolean = false, isBlocked: boolean = false) => {
+  if (isBlocked) {
+    return 'bg-blue-500 text-white border-blue-600 shadow-lg'
+  }
+  
   if (isSelected) {
     return 'bg-green-500 text-white border-green-600 shadow-lg'
   }
@@ -31,12 +36,14 @@ function FloorGrid({
   piso, 
   onSeatSelect, 
   selectedSeats,
+  blockedSeats,
   columnas
 }: { 
   floorSeats: Asiento[]
   piso: number
   onSeatSelect: (asiento: Asiento) => void
   selectedSeats?: Asiento[]
+  blockedSeats?: Asiento[]
   columnas: number
 }) {
   // Group seats by row using the actual column configuration
@@ -59,19 +66,23 @@ function FloorGrid({
           <div key={rowIndex} className="flex gap-2 justify-center">
             {row.map((asiento) => {
               const isSelected = selectedSeats?.some(seat => seat.numero === asiento.numero) || false
+              const isBlocked = blockedSeats?.some(seat => seat.numero === asiento.numero) || false
               return (
                 <button
                   key={asiento.numero}
-                  onClick={() => asiento.disponible && onSeatSelect(asiento)}
-                  disabled={!asiento.disponible}
+                  onClick={() => asiento.disponible && !isBlocked && onSeatSelect(asiento)}
+                  disabled={!asiento.disponible || isBlocked}
                   className={cn(
                     "w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium",
                     "transition-all duration-200",
-                    getSeatTypeColor(asiento.disponible, isSelected),
-                    asiento.disponible && !isSelected && "cursor-pointer hover:scale-105 hover:shadow-md",
-                    isSelected && "ring-2 ring-green-400 ring-offset-2"
+                    getSeatTypeColor(asiento.disponible, isSelected, isBlocked),
+                    asiento.disponible && !isSelected && !isBlocked && "cursor-pointer hover:scale-105 hover:shadow-md",
+                    isSelected && "ring-2 ring-green-400 ring-offset-2",
+                    isBlocked && "ring-2 ring-blue-400 ring-offset-2"
                   )}
-                  title={`Asiento ${asiento.numero} - ${getSeatTypeLabel(asiento.tipo)} - ${asiento.disponible ? 'Disponible' : 'Ocupado'}`}
+                  title={`Asiento ${asiento.numero} - ${getSeatTypeLabel(asiento.tipo)} - ${
+                    isBlocked ? 'Bloqueado' : asiento.disponible ? 'Disponible' : 'Ocupado'
+                  }`}
                 >
                   {asiento.numero}
                 </button>
@@ -84,7 +95,7 @@ function FloorGrid({
   )
 }
 
-export function SeatGrid({ asientos, onSeatSelect, selectedSeats, configuracionBus }: SeatGridProps) {
+export function SeatGrid({ asientos, onSeatSelect, selectedSeats, blockedSeats, configuracionBus }: SeatGridProps) {
   // Separate seats by floor
   const piso1 = asientos.filter(asiento => asiento.piso === 1)
   const piso2 = asientos.filter(asiento => asiento.piso === 2)
@@ -99,6 +110,7 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeats, configuracionB
           piso={1} 
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
+          blockedSeats={blockedSeats}
           columnas={configuracionBus.columnas}
         />
         <FloorGrid 
@@ -106,6 +118,7 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeats, configuracionB
           piso={2} 
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
+          blockedSeats={blockedSeats}
           columnas={configuracionBus.columnas}
         />
       </div>
@@ -120,6 +133,7 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeats, configuracionB
           piso={1} 
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
+          blockedSeats={blockedSeats}
           columnas={configuracionBus.columnas}
         />
       </div>

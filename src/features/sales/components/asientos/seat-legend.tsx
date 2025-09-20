@@ -8,6 +8,11 @@ export function SeatLegend() {
       description: 'Asiento seleccionado'
     },
     {
+      color: 'bg-blue-500 border-blue-600',
+      label: 'Bloqueado',
+      description: 'Asiento confirmado'
+    },
+    {
       color: 'bg-blue-100 border-blue-300',
       label: 'Disponible',
       description: 'Asiento disponible'
@@ -22,7 +27,7 @@ export function SeatLegend() {
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-medium text-center">Leyenda de Asientos</h4>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
         {legendItems.map((item, index) => (
           <div key={index} className="flex items-center gap-2">
             <div className={cn("w-4 h-4 rounded border-2 flex-shrink-0", item.color)}></div>
