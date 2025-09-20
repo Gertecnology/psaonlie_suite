@@ -21,6 +21,7 @@ export { useGetServicios } from './hooks/use-get-servicios'
 export { useGetAsientos } from './hooks/use-get-asientos'
 export { useBloquearAsientos } from './hooks/use-bloquear-asientos'
 export { useLiberarBloqueo } from './hooks/use-liberar-bloqueo'
+export { useActualizarEstadoPago } from './hooks/use-actualizar-estado-pago'
 
 // Services
 export { 
