@@ -1,4 +1,4 @@
-import { ClientesListResponse, ClientesSearchParams, ClienteConEstadisticas, CreateClientFormValues, UpdateClientFormValues } from '../models/clients.model'
+import { ClientesListResponse, ClientesSearchParams, ClienteConEstadisticas, CreateClientFormValues, UpdateClientFormValues, CreateClientResponse } from '../models/clients.model'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -52,7 +52,7 @@ export async function getClienteById(id: string): Promise<ClienteConEstadisticas
   return data.data
 }
 
-export async function createClient(data: CreateClientFormValues): Promise<ClienteConEstadisticas> {
+export async function createClient(data: CreateClientFormValues): Promise<CreateClientResponse> {
   const response = await fetch(`${API_URL}/api/clientes`, {
     method: 'POST',
     headers: {
@@ -66,8 +66,7 @@ export async function createClient(data: CreateClientFormValues): Promise<Client
     throw new Error(errorData.message || 'Error al crear el cliente')
   }
 
-  const result = await response.json()
-  return result.data
+  return response.json()
 }
 
 export async function updateClient(email: string, data: UpdateClientFormValues): Promise<ClienteConEstadisticas> {

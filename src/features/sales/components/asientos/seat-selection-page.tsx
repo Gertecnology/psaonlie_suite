@@ -29,6 +29,8 @@ interface SeatSelectionSearch {
   preciosBloqueados?: string
   tiposBloqueados?: string
   pisosBloqueados?: string
+  empresaBoleto?: string // Emp del servicio
+  calidad?: string // Calidad del servicio
 }
 
 export function SeatSelectionPage() {
@@ -57,6 +59,8 @@ export function SeatSelectionPage() {
       preciosBloqueados: urlParams.get('preciosBloqueados') || undefined,
       tiposBloqueados: urlParams.get('tiposBloqueados') || undefined,
       pisosBloqueados: urlParams.get('pisosBloqueados') || undefined,
+      empresaBoleto: urlParams.get('empresaBoleto') || undefined,
+      calidad: urlParams.get('calidad') || undefined,
     }
     setSearch(searchData)
 
@@ -184,6 +188,8 @@ export function SeatSelectionPage() {
         tipos: blockedSeats.map(seat => seat.tipo).join(','),
         pisos: blockedSeats.map(seat => seat.piso.toString()).join(','),
         codigoReferencia: blockReferenceCode || '',
+        empresaBoleto: search.empresaBoleto || '',
+        calidad: search.calidad || '',
       })
       window.location.href = `/sales/checkout?${checkoutParams.toString()}`
     }

@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ClientForm } from './client-form'
 import type { Asiento } from '../../models/sales.model'
 import type { CreateClientFormValues } from '@/features/clients/models/clients.model'
+import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
+import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
+import { toast } from 'sonner'
 
 // Extend the client form values to include seat number for checkout
 type ClientWithSeat = CreateClientFormValues & { seatNumber?: number }
@@ -27,12 +30,18 @@ interface CheckoutSearch {
   tipos: string
   pisos: string
   codigoReferencia: string
+  empresaBoleto?: string // Emp del servicio
+  calidad?: string // Calidad del servicio
 }
 
 export function CheckoutPage() {
   const [search, setSearch] = useState<CheckoutSearch | null>(null)
   const [asientos, setAsientos] = useState<Asiento[]>([])
   const [clientsData, setClientsData] = useState<ClientWithSeat[]>([])
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+
+  const createClientMutation = useCreateClient()
+  const confirmarVentaMutation = useConfirmarVenta()
 
   useEffect(() => {
     // Get search parameters from URL
@@ -53,6 +62,8 @@ export function CheckoutPage() {
       tipos: urlParams.get('tipos') || '',
       pisos: urlParams.get('pisos') || '',
       codigoReferencia: urlParams.get('codigoReferencia') || '',
+      empresaBoleto: urlParams.get('empresaBoleto') || undefined,
+      calidad: urlParams.get('calidad') || undefined,
     }
     setSearch(searchData)
 
@@ -102,11 +113,6 @@ export function CheckoutPage() {
     }
   }
 
-  const handleProceedToPayment = () => {
-    // TODO: Implement payment flow
-    //console.log('Proceeding to payment...')
-  }
-
   const handleClientCreated = (client: CreateClientFormValues, seatNumber: number) => {
     setClientsData(prev => {
       const existingIndex = prev.findIndex(c => c.seatNumber === seatNumber)
@@ -120,6 +126,96 @@ export function CheckoutPage() {
         return [...prev, { ...client, seatNumber }]
       }
     })
+  }
+
+  const handleProceedToPayment = async () => {
+    if (!search || clientsData.length !== asientos.length) {
+      toast.error('Por favor completa todos los formularios de clientes')
+      return
+    }
+
+    setIsProcessingPayment(true)
+
+    try {
+      // Crear todos los clientes primero
+      const clientIds: { [seatNumber: number]: string } = {}
+      
+      for (const clientData of clientsData) {
+        const response = await createClientMutation.mutateAsync(clientData)
+        clientIds[clientData.seatNumber!] = response.cliente.id
+      }
+
+      // Preparar datos para confirmar venta
+      const ventaData = {
+        ventas: [{
+          bloqueoCodigoReferencia: search.codigoReferencia,
+          servicioId: search.servicioId,
+          empresaId: search.empresaId,
+          EmpresaBoleto: search.empresaBoleto || 'SOL', // Usar Emp del servicio
+          calidad: search.calidad || 'CA', // Usar Calidad del servicio
+          origenId: search.origenId,
+          destinoId: search.destinoId,
+          metodoPago: 'EFECTIVO', // Por defecto, se puede cambiar después
+          estadoPago: 'PENDIENTE', // Cambiado a PENDIENTE como solicitado
+          importeTotal: asientos.reduce((total, asiento) => total + asiento.precio, 0),
+          asiento: asientos.map(asiento => ({
+            Nroasiento: asiento.numero,
+            Precio: asiento.precio,
+            clienteId: clientIds[parseInt(asiento.numero)]
+          }))
+        }]
+      }
+
+      // Confirmar la venta
+      const ventaResponse = await confirmarVentaMutation.mutateAsync(ventaData)
+      
+      // Si llegamos aquí, la venta fue exitosa
+      toast.success('Venta confirmada exitosamente', {
+        description: `Se procesaron ${ventaResponse.exitosas} venta(s) correctamente`,
+        duration: 5000,
+      })
+
+      // Obtener datos de la venta exitosa
+      const ventaExitosa = ventaResponse.resultados[0]?.venta
+      if (ventaExitosa) {
+        // Construir URL para página de pago con todos los datos necesarios
+        const paymentParams = new URLSearchParams({
+          servicioId: search.servicioId,
+          origenId: search.origenId,
+          destinoId: search.destinoId,
+          empresaId: search.empresaId,
+          empresa: search.empresa || '',
+          origen: search.origen || '',
+          destino: search.destino || '',
+          fecha: search.fecha || '',
+          hora: search.hora || '',
+          serviceCharge: search.serviceCharge || '',
+          asientosIds: asientos.map(asiento => asiento.numero).join(','),
+          precios: asientos.map(asiento => asiento.precio.toString()).join(','),
+          tipos: asientos.map(asiento => asiento.tipo).join(','),
+          pisos: asientos.map(asiento => asiento.piso.toString()).join(','),
+          codigoReferencia: search.codigoReferencia || '',
+          empresaBoleto: search.empresaBoleto || '',
+          calidad: search.calidad || '',
+          ventaId: ventaExitosa.ventaId,
+          numeroTransaccion: ventaExitosa.numeroTransaccion,
+          estado: ventaExitosa.estado,
+          mensaje: ventaExitosa.mensaje,
+          comisionTotal: ventaExitosa.comisionTotal.toString(),
+        })
+        
+        // Redirigir a página de pago
+        window.location.href = `/sales/payment?${paymentParams.toString()}`
+      }
+
+    } catch (error) {
+      // TODO: Show error message to user
+      toast.error('Error al procesar el pago', {
+        description: error instanceof Error ? error.message : 'Error desconocido'
+      })
+    } finally {
+      setIsProcessingPayment(false)
+    }
   }
 
   if (!search || !search.servicioId) {
@@ -319,12 +415,14 @@ export function CheckoutPage() {
             onClick={handleProceedToPayment}
             className="w-full"
             size="lg"
-            disabled={clientsData.length !== asientos.length}
+            disabled={clientsData.length !== asientos.length || isProcessingPayment}
           >
             <CreditCard className="h-4 w-4 mr-2" />
-            {clientsData.length === asientos.length 
-              ? 'Continuar al Pago' 
-              : `Completa los datos de ${asientos.length - clientsData.length} cliente(s) restante(s)`
+            {isProcessingPayment 
+              ? 'Procesando pago...' 
+              : clientsData.length === asientos.length 
+                ? 'Continuar al Pago' 
+                : `Completa los datos de ${asientos.length - clientsData.length} cliente(s) restante(s)`
             }
           </Button>
         </div>

@@ -44,6 +44,7 @@ import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_auth
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authenticated/sales/seats'
+import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
 import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
 import { Route as AuthenticatedCompaniesIdRouteImport } from './routes/_authenticated/companies/$id'
@@ -232,6 +233,12 @@ const AuthenticatedSalesSeatsRoute = AuthenticatedSalesSeatsRouteImport.update({
   path: '/sales/seats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSalesPaymentRoute =
+  AuthenticatedSalesPaymentRouteImport.update({
+    id: '/sales/payment',
+    path: '/sales/payment',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSalesCheckoutRoute =
   AuthenticatedSalesCheckoutRouteImport.update({
     id: '/sales/checkout',
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
+  '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -305,6 +313,7 @@ export interface FileRoutesByTo {
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
+  '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -346,6 +355,7 @@ export interface FileRoutesById {
   '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
+  '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/_authenticated/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/companies/$id'
     | '/destinations/$id'
     | '/sales/checkout'
+    | '/sales/payment'
     | '/sales/seats'
     | '/settings/account'
     | '/settings/appearance'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/companies/$id'
     | '/destinations/$id'
     | '/sales/checkout'
+    | '/sales/payment'
     | '/sales/seats'
     | '/settings/account'
     | '/settings/appearance'
@@ -462,6 +474,7 @@ export interface FileRouteTypes {
     | '/_authenticated/companies/$id'
     | '/_authenticated/destinations/$id'
     | '/_authenticated/sales/checkout'
+    | '/_authenticated/sales/payment'
     | '/_authenticated/sales/seats'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
@@ -745,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalesSeatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sales/payment': {
+      id: '/_authenticated/sales/payment'
+      path: '/sales/payment'
+      fullPath: '/sales/payment'
+      preLoaderRoute: typeof AuthenticatedSalesPaymentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sales/checkout': {
       id: '/_authenticated/sales/checkout'
       path: '/sales/checkout'
@@ -801,6 +821,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompaniesIdRoute: typeof AuthenticatedCompaniesIdRoute
   AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
+  AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
   AuthenticatedSalesSeatsRoute: typeof AuthenticatedSalesSeatsRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
@@ -819,6 +840,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompaniesIdRoute: AuthenticatedCompaniesIdRoute,
   AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
+  AuthenticatedSalesPaymentRoute: AuthenticatedSalesPaymentRoute,
   AuthenticatedSalesSeatsRoute: AuthenticatedSalesSeatsRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,

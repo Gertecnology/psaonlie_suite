@@ -84,6 +84,8 @@ function ServicioCard({
       destino: destino.nombre,
       fecha: servicio.Fec || new Date().toISOString().split('T')[0],
       hora: servicio.Embarque || '00:00',
+      empresaBoleto: servicio.Emp, 
+      calidad: servicio.Calidad, 
       ...(serviceCharge && { serviceCharge }),
     })
 

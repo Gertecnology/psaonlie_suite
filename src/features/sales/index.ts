@@ -12,6 +12,9 @@ export * from './components/asientos'
 // Checkout components
 export * from './components/checkout'
 
+// Payment components
+export * from './components/payment'
+
 // Hooks
 export { useGetParadasHomologadas } from './hooks/use-get-paradas-homologadas'
 export { useGetServicios } from './hooks/use-get-servicios'
