@@ -8,6 +8,7 @@ import {
   IconShoppingCart,
   //IconCurrencyDollar,
   IconUsers,
+  IconUserCog,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -59,6 +60,11 @@ export const sidebarData: SidebarData = {
           title: 'Clientes',
           url: '/clients',
           icon: IconUsers,
+        },
+        {
+          title: 'Usuarios',
+          url: '/users',
+          icon: IconUserCog,
         },
         {
           title: 'Ventas',

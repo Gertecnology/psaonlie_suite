@@ -24,21 +24,19 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { userTypes } from '../data/data'
-import { User } from '../data/schema'
+import { userRoles } from '../data/data'
+import { User } from '../models/user'
 
 const formSchema = z
   .object({
-    firstName: z.string().min(1, { message: 'First Name is required.' }),
-    lastName: z.string().min(1, { message: 'Last Name is required.' }),
-    username: z.string().min(1, { message: 'Username is required.' }),
-    phoneNumber: z.string().min(1, { message: 'Phone number is required.' }),
+    firstName: z.string().min(1, { message: 'El nombre es requerido.' }),
+    lastName: z.string().min(1, { message: 'El apellido es requerido.' }),
     email: z
       .string()
-      .min(1, { message: 'Email is required.' })
-      .email({ message: 'Email is invalid.' }),
+      .min(1, { message: 'El email es requerido.' })
+      .email({ message: 'El email no es válido.' }),
     password: z.string().transform((pwd) => pwd.trim()),
-    role: z.string().min(1, { message: 'Role is required.' }),
+    roleIds: z.array(z.string()).optional(),
     confirmPassword: z.string().transform((pwd) => pwd.trim()),
     isEdit: z.boolean(),
   })
@@ -47,7 +45,7 @@ const formSchema = z
       if (password === '') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Password is required.',
+          message: 'La contraseña es requerida.',
           path: ['password'],
         })
       }
@@ -55,7 +53,7 @@ const formSchema = z
       if (password.length < 8) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Password must be at least 8 characters long.',
+          message: 'La contraseña debe tener al menos 8 caracteres.',
           path: ['password'],
         })
       }
@@ -63,7 +61,7 @@ const formSchema = z
       if (!password.match(/[a-z]/)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Password must contain at least one lowercase letter.',
+          message: 'La contraseña debe contener al menos una letra minúscula.',
           path: ['password'],
         })
       }
@@ -71,7 +69,7 @@ const formSchema = z
       if (!password.match(/\d/)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Password must contain at least one number.',
+          message: 'La contraseña debe contener al menos un número.',
           path: ['password'],
         })
       }
@@ -79,7 +77,7 @@ const formSchema = z
       if (password !== confirmPassword) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Passwords don't match.",
+          message: 'Las contraseñas no coinciden.',
           path: ['confirmPassword'],
         })
       }
@@ -99,20 +97,21 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
       ? {
-          ...currentRow,
+          firstName: currentRow?.firstName || '',
+          lastName: currentRow?.lastName || '',
+          email: currentRow?.email || '',
           password: '',
           confirmPassword: '',
+          roleIds: currentRow?.roles?.map(role => role.id) || [],
           isEdit,
         }
       : {
           firstName: '',
           lastName: '',
-          username: '',
           email: '',
-          role: '',
-          phoneNumber: '',
           password: '',
           confirmPassword: '',
+          roleIds: [],
           isEdit,
         },
   })
@@ -135,10 +134,10 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
     >
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader className='text-left'>
-          <DialogTitle>{isEdit ? 'Edit User' : 'Add New User'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}</DialogTitle>
           <DialogDescription>
-            {isEdit ? 'Update the user here. ' : 'Create new user here. '}
-            Click save when you&apos;re done.
+            {isEdit ? 'Actualiza la información del usuario aquí. ' : 'Crea un nuevo usuario aquí. '}
+            Haz clic en guardar cuando termines.
           </DialogDescription>
         </DialogHeader>
         <div className='-mr-4 h-[26.25rem] w-full overflow-y-auto py-1 pr-4'>
@@ -154,11 +153,11 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
                     <FormLabel className='col-span-2 text-right'>
-                      First Name
+                      Nombre
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder='John'
+                        placeholder='Juan'
                         className='col-span-4'
                         autoComplete='off'
                         {...field}
@@ -174,32 +173,13 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
                     <FormLabel className='col-span-2 text-right'>
-                      Last Name
+                      Apellido
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder='Doe'
+                        placeholder='Pérez'
                         className='col-span-4'
                         autoComplete='off'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className='col-span-4 col-start-3' />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
-                    <FormLabel className='col-span-2 text-right'>
-                      Username
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='john_doe'
-                        className='col-span-4'
                         {...field}
                       />
                     </FormControl>
@@ -217,7 +197,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder='john.doe@gmail.com'
+                        placeholder='juan.perez@gmail.com'
                         className='col-span-4'
                         {...field}
                       />
@@ -228,37 +208,18 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
               />
               <FormField
                 control={form.control}
-                name='phoneNumber'
+                name='roleIds'
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
                     <FormLabel className='col-span-2 text-right'>
-                      Phone Number
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='+123456789'
-                        className='col-span-4'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage className='col-span-4 col-start-3' />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='role'
-                render={({ field }) => (
-                  <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
-                    <FormLabel className='col-span-2 text-right'>
-                      Role
+                      Roles
                     </FormLabel>
                     <SelectDropdown
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                      placeholder='Select a role'
+                      defaultValue={field.value?.[0] || ''}
+                      onValueChange={(value) => field.onChange([value])}
+                      placeholder='Seleccionar un rol'
                       className='col-span-4'
-                      items={userTypes.map(({ label, value }) => ({
+                      items={userRoles.map(({ label, value }) => ({
                         label,
                         value,
                       }))}
@@ -273,11 +234,11 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
                     <FormLabel className='col-span-2 text-right'>
-                      Password
+                      Contraseña
                     </FormLabel>
                     <FormControl>
                       <PasswordInput
-                        placeholder='e.g., S3cur3P@ssw0rd'
+                        placeholder='ej., S3cur3P@ssw0rd'
                         className='col-span-4'
                         {...field}
                       />
@@ -292,12 +253,12 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 render={({ field }) => (
                   <FormItem className='grid grid-cols-6 items-center space-y-0 gap-x-4 gap-y-1'>
                     <FormLabel className='col-span-2 text-right'>
-                      Confirm Password
+                      Confirmar Contraseña
                     </FormLabel>
                     <FormControl>
                       <PasswordInput
                         disabled={!isPasswordTouched}
-                        placeholder='e.g., S3cur3P@ssw0rd'
+                        placeholder='ej., S3cur3P@ssw0rd'
                         className='col-span-4'
                         {...field}
                       />
@@ -311,7 +272,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
         </div>
         <DialogFooter>
           <Button type='submit' form='user-form'>
-            Save changes
+            Guardar cambios
           </Button>
         </DialogFooter>
       </DialogContent>

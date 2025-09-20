@@ -10,7 +10,6 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
@@ -22,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { User } from '../data/schema'
+import { User } from '../models/user'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
@@ -33,12 +32,23 @@ declare module '@tanstack/react-table' {
   }
 }
 
+interface PaginationInfo {
+  total: number
+  currentPage: number
+  totalPages: number
+  limit: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
 interface DataTableProps {
   columns: ColumnDef<User>[]
   data: User[]
+  isLoading?: boolean
+  pagination?: PaginationInfo
 }
 
-export function UsersTable({ columns, data }: DataTableProps) {
+export function UsersTable({ columns, data, isLoading = false, pagination }: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -60,10 +70,12 @@ export function UsersTable({ columns, data }: DataTableProps) {
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    // Deshabilitar paginación del cliente ya que usamos paginación del servidor
+    manualPagination: true,
+    pageCount: pagination?.totalPages || 0,
   })
 
   return (
@@ -94,7 +106,19 @@ export function UsersTable({ columns, data }: DataTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center'
+                >
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <span className="ml-2">Cargando usuarios...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -120,14 +144,14 @@ export function UsersTable({ columns, data }: DataTableProps) {
                   colSpan={columns.length}
                   className='h-24 text-center'
                 >
-                  No results.
+                  No se encontraron usuarios.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      {pagination && <DataTablePagination table={table} pagination={pagination} />}
     </div>
   )
 }
