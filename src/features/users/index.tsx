@@ -7,8 +7,16 @@ import UsersProvider from './context/users-context'
 import { useUsersFilters, useUsers } from './hooks/use-users'
 
 export default function Users() {
-  const { filters } = useUsersFilters()
+  const { filters, updateFilter } = useUsersFilters()
   const { data: usersData, isLoading, error } = useUsers(filters)
+
+  const handlePageChange = (page: number) => {
+    updateFilter('page', page)
+  }
+
+  const handleLimitChange = (limit: number) => {
+    updateFilter('limit', limit)
+  }
 
   if (error) {
     return (
@@ -48,6 +56,8 @@ export default function Users() {
             hasNextPage: usersData?.hasNextPage || false,
             hasPreviousPage: usersData?.hasPreviousPage || false,
           }}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
         />
       </PageLayout>
 

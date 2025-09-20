@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { User } from '../models/user'
-import { DataTablePagination } from './data-table-pagination'
+import { ServerPagination } from './server-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
 declare module '@tanstack/react-table' {
@@ -46,9 +46,18 @@ interface DataTableProps {
   data: User[]
   isLoading?: boolean
   pagination?: PaginationInfo
+  onPageChange?: (page: number) => void
+  onLimitChange?: (limit: number) => void
 }
 
-export function UsersTable({ columns, data, isLoading = false, pagination }: DataTableProps) {
+export function UsersTable({ 
+  columns, 
+  data, 
+  isLoading = false, 
+  pagination,
+  onPageChange,
+  onLimitChange
+}: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -151,7 +160,13 @@ export function UsersTable({ columns, data, isLoading = false, pagination }: Dat
           </TableBody>
         </Table>
       </div>
-      {pagination && <DataTablePagination table={table} pagination={pagination} />}
+      {pagination && onPageChange && onLimitChange && (
+        <ServerPagination 
+          pagination={pagination}
+          onPageChange={onPageChange}
+          onLimitChange={onLimitChange}
+        />
+      )}
     </div>
   )
 }
