@@ -51,7 +51,7 @@ export function ClienteSearch({ onClienteSelect, selectedClienteId, placeholder 
   }, [onClienteSelect])
 
   return (
-    <div className={cn("w-[300px]", className)}>
+    <div className={cn("w-full", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -72,7 +72,7 @@ export function ClienteSearch({ onClienteSelect, selectedClienteId, placeholder 
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-[300px] p-0" align="start">
           <Command>
             <CommandInput 
               placeholder="Buscar por nombre, apellido o email..."

@@ -24,6 +24,17 @@ export interface Servicio {
   TextoTarifasFull: string
 }
 
+// Interface for service charge
+export interface ServiceCharge {
+  id: string
+  nombre: string
+  porcentaje: string
+  activo: boolean
+  esGlobal: boolean
+  tipoAplicacion: string
+  montoFijo: number | null
+}
+
 // Interface for company services response
 export interface EmpresaServicios {
   empresa: string
@@ -31,6 +42,9 @@ export interface EmpresaServicios {
   success: boolean
   url: string
   id: string
+  imageUrl?: string
+  porcentajeVenta?: string
+  serviceCharge?: ServiceCharge
 }
 
 // Interface for search parameters
@@ -151,6 +165,83 @@ export async function consultarAsientos(params: {
 
   if (!response.ok) {
     throw new Error('Error al consultar asientos disponibles')
+  }
+
+  const result = await response.json()
+  return result
+}
+
+// Service to block seats for 30 minutes
+export async function bloquearAsientos(params: {
+  servicioId: string
+  origenId: string
+  destinoId: string
+  asientos: string[]
+  empresaId: string
+}) {
+  const { servicioId, origenId, destinoId, asientos, empresaId } = params
+
+  // Validate required parameters
+  if (!servicioId || !origenId || !destinoId || !empresaId) {
+    throw new Error('Los parámetros servicioId, origenId, destinoId y empresaId son requeridos')
+  }
+
+  if (!asientos || asientos.length === 0) {
+    throw new Error('Debe seleccionar al menos un asiento para bloquear')
+  }
+
+  const response = await fetch(`${API_URL}/api/ventas/bloquear-asientos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      servicioId,
+      origenId,
+      destinoId,
+      asientos,
+      empresaId,
+    }),
+  })
+
+  if (!response.ok) {
+    if (response.status === 400) {
+      throw new Error('Parámetros inválidos para bloquear asientos')
+    }
+    if (response.status === 404) {
+      throw new Error('Servicio o asientos no encontrados')
+    }
+    if (response.status === 409) {
+      throw new Error('Algunos asientos no están disponibles')
+    }
+    throw new Error('Error al bloquear asientos')
+  }
+
+  const result = await response.json()
+  return result
+}
+
+// Service to release seat block using reference code
+export async function liberarBloqueo(codigoReferencia: string) {
+  if (!codigoReferencia) {
+    throw new Error('El código de referencia es requerido')
+  }
+
+  const response = await fetch(`${API_URL}/api/ventas/liberar-bloqueo/${codigoReferencia}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Código de referencia no encontrado')
+    }
+    if (response.status === 400) {
+      throw new Error('Código de referencia inválido')
+    }
+    throw new Error('Error al liberar bloqueo de asientos')
   }
 
   const result = await response.json()

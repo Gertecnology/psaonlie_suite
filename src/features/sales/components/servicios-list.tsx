@@ -1,12 +1,9 @@
-import { useState } from 'react'
 import { Clock, MapPin, Users, DollarSign, Star, Bus } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import { SeatSelector } from './seat-selector'
-import { useGetAsientos } from '../hooks/use-get-asientos'
-import type { EmpresaServicios, Servicio, Asiento, ParadaHomologada } from '../models/sales.model'
+import type { EmpresaServicios, Servicio, ParadaHomologada } from '../models/sales.model'
 
 interface ServiciosListProps {
   data: EmpresaServicios[]
@@ -59,106 +56,118 @@ const formatPrice = (price: string) => {
 function ServicioCard({ 
   servicio, 
   empresaId, 
+  empresaNombre,
+  empresaLogo,
+  serviceCharge,
   origen, 
   destino 
 }: { 
   servicio: Servicio
   empresaId: string
+  empresaNombre: string
+  empresaLogo?: string
+  serviceCharge?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
 }) {
-  const [showSeatSelector, setShowSeatSelector] = useState(false)
-  
-  // Only fetch seats when the dialog is open and we have the required data
-  const asientosParams = showSeatSelector && origen && destino ? {
-    servicioId: servicio.Id,
-    origenId: origen.id,
-    destinoId: destino.id,
-    empresaId: empresaId,
-  } : null
+  const handleSeatSelection = () => {
+    if (!origen || !destino) return
 
-  const { data: asientosData, isLoading: isLoadingAsientos, error: asientosError } = useGetAsientos(asientosParams)
+    // Create URL with search parameters
+    const searchParams = new URLSearchParams({
+      servicioId: servicio.Id,
+      origenId: origen.id,
+      destinoId: destino.id,
+      empresaId: empresaId,
+      empresa: empresaNombre,
+      origen: origen.nombre,
+      destino: destino.nombre,
+      fecha: servicio.Fec || new Date().toISOString().split('T')[0],
+      hora: servicio.Embarque || '00:00',
+      empresaBoleto: servicio.Emp, 
+      calidad: servicio.Calidad, 
+      ...(serviceCharge && { serviceCharge }),
+    })
 
-  const handleSeatSelect = (_asiento: Asiento) => {
-    // Here you would typically handle the seat selection logic
-    // For now, we'll just close the dialog
-    setShowSeatSelector(false)
+    // Navigate to seats page
+    window.location.href = `/sales/seats?${searchParams.toString()}`
   }
 
   return (
-    <>
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bus className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-sm">{servicio.Cod}</span>
-            </div>
-            <Badge className={getCalidadColor(servicio.Calidad)}>
-              {getCalidadLabel(servicio.Calidad)}
-            </Badge>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {empresaLogo ? (
+              <img 
+                src={empresaLogo} 
+                alt={`Logo ${empresaNombre}`}
+                className="h-6 w-6 object-contain rounded"
+                onError={(e) => {
+                  // Fallback to Bus icon if image fails to load
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                }}
+              />
+            ) : null}
+            <Bus className={`h-4 w-4 text-muted-foreground ${empresaLogo ? 'hidden' : ''}`} />
+            <span className="font-medium text-sm">{empresaNombre}</span>
           </div>
-        </CardHeader>
+          <Badge className={getCalidadColor(servicio.Calidad)}>
+            {getCalidadLabel(servicio.Calidad)}
+          </Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Salida</p>
+              <p className="text-muted-foreground">{servicio.Embarque}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Llegada</p>
+              <p className="text-muted-foreground">{servicio.Desembarque}</p>
+            </div>
+          </div>
+        </div>
         
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Salida</p>
-                <p className="text-muted-foreground">{servicio.Embarque}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Llegada</p>
-                <p className="text-muted-foreground">{servicio.Desembarque}</p>
-              </div>
-            </div>
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              {servicio.Libres} asientos libres
+            </span>
           </div>
           
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">
-                {servicio.Libres} asientos libres
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="font-bold text-lg">
-                {formatPrice(servicio.Tarifa)}
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="font-bold text-lg">
+              {formatPrice(servicio.Tarifa)}
+            </span>
           </div>
-          
-          <div className="pt-2">
-            <Button 
-              className="w-full" 
-              size="sm"
-              onClick={() => setShowSeatSelector(true)}
-              disabled={!origen || !destino}
-            >
-              Seleccionar Asiento
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <SeatSelector
-        asientosData={asientosData || null}
-        isLoading={isLoadingAsientos}
-        error={asientosError}
-        onSeatSelect={handleSeatSelect}
-        onClose={() => setShowSeatSelector(false)}
-        isOpen={showSeatSelector}
-      />
-    </>
+        </div>
+        
+        <div className="pt-2">
+          <Button 
+            className="w-full" 
+            size="sm"
+            onClick={handleSeatSelection}
+            disabled={!origen || !destino}
+          >
+            Seleccionar Asiento
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -187,6 +196,9 @@ function EmpresaSection({
             key={servicio.Id} 
             servicio={servicio} 
             empresaId={empresa.id}
+            empresaNombre={empresa.empresa}
+            empresaLogo={empresa.imageUrl}
+            serviceCharge={empresa.serviceCharge?.porcentaje}
             origen={origen}
             destino={destino}
           />

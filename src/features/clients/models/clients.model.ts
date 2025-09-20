@@ -88,6 +88,24 @@ export const updateClientSchema = z.object({
   observaciones: z.string().optional(),
 })
 
+export const createClientResponseSchema = z.object({
+  cliente: clienteSchema,
+  clienteEmpresa: z.object({
+    id: z.string(),
+    cliente: z.object({}),
+    empresaId: z.string(),
+    empresaNombre: z.string(),
+    tipoDocumento: z.string(),
+    numeroDocumento: z.string(),
+    documentoCompleto: z.string(),
+    idExterno: z.string(),
+    sincronizado: z.boolean(),
+    ultimaSincronizacion: z.string(),
+    createdAt: z.string(),
+  }),
+  sincronizado: z.boolean(),
+})
+
 export type Cliente = z.infer<typeof clienteSchema>
 export type EstadisticasVentas = z.infer<typeof estadisticasVentasSchema>
 export type ClienteConEstadisticas = z.infer<typeof clienteConEstadisticasSchema>
@@ -95,3 +113,4 @@ export type ClientesListResponse = z.infer<typeof clientesListResponseSchema>
 export type ClientesSearchParams = z.infer<typeof clientesSearchParamsSchema>
 export type CreateClientFormValues = z.infer<typeof createClientSchema>
 export type UpdateClientFormValues = z.infer<typeof updateClientSchema>
+export type CreateClientResponse = z.infer<typeof createClientResponseSchema>
