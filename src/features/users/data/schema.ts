@@ -1,32 +1,41 @@
 import { z } from 'zod'
 
-const userStatusSchema = z.union([
-  z.literal('active'),
-  z.literal('inactive'),
-  z.literal('invited'),
-  z.literal('suspended'),
-])
-export type UserStatus = z.infer<typeof userStatusSchema>
-
-const userRoleSchema = z.union([
-  z.literal('superadmin'),
-  z.literal('admin'),
-  z.literal('cashier'),
-  z.literal('manager'),
-])
+const roleSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  name: z.string(),
+  description: z.string(),
+})
 
 const userSchema = z.object({
   id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  email: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  username: z.string(),
-  email: z.string(),
-  phoneNumber: z.string(),
-  status: userStatusSchema,
-  role: userRoleSchema,
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
+  urlPerfil: z.string().nullable(),
+  imagePath: z.string().nullable(),
+  isActive: z.boolean(),
+  isVerified: z.boolean(),
+  lastLoginAt: z.string().nullable(),
+  roles: z.array(roleSchema),
 })
-export type User = z.infer<typeof userSchema>
 
-export const userListSchema = z.array(userSchema)
+export type User = z.infer<typeof userSchema>
+export type Role = z.infer<typeof roleSchema>
+
+export const usersResponseSchema = z.object({
+  data: z.array(userSchema),
+  total: z.number(),
+  currentPage: z.string(),
+  totalPages: z.number(),
+  limit: z.string(),
+  hasNextPage: z.boolean(),
+  hasPreviousPage: z.boolean(),
+})
+
+export type UsersResponse = z.infer<typeof usersResponseSchema>

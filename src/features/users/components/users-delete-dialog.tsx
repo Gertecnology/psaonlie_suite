@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { User } from '../data/schema'
+import { User } from '../models/user'
 
 interface Props {
   open: boolean
@@ -19,10 +19,10 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
   const [value, setValue] = useState('')
 
   const handleDelete = () => {
-    if (value.trim() !== currentRow.username) return
+    if (value.trim() !== currentRow.email) return
 
     onOpenChange(false)
-    showSubmittedData(currentRow, 'The following user has been deleted:')
+    showSubmittedData(currentRow, 'El siguiente usuario ha sido eliminado:')
   }
 
   return (
@@ -30,47 +30,47 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={value.trim() !== currentRow.username}
+      disabled={value.trim() !== currentRow.email}
       title={
         <span className='text-destructive'>
           <IconAlertTriangle
             className='stroke-destructive mr-1 inline-block'
             size={18}
           />{' '}
-          Delete User
+          Eliminar Usuario
         </span>
       }
       desc={
         <div className='space-y-4'>
           <p className='mb-2'>
-            Are you sure you want to delete{' '}
-            <span className='font-bold'>{currentRow.username}</span>?
+            ¿Estás seguro de que quieres eliminar{' '}
+            <span className='font-bold'>{currentRow.email}</span>?
             <br />
-            This action will permanently remove the user with the role of{' '}
+            Esta acción eliminará permanentemente al usuario con los roles{' '}
             <span className='font-bold'>
-              {currentRow.role.toUpperCase()}
+              {currentRow.roles.map(role => role.name).join(', ').toUpperCase()}
             </span>{' '}
-            from the system. This cannot be undone.
+            del sistema. Esta acción no se puede deshacer.
           </p>
 
           <Label className='my-2'>
-            Username:
+            Email:
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder='Enter username to confirm deletion.'
+              placeholder='Ingresa el email para confirmar la eliminación.'
             />
           </Label>
 
           <Alert variant='destructive'>
-            <AlertTitle>Warning!</AlertTitle>
+            <AlertTitle>¡Advertencia!</AlertTitle>
             <AlertDescription>
-              Please be carefull, this operation can not be rolled back.
+              Por favor ten cuidado, esta operación no se puede revertir.
             </AlertDescription>
           </Alert>
         </div>
       }
-      confirmText='Delete'
+      confirmText='Eliminar'
       destructive
     />
   )

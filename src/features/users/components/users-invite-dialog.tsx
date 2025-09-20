@@ -24,14 +24,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { userTypes } from '../data/data'
+import { userRoles } from '../data/data'
 
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, { message: 'Email is required.' })
-    .email({ message: 'Email is invalid.' }),
-  role: z.string().min(1, { message: 'Role is required.' }),
+    .min(1, { message: 'El email es requerido.' })
+    .email({ message: 'El email no es válido.' }),
+  roleIds: z.array(z.string()).min(1, { message: 'El rol es requerido.' }),
   desc: z.string().optional(),
 })
 type UserInviteForm = z.infer<typeof formSchema>
@@ -44,7 +44,7 @@ interface Props {
 export function UsersInviteDialog({ open, onOpenChange }: Props) {
   const form = useForm<UserInviteForm>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', role: '', desc: '' },
+    defaultValues: { email: '', roleIds: [], desc: '' },
   })
 
   const onSubmit = (values: UserInviteForm) => {
@@ -64,11 +64,11 @@ export function UsersInviteDialog({ open, onOpenChange }: Props) {
       <DialogContent className='sm:max-w-md'>
         <DialogHeader className='text-left'>
           <DialogTitle className='flex items-center gap-2'>
-            <IconMailPlus /> Invite User
+            <IconMailPlus /> Invitar Usuario
           </DialogTitle>
           <DialogDescription>
-            Invite new user to join your team by sending them an email
-            invitation. Assign a role to define their access level.
+            Invita a un nuevo usuario a unirse a tu equipo enviándole una invitación por email.
+            Asigna un rol para definir su nivel de acceso.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -86,7 +86,7 @@ export function UsersInviteDialog({ open, onOpenChange }: Props) {
                   <FormControl>
                     <Input
                       type='email'
-                      placeholder='eg: john.doe@gmail.com'
+                      placeholder='ej: juan.perez@gmail.com'
                       {...field}
                     />
                   </FormControl>
@@ -96,15 +96,15 @@ export function UsersInviteDialog({ open, onOpenChange }: Props) {
             />
             <FormField
               control={form.control}
-              name='role'
+              name='roleIds'
               render={({ field }) => (
                 <FormItem className='space-y-1'>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>Rol</FormLabel>
                   <SelectDropdown
-                    defaultValue={field.value}
-                    onValueChange={field.onChange}
-                    placeholder='Select a role'
-                    items={userTypes.map(({ label, value }) => ({
+                    defaultValue={field.value?.[0] || ''}
+                    onValueChange={(value) => field.onChange([value])}
+                    placeholder='Seleccionar un rol'
+                    items={userRoles.map(({ label, value }) => ({
                       label,
                       value,
                     }))}
@@ -118,11 +118,11 @@ export function UsersInviteDialog({ open, onOpenChange }: Props) {
               name='desc'
               render={({ field }) => (
                 <FormItem className=''>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel>Descripción (opcional)</FormLabel>
                   <FormControl>
                     <Textarea
                       className='resize-none'
-                      placeholder='Add a personal note to your invitation (optional)'
+                      placeholder='Agrega una nota personal a tu invitación (opcional)'
                       {...field}
                     />
                   </FormControl>
@@ -134,10 +134,10 @@ export function UsersInviteDialog({ open, onOpenChange }: Props) {
         </Form>
         <DialogFooter className='gap-y-2'>
           <DialogClose asChild>
-            <Button variant='outline'>Cancel</Button>
+            <Button variant='outline'>Cancelar</Button>
           </DialogClose>
           <Button type='submit' form='user-invite-form'>
-            Invite <IconSend />
+            Invitar <IconSend />
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -19,8 +19,31 @@ import { UsersDialogs } from '@/features/users/components/users-dialogs'
 import { UsersPrimaryButtons } from '@/features/users/components/users-primary-buttons'
 import { UsersTable } from '@/features/users/components/users-table'
 import UsersProvider from '@/features/users/context/users-context'
-import { userListSchema } from '@/features/users/data/schema'
-import { users } from '@/features/users/data/users'
+// Datos de ejemplo para la página de demostración
+const exampleUsers = [
+  {
+    id: '1',
+    email: 'admin@example.com',
+    firstName: 'Admin',
+    lastName: 'User',
+    isActive: true,
+    isVerified: true,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    urlPerfil: null,
+    deletedAt: null,
+    imagePath: null,
+    lastLoginAt: '2024-01-01T00:00:00Z',
+    roles: [{ 
+      id: '1', 
+      name: 'admin', 
+      description: 'Administrador',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      deletedAt: null
+    }]
+  }
+]
 
 export const Route = createFileRoute('/clerk/_authenticated/user-management')({
   component: UserManagement,
@@ -42,8 +65,8 @@ function UserManagement() {
     return <Unauthorized />
   }
 
-  // Parse user list
-  const userList = userListSchema.parse(users)
+  // Usar datos de ejemplo
+  const userList = exampleUsers
   return (
     <>
       <SignedIn>
