@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
 import { useTiposDocumentoByEmpresa } from '@/features/clients/hooks/use-tipos-documento'
+import { useGetPaisesDisponibles } from '../../hooks/use-get-paises'
 import { CreateClientFormValues } from '@/features/clients/models/clients.model'
 
 const formSchema = z.object({
@@ -54,6 +55,9 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
   
   // Obtener tipos de documento para la empresa
   const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(empresaId)
+  
+  // Obtener países disponibles del API
+  const { data: paisesDisponibles, isLoading: isLoadingPaises } = useGetPaisesDisponibles(empresaId)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -175,66 +179,7 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
                 />
               </div>
 
-              {/* Segunda fila: Nacionalidad y País de residencia */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="nacionalidad"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1">
-                      <FormLabel className="text-sm">Nacionalidad <span className="text-destructive">*</span></FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 w-full">
-                            <SelectValue placeholder="Nacionalidad" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Paraguaya">Paraguaya</SelectItem>
-                          <SelectItem value="Argentina">Argentina</SelectItem>
-                          <SelectItem value="Brasileña">Brasileña</SelectItem>
-                          <SelectItem value="Uruguaya">Uruguaya</SelectItem>
-                          <SelectItem value="Chilena">Chilena</SelectItem>
-                          <SelectItem value="Boliviana">Boliviana</SelectItem>
-                          <SelectItem value="Peruana">Peruana</SelectItem>
-                          <SelectItem value="Colombiana">Colombiana</SelectItem>
-                          <SelectItem value="Venezolana">Venezolana</SelectItem>
-                          <SelectItem value="Ecuatoriana">Ecuatoriana</SelectItem>
-                          <SelectItem value="Mexicana">Mexicana</SelectItem>
-                          <SelectItem value="Estadounidense">Estadounidense</SelectItem>
-                          <SelectItem value="Española">Española</SelectItem>
-                          <SelectItem value="Italiana">Italiana</SelectItem>
-                          <SelectItem value="Alemana">Alemana</SelectItem>
-                          <SelectItem value="Otro">Otro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="paisResidencia"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1">
-                      <FormLabel className="text-sm">País de residencia <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Ej: Paraguay" 
-                          className="h-8"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Tercera fila: Tipo de documento y N° de documento */}
+              {/* Segunda fila: Tipo de documento y N° de documento */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
@@ -284,6 +229,66 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
                         <Input 
                           {...field} 
                           placeholder="Número" 
+                          className="h-8"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+
+              {/* Tercera fila: Nacionalidad y País de residencia */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="nacionalidad"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-sm">Nacionalidad <span className="text-destructive">*</span></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isLoadingPaises}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-8 w-full">
+                            <SelectValue placeholder="Nacionalidad" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isLoadingPaises ? (
+                            <SelectItem value="loading-paises" disabled>
+                              Cargando países...
+                            </SelectItem>
+                          ) : paisesDisponibles && paisesDisponibles.length > 0 ? (
+                            paisesDisponibles.map((pais) => (
+                              <SelectItem key={pais.id} value={pais.Codigo}>
+                                {pais.Descripcion}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-paises" disabled>
+                              No hay países disponibles
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="paisResidencia"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-sm">País de residencia <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Ej: Paraguay" 
                           className="h-8"
                         />
                       </FormControl>

@@ -22,6 +22,7 @@ export function SalesPage() {
   
   const [showVuelta, setShowVuelta] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [shouldSearch, setShouldSearch] = useState(false)
   const [filters, setFilters] = useState<SearchFilters>({
 
     asientosMinimos: 2,
@@ -47,11 +48,12 @@ export function SalesPage() {
     origenDestinoId: '',
     destinoDestinoId: '',
     fecha: '',
-  })
+  }, shouldSearch)
 
   const handleSearch = () => {
-    // The search is automatically triggered by the useGetServicios hook
-    // when searchParams changes
+    if (canSearch) {
+      setShouldSearch(true)
+    }
   }
 
   const handleClear = () => {
@@ -62,6 +64,7 @@ export function SalesPage() {
       fechaVuelta: null,
     })
     setShowVuelta(false)
+    setShouldSearch(false)
     setFilters({
       horaDesde: '08:00',
       horaHasta: '22:00',
@@ -118,7 +121,11 @@ export function SalesPage() {
                         mode="single"
                         selected={searchData.fechaIda || undefined}
                         onSelect={(date) => setSearchData(prev => ({ ...prev, fechaIda: date || null }))}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => {
+                          const today = new Date()
+                          today.setHours(0, 0, 0, 0)
+                          return date < today
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
@@ -270,7 +277,7 @@ export function SalesPage() {
       </Card>
 
       {/* Search Results */}
-      {canSearch && (
+      {shouldSearch && canSearch && (
         <Card>
           <CardHeader>
             <CardTitle>

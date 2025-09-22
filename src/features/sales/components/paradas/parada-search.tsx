@@ -26,7 +26,7 @@ export function ParadaSearch({
   const [searchTerm, setSearchTerm] = useState('')
   
   // Only search when user has typed at least 3 characters
-  const shouldSearch = searchTerm.length >= 3
+  const shouldSearch = searchTerm.length >= 2
   const { data: paradas = [], isLoading } = useGetParadasHomologadas(searchTerm)
 
   // Reset search when popover closes
@@ -75,14 +75,14 @@ export function ParadaSearch({
         <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput 
-              placeholder="Escribe al menos 3 caracteres..." 
+              placeholder="Escribe al menos 2 caracteres..." 
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
             <CommandList>
               {!shouldSearch && (
                 <CommandEmpty>
-                  Escribe al menos 3 caracteres para buscar
+                  Escribe al menos 2 caracteres para buscar
                 </CommandEmpty>
               )}
               
