@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { type PaginationState } from '@tanstack/react-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ServiceChargeDataTable } from '../components/data-table'
 import { columns } from '../components/columns'
-import { ServiceChargeMutateDrawer } from '../components/service-charge-mutate-drawer'
+import { ServiceChargesDialogs } from '../components/service-charges-dialogs'
+import { ServiceChargesPrimaryButtons } from '../components/service-charges-primary-buttons'
 import { useGetServiceCharges } from '../hooks/use-get-service-charges'
 
 export function ServiceChargesPage() {
@@ -12,50 +14,65 @@ export function ServiceChargesPage() {
     pageSize: 10,
   })
 
-  const { data: serviceCharges, error } = useGetServiceCharges({
+  const { data: serviceCharges, isLoading, error } = useGetServiceCharges({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
   })
 
   if (error) {
     return (
-      <div className='flex items-center justify-center p-6'>
-        <Card className='w-full max-w-md'>
-          <CardContent className='flex items-center justify-center py-12'>
-            <div className='text-center'>
-              <h3 className='text-lg font-semibold text-destructive mb-2'>
-                Error al cargar los cargos por servicio
-              </h3>
-              <p className='text-muted-foreground'>
-                {error instanceof Error ? error.message : 'Ha ocurrido un error inesperado'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Error</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive">Error al cargar los cargos por servicio</p>
+        </CardContent>
+      </Card>
     )
   }
 
-  return (
-    <div className='h-full flex flex-col'>
-      <Card className='flex-1 flex flex-col'>
+  if (isLoading) {
+    return (
+      <Card>
         <CardHeader>
-          <CardTitle>Cargos por Servicio</CardTitle>
+          <CardTitle>Cargando cargos por servicio...</CardTitle>
         </CardHeader>
-        <CardContent className='flex-1 p-0 overflow-hidden'>
-          <div className='h-full p-6'>
-            <ServiceChargeDataTable
-              columns={columns}
-              data={serviceCharges?.items || []}
-              pageCount={serviceCharges?.totalPages || 0}
-              pagination={pagination}
-              onPaginationChange={setPagination}
-            />
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
           </div>
         </CardContent>
       </Card>
+    )
+  }
 
-      <ServiceChargeMutateDrawer />
+  const items = serviceCharges?.items || []
+  const pageCount = serviceCharges?.totalPages || 0
+
+  return (
+    <div className='h-full flex flex-col'>
+      <div className='space-y-0.5 mb-6'>
+        <h1 className='text-2xl font-bold tracking-tight md:text-3xl'>
+          Cargos por Servicio
+        </h1>
+        <p className='text-muted-foreground'>
+          Gestiona los cargos por servicio del sistema, configura porcentajes y montos fijos.
+        </p>
+      </div>
+      
+      <ServiceChargeDataTable
+        data={items}
+        columns={columns}
+        pageCount={pageCount}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        actions={<ServiceChargesPrimaryButtons />}
+      />
+
+      <ServiceChargesDialogs />
     </div>
   )
 }

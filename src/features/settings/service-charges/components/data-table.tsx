@@ -33,6 +33,7 @@ interface ServiceChargeDataTableProps {
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
+  actions?: React.ReactNode
 }
 
 export function ServiceChargeDataTable({
@@ -41,6 +42,7 @@ export function ServiceChargeDataTable({
   pageCount,
   pagination,
   onPaginationChange,
+  actions,
 }: ServiceChargeDataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -78,7 +80,7 @@ export function ServiceChargeDataTable({
 
   return (
     <div className='h-full flex flex-col space-y-4'>
-      <DataTableToolbar table={table} />
+      <DataTableToolbar table={table} actions={actions} />
       <div className='flex-1 rounded-md border overflow-hidden bg-card'>
         <div className='h-full overflow-auto'>
           <Table className='w-full'>

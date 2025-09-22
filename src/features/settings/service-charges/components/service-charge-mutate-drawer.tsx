@@ -38,7 +38,7 @@ import { useUpdateServiceCharge } from '../hooks/use-update-service-charge'
 const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
   descripcion: z.string().nullable().optional(),
-  porcentaje: z.string().min(1, 'El porcentaje es requerido.').optional(),
+  porcentaje: z.string().optional(),
   activo: z.boolean(),
   esGlobal: z.boolean(),
   fechaInicio: z.string().min(1, 'La fecha de inicio es requerida.'),
@@ -47,6 +47,17 @@ const formSchema = z.object({
   montoFijo: z.number().min(0, 'El monto fijo debe ser mayor o igual a 0').optional(),
   montoMinimo: z.number().min(0, 'El monto mínimo debe ser mayor o igual a 0').optional(),
   montoMaximo: z.number().min(0, 'El monto máximo debe ser mayor o igual a 0').optional(),
+}).refine((data) => {
+  if (data.tipoAplicacion === 'PORCENTUAL') {
+    return data.porcentaje && data.porcentaje.trim() !== ''
+  }
+  if (data.tipoAplicacion === 'FIJO') {
+    return data.montoFijo !== undefined && data.montoFijo !== null
+  }
+  return true
+}, {
+  message: 'Debe completar los campos requeridos según el tipo de aplicación',
+  path: ['tipoAplicacion']
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -257,89 +268,95 @@ export function ServiceChargeMutateDrawer() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name='porcentaje'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Porcentaje</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='number'
-                      step='0.01'
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un porcentaje'
-                      onChange={(e) => field.onChange(e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {form.watch('tipoAplicacion') === 'PORCENTUAL' && (
+              <FormField
+                control={form.control}
+                name='porcentaje'
+                render={({ field }) => (
+                  <FormItem className='space-y-1'>
+                    <FormLabel>Porcentaje</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='number'
+                        step='0.01'
+                        value={field.value ?? ''}
+                        placeholder='Ingresa un porcentaje'
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            <FormField
-              control={form.control}
-              name='montoFijo'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Monto Fijo</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='number'
-                      step='0.01'
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un monto fijo'
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {form.watch('tipoAplicacion') === 'FIJO' && (
+              <>
+                <FormField
+                  control={form.control}
+                  name='montoFijo'
+                  render={({ field }) => (
+                    <FormItem className='space-y-1'>
+                      <FormLabel>Monto Fijo</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type='number'
+                          step='0.01'
+                          value={field.value ?? ''}
+                          placeholder='Ingresa un monto fijo'
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name='montoMinimo'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Monto Mínimo</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='number'
-                      step='0.01'
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un monto mínimo'
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name='montoMinimo'
+                  render={({ field }) => (
+                    <FormItem className='space-y-1'>
+                      <FormLabel>Monto Mínimo</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type='number'
+                          step='0.01'
+                          value={field.value ?? ''}
+                          placeholder='Ingresa un monto mínimo'
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name='montoMaximo'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Monto Máximo</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='number'
-                      step='0.01'
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un monto máximo'
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name='montoMaximo'
+                  render={({ field }) => (
+                    <FormItem className='space-y-1'>
+                      <FormLabel>Monto Máximo</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type='number'
+                          step='0.01'
+                          value={field.value ?? ''}
+                          placeholder='Ingresa un monto máximo'
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <div className='grid grid-cols-2 gap-4'>
               <FormField

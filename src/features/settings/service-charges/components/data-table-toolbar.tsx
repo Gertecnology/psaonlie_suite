@@ -1,19 +1,19 @@
 import { type Table } from '@tanstack/react-table'
-import { Plus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableViewOptions } from '@/features/settings/service-charges/components/data-table-view-options'
 import { DataTableFacetedFilter } from '@/features/settings/service-charges/components/data-table-faceted-filter'
-import { useServiceChargeDialog } from '@/features/settings/service-charges/store/use-service-charge-dialog'
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
+  actions?: React.ReactNode
 }
 
 export function DataTableToolbar<TData>({
   table,
+  actions,
 }: DataTableToolbarProps<TData>) {
-  const { openDialog } = useServiceChargeDialog()
   const isFiltered = table.getState().columnFilters.length > 0
 
   return (
@@ -72,14 +72,7 @@ export function DataTableToolbar<TData>({
       </div>
       <div className='flex items-center space-x-2'>
         <DataTableViewOptions table={table} />
-        <Button
-          onClick={() => openDialog('create')}
-          className='h-8'
-        >
-          <Plus className='mr-2 h-4 w-4' />
-          <span className='hidden sm:inline'>Nuevo Cargo</span>
-          <span className='sm:hidden'>Nuevo</span>
-        </Button>
+        {actions}
       </div>
     </div>
   )

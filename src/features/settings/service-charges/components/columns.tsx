@@ -81,7 +81,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
     cell: ({ row }) => {
       const porcentaje = row.getValue('porcentaje') as string
       return porcentaje ? (
-        <span className='font-mono text-sm font-medium text-blue-600'>
+        <span className='font-mono text-sm font-medium text-muted-foreground'>
           {parseFloat(porcentaje).toFixed(2)}%
         </span>
       ) : (
