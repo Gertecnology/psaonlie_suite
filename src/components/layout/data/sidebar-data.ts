@@ -1,14 +1,12 @@
 import {
   IconChecklist,
   IconLayoutDashboard,
-  //IconSettings,
- //IconTool,
- //IconUserCog,
+  IconSettings,
+  IconUserCog,
   IconBuilding,
   IconShoppingCart,
-  //IconCurrencyDollar,
+  IconCurrencyDollar,
   IconUsers,
-  IconUserCog,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -73,8 +71,8 @@ export const sidebarData: SidebarData = {
         }
       ],
     },
-    /*{
-      title: 'Otros',
+    {
+      title: 'Configuración',
       items: [
         {
           title: 'Configuración',
@@ -88,6 +86,6 @@ export const sidebarData: SidebarData = {
           ],
         },
       ],
-    },*/
+    },
   ],
 }

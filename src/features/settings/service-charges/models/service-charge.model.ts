@@ -4,19 +4,19 @@ export const serviceChargeSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, 'El nombre es requerido.'),
   descripcion: z.string().nullable().optional(),
-  porcentaje: z.number().optional(),
+  porcentaje: z.string().nullable().optional(), // El API devuelve string
   esGlobal: z.boolean(),
   activo: z.boolean(),
   empresas: z.array(z.object({
     id: z.string(),
     nombre: z.string(),
   })).nullable().optional(),
-  fechaInicio: z.string(),
-  fechaFin: z.string(),
+  fechaInicio: z.string().nullable().optional(), // Puede ser null
+  fechaFin: z.string().nullable().optional(), // Puede ser null
   tipoAplicacion: z.enum(['PORCENTUAL', 'FIJO']),
-  montoFijo: z.number().optional(),
-  montoMinimo: z.number().optional(),
-  montoMaximo: z.number().optional(),
+  montoFijo: z.number().nullable().optional(), // Puede ser null
+  montoMinimo: z.number().nullable().optional(), // Puede ser null
+  montoMaximo: z.number().nullable().optional(), // Puede ser null
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -24,8 +24,8 @@ export const serviceChargeSchema = z.object({
 export const paginatedServiceChargesSchema = z.object({
   items: z.array(serviceChargeSchema),
   total: z.number(),
-  page: z.number(),
-  limit: z.number(),
+  page: z.string(), // El API devuelve string
+  limit: z.string(), // El API devuelve string
   totalPages: z.number(),
 })
 
@@ -39,12 +39,12 @@ export const serviceChargeFormSchema = serviceChargeSchema.omit({
 export const createServiceChargeSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
   descripcion: z.string().nullable().optional(),
-  porcentaje: z.number().min(0, 'El porcentaje debe ser mayor o igual a 0').optional(),
+  porcentaje: z.string().nullable().optional(),
   activo: z.boolean(),
   esGlobal: z.boolean(),
   fechaInicio: z.string().min(1, 'La fecha de inicio es requerida.'),
   fechaFin: z.string().min(1, 'La fecha de fin es requerida.'),
-  tipoAplicacion: z.enum(['PORCENTUAL', 'FIJO', 'MIXTO']),
+  tipoAplicacion: z.enum(['PORCENTUAL', 'FIJO']),
   montoFijo: z.number().min(0, 'El monto fijo debe ser mayor o igual a 0').optional(),
   montoMinimo: z.number().min(0, 'El monto mínimo debe ser mayor o igual a 0').optional(),
   montoMaximo: z.number().min(0, 'El monto máximo debe ser mayor o igual a 0').optional(),

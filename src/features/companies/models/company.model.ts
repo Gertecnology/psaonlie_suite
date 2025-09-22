@@ -20,6 +20,15 @@ export const companySchema = z.object({
     boletosDisponibles: z.number(),
     activo: z.boolean(),
   })).nullable().optional(),
+  serviceCharge: z.object({
+    id: z.string(),
+    nombre: z.string(),
+    porcentaje: z.string().nullable().optional(),
+    activo: z.boolean(),
+    esGlobal: z.boolean(),
+    tipoAplicacion: z.enum(['PORCENTUAL', 'FIJO']),
+    montoFijo: z.number().nullable().optional(),
+  }).nullable().optional(),
 })
 
 export const paginatedCompaniesSchema = z.object({

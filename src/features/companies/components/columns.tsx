@@ -107,6 +107,64 @@ export const companyColumns: ColumnDef<Company>[] = [
     },
   },
   {
+    accessorKey: 'serviceCharge',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Cargo por Servicio' />
+    ),
+    cell: ({ row }) => {
+      const serviceCharge = row.getValue('serviceCharge') as Company['serviceCharge']
+      
+      if (!serviceCharge) {
+        return (
+          <div className="text-muted-foreground text-sm">
+            Sin cargo asignado
+          </div>
+        )
+      }
+
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <Badge 
+              variant={serviceCharge.activo ? 'default' : 'secondary'}
+              className="text-xs"
+            >
+              {serviceCharge.tipoAplicacion === 'PORCENTUAL' ? 'Porcentual' : 'Fijo'}
+            </Badge>
+            {serviceCharge.tipoAplicacion === 'PORCENTUAL' && serviceCharge.porcentaje ? (
+              <span className="font-mono text-sm font-medium text-blue-600">
+                {parseFloat(serviceCharge.porcentaje).toFixed(2)}%
+              </span>
+            ) : serviceCharge.tipoAplicacion === 'FIJO' && serviceCharge.montoFijo ? (
+              <span className="font-mono text-sm font-medium text-green-600">
+                ${serviceCharge.montoFijo.toLocaleString('es-PY')}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      )
+    },
+    filterFn: (row, id, value) => {
+      const serviceCharge = row.getValue(id) as Company['serviceCharge']
+      if (!serviceCharge) return value.includes('sin-cargo')
+      
+      if (value.includes('porcentual') && serviceCharge.tipoAplicacion === 'PORCENTUAL') {
+        return true
+      }
+      if (value.includes('fijo') && serviceCharge.tipoAplicacion === 'FIJO') {
+        return true
+      }
+      if (value.includes('activo') && serviceCharge.activo) {
+        return true
+      }
+      if (value.includes('inactivo') && !serviceCharge.activo) {
+        return true
+      }
+      
+      return false
+    },
+  },
+  {
     id: 'actions',
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },

@@ -9,21 +9,34 @@ const API_URL = import.meta.env.VITE_API_URL
 
 // Service to get service charges
 export async function getServiceCharges(
-  token: string,
   page: number = 1,
   limit: number = 10
 ): Promise<PaginatedServiceChargesResponse> {
   const response = await fetch(`${API_URL}/service-charges?page=${page}&limit=${limit}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'accept': 'application/json',
     },
   })
 
   if (!response.ok) {
     throw new Error('Error al obtener los cargos por servicio')
   }
+  
   const result = await response.json()
-  return result.data
+  
+  // La respuesta tiene la estructura: { success, statusCode, message, data }
+  if (result.success && result.data) {
+    return result.data
+  }
+  
+  // Fallback: crear una estructura válida
+  return {
+    items: [],
+    total: 0,
+    page: page.toString(),
+    limit: limit.toString(),
+    totalPages: 0,
+  }
 }
 
 // Service to create a service charge
@@ -96,4 +109,24 @@ export async function getServiceChargeById(id: string): Promise<ServiceCharge> {
   }
   const result = await response.json()
   return result.data
+}
+
+// Service to assign service charge to company
+export async function assignServiceChargeToCompany(
+  empresaId: string,
+  serviceChargeId: string
+): Promise<void> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/service-charges/empresa/${empresaId}/assign/${serviceChargeId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || 'Error al asignar el cargo por servicio a la empresa')
+  }
 }
