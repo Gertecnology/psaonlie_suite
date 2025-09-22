@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { getServiceCharges } from '../services/service-charge.service'
-import { useAuth } from '@/context/auth-context'
 
-export function useGetServiceCharges(page: number, limit: number) {
-  const { accessToken } = useAuth()
+interface UseGetServiceChargesParams {
+  page: number
+  limit: number
+}
 
+export function useGetServiceCharges({ page, limit }: UseGetServiceChargesParams) {
   return useQuery({
-    queryKey: ['service-charges', page, limit, accessToken],
-    queryFn: () => {
-      if (!accessToken) throw new Error('No hay token de acceso')
-      return getServiceCharges(accessToken, page, limit)
-    },
-    enabled: !!accessToken,
+    queryKey: ['service-charges', { page, limit }],
+    queryFn: () => getServiceCharges(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   })
 }

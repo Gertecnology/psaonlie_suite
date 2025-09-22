@@ -1,14 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ServiceChargesPage } from '@/features/settings/service-charges'
 
 export const Route = createFileRoute('/_authenticated/settings/service-charges')({
-  component: ServiceChargesPage,
+  component: RouteComponent,
 })
 
-function ServiceChargesPage() {
+function RouteComponent() {
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold">Cargos por servicio</h1>
-      <p className="text-muted-foreground">Configuración de cargos por servicio</p>
-    </div>
+      <ServiceChargesPage />
   )
 }
