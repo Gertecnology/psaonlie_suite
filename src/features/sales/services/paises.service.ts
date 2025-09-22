@@ -1,3 +1,5 @@
+const API_URL = import.meta.env.VITE_API_URL
+
 export interface PaisData {
   diffgr_id: string
   rowOrder: string
@@ -19,8 +21,8 @@ export type PaisesResponse = Array<PaisEmpresa>
 
 export async function getPaises(empresaId?: string): Promise<PaisesResponse> {
   const url = empresaId 
-    ? `https://api.pasajeonline.com.py/api/paises?empresaid=${empresaId}`
-    : 'https://api.pasajeonline.com.py/api/paises'
+    ? `${API_URL}/api/paises?empresaid=${empresaId}`
+    : `${API_URL}/api/paises`
   
   const response = await fetch(url, {
     method: 'GET',
