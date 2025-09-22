@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useServiceChargeDialog } from '../store/use-service-charge-dialog'
+import { useAssignServiceChargeDialog } from '../store/use-assign-service-charge-dialog'
 import { useDeleteServiceCharge } from '../hooks/use-delete-service-charge'
 import { type ServiceCharge } from '../models/service-charge.model'
 
@@ -18,10 +19,15 @@ interface ServiceChargeRowActionsProps {
 
 export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActionsProps) {
   const { openDialog } = useServiceChargeDialog()
+  const { openDialog: openAssignDialog } = useAssignServiceChargeDialog()
   const deleteServiceCharge = useDeleteServiceCharge()
 
   const handleEdit = () => {
     openDialog('edit', serviceCharge)
+  }
+
+  const handleAssign = () => {
+    openAssignDialog(serviceCharge.id, serviceCharge.nombre)
   }
 
   const handleDelete = () => {
@@ -65,6 +71,10 @@ export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActio
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
         <DropdownMenuItem onClick={handleEdit}>
           Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleAssign}>
+          <Building2 className='mr-2 h-4 w-4' />
+          Asignar a Empresa
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 

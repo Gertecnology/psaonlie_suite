@@ -110,3 +110,23 @@ export async function getServiceChargeById(id: string): Promise<ServiceCharge> {
   const result = await response.json()
   return result.data
 }
+
+// Service to assign service charge to company
+export async function assignServiceChargeToCompany(
+  empresaId: string,
+  serviceChargeId: string
+): Promise<void> {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${API_URL}/service-charges/empresa/${empresaId}/assign/${serviceChargeId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || 'Error al asignar el cargo por servicio a la empresa')
+  }
+}
