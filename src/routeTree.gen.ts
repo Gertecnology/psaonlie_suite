@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ClerkRouteRouteImport } from './routes/clerk/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTestNotificationsRouteImport } from './routes/_authenticated/test-notifications'
+import { Route as AuthenticatedSocketMonitorRouteImport } from './routes/_authenticated/socket-monitor'
 import { Route as errors503RouteImport } from './routes/(errors)/503'
 import { Route as errors500RouteImport } from './routes/(errors)/500'
 import { Route as errors404RouteImport } from './routes/(errors)/404'
@@ -63,6 +65,18 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTestNotificationsRoute =
+  AuthenticatedTestNotificationsRouteImport.update({
+    id: '/test-notifications',
+    path: '/test-notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSocketMonitorRoute =
+  AuthenticatedSocketMonitorRouteImport.update({
+    id: '/socket-monitor',
+    path: '/socket-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const errors503Route = errors503RouteImport.update({
   id: '/(errors)/503',
   path: '/503',
@@ -272,6 +286,8 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/socket-monitor': typeof AuthenticatedSocketMonitorRoute
+  '/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -309,6 +325,8 @@ export interface FileRoutesByTo {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/socket-monitor': typeof AuthenticatedSocketMonitorRoute
+  '/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -351,6 +369,8 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404Route
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
+  '/_authenticated/socket-monitor': typeof AuthenticatedSocketMonitorRoute
+  '/_authenticated/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -392,6 +412,8 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/socket-monitor'
+    | '/test-notifications'
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
@@ -429,6 +451,8 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/socket-monitor'
+    | '/test-notifications'
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
@@ -470,6 +494,8 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
+    | '/_authenticated/socket-monitor'
+    | '/_authenticated/test-notifications'
     | '/_authenticated/'
     | '/_authenticated/companies/$id'
     | '/_authenticated/destinations/$id'
@@ -532,6 +558,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/test-notifications': {
+      id: '/_authenticated/test-notifications'
+      path: '/test-notifications'
+      fullPath: '/test-notifications'
+      preLoaderRoute: typeof AuthenticatedTestNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/socket-monitor': {
+      id: '/_authenticated/socket-monitor'
+      path: '/socket-monitor'
+      fullPath: '/socket-monitor'
+      preLoaderRoute: typeof AuthenticatedSocketMonitorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/(errors)/503': {
@@ -817,6 +857,8 @@ const AuthenticatedSettingsRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
+  AuthenticatedSocketMonitorRoute: typeof AuthenticatedSocketMonitorRoute
+  AuthenticatedTestNotificationsRoute: typeof AuthenticatedTestNotificationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCompaniesIdRoute: typeof AuthenticatedCompaniesIdRoute
   AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
@@ -836,6 +878,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
+  AuthenticatedSocketMonitorRoute: AuthenticatedSocketMonitorRoute,
+  AuthenticatedTestNotificationsRoute: AuthenticatedTestNotificationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCompaniesIdRoute: AuthenticatedCompaniesIdRoute,
   AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
