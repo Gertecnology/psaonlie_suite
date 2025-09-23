@@ -4,7 +4,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { NotificationsIndicator } from '@/components/notifications/notifications-indicator'
+import { HeaderNotifications } from '@/components/notifications/header-notifications'
 
 interface PageLayoutProps {
   /** Título principal de la página */
@@ -48,7 +48,7 @@ export function PageLayout({
         {showSearch && <Search />}
         {showHeaderControls && (
           <div className='ml-auto flex items-center space-x-4'>
-            {showNotifications && <NotificationsIndicator />}
+            {showNotifications && <HeaderNotifications />}
             <ThemeSwitch />
             <ProfileDropdown />
           </div>

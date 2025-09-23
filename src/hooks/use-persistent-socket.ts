@@ -31,18 +31,8 @@ export function usePersistentSocket() {
       }
     }
     
-    // Si no está conectado, intentar recuperar desde sessionStorage
-    try {
-      const saved = sessionStorage.getItem(SOCKET_STATE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        console.log('Estado del socket recuperado desde sessionStorage:', parsed)
-        return parsed
-      }
-    } catch (error) {
-      console.error('Error al recuperar estado del socket:', error)
-    }
-    
+    // Si no está conectado, no usar sessionStorage para evitar estados incorrectos
+    console.log('Socket no conectado, iniciando con estado desconectado')
     return {
       isConnected: false,
       connectionError: null,
@@ -50,10 +40,15 @@ export function usePersistentSocket() {
     }
   })
 
-  // Guardar estado en sessionStorage cuando cambie
+  // Guardar estado en sessionStorage cuando cambie (solo si está conectado)
   useEffect(() => {
     try {
-      sessionStorage.setItem(SOCKET_STATE_KEY, JSON.stringify(socketState))
+      if (socketState.isConnected) {
+        sessionStorage.setItem(SOCKET_STATE_KEY, JSON.stringify(socketState))
+      } else {
+        // Si no está conectado, limpiar el sessionStorage
+        sessionStorage.removeItem(SOCKET_STATE_KEY)
+      }
     } catch (error) {
       console.error('Error al guardar estado del socket:', error)
     }
@@ -86,6 +81,7 @@ export function usePersistentSocket() {
     socketService.disconnect()
     updateConnectionState(false)
   }, [updateConnectionState])
+
 
   // Sincronizar estado al montar el hook
   useEffect(() => {
@@ -121,27 +117,38 @@ export function usePersistentSocket() {
     const checkConnection = () => {
       const actualConnected = socketService.isConnected()
       const actualSocketId = socketService.getSocket()?.id || null
+      const isHealthy = socketService.isConnectionHealthy()
       
       setSocketState(prev => {
-        // Solo actualizar si hay cambios reales
-        if (actualConnected !== prev.isConnected || actualSocketId !== prev.socketId) {
+        // Solo actualizar si hay cambios reales o la conexión no está saludable
+        if (actualConnected !== prev.isConnected || actualSocketId !== prev.socketId || !isHealthy) {
           console.log('Estado del socket actualizado:', { 
             isConnected: actualConnected, 
-            socketId: actualSocketId 
+            socketId: actualSocketId,
+            isHealthy
           })
+          
+          // Si la conexión no está saludable pero debería estar conectada, intentar reconectar
+          if (!isHealthy && actualConnected) {
+            console.log('Conexión no saludable, intentando reconectar...')
+            socketService.ensureConnection().catch(error => {
+              console.error('Error al verificar conexión:', error)
+            })
+          }
+          
           return {
             ...prev,
-            isConnected: actualConnected,
+            isConnected: actualConnected && isHealthy,
             socketId: actualSocketId,
-            connectionError: actualConnected ? null : prev.connectionError
+            connectionError: (actualConnected && isHealthy) ? null : prev.connectionError
           }
         }
         return prev // No hay cambios, devolver el estado anterior
       })
     }
 
-    // Verificar cada 5 segundos
-    const interval = setInterval(checkConnection, 5000)
+    // Verificar cada 10 segundos (menos frecuente para evitar spam)
+    const interval = setInterval(checkConnection, 10000)
 
     return () => clearInterval(interval)
   }, []) // Sin dependencias para evitar bucles infinitos
@@ -154,6 +161,10 @@ export function usePersistentSocket() {
     addListener: socketService.addListener.bind(socketService),
     removeListener: socketService.removeListener.bind(socketService),
     emit: socketService.emit.bind(socketService),
-    refreshToken: socketService.refreshToken.bind(socketService)
+    refreshToken: socketService.refreshToken.bind(socketService),
+    keepAlive: socketService.keepAlive.bind(socketService),
+    ensureConnection: socketService.ensureConnection.bind(socketService),
+    isConnectionHealthy: socketService.isConnectionHealthy.bind(socketService),
+    forceReconnect: socketService.forceReconnect.bind(socketService)
   }
 }

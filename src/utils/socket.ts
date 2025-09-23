@@ -26,6 +26,8 @@ class SocketService {
       return this.connectionPromise
     }
 
+    // Resetear intentos de reconexión al conectar manualmente
+    this.reconnectAttempts = 0
     this.isConnecting = true
     this.connectionPromise = new Promise((resolve, reject) => {
       const initializeConnection = async () => {
@@ -79,9 +81,13 @@ class SocketService {
         console.log('Socket desconectado:', reason)
         this.isConnecting = false
         this.connectionPromise = null
+        
         // Solo reconectar si no fue una desconexión intencional
-        if (reason !== 'io client disconnect') {
+        if (reason !== 'io client disconnect' && reason !== 'io server disconnect') {
+          console.log('Iniciando reconexión automática por desconexión inesperada')
           this.handleReconnect()
+        } else {
+          console.log('Desconexión intencional, no reconectando automáticamente')
         }
       })
 
@@ -215,6 +221,8 @@ class SocketService {
       this.reconnectAttempts++
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
       
+      console.log(`Programando reconexión en ${delay}ms (intento ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+      
       setTimeout(async () => {
         // Verificar nuevamente antes de reconectar
         if (this.socket?.connected) {
@@ -224,25 +232,37 @@ class SocketService {
 
         console.log(`Intentando reconectar Socket (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
         
-        // Intentar refrescar el token primero
-        const tokenRefreshed = await this.refreshTokenAndReconnect()
-        
-        if (!tokenRefreshed) {
-          // Si no se pudo refrescar, usar el token actual
-          const token = localStorage.getItem('accessToken')
-          if (token) {
-            try {
+        try {
+          // Intentar refrescar el token primero
+          const tokenRefreshed = await this.refreshTokenAndReconnect()
+          
+          if (!tokenRefreshed) {
+            // Si no se pudo refrescar, usar el token actual
+            const token = localStorage.getItem('accessToken')
+            if (token) {
+              console.log('Usando token actual para reconexión')
               await this.connect(token)
-            } catch (error) {
-              console.error('Error en reconexión:', error)
+            } else {
+              console.error('No hay token disponible para reconectar')
+              // Resetear intentos para permitir más intentos cuando haya token
+              this.reconnectAttempts = 0
             }
-          } else {
-            console.error('No hay token disponible para reconectar')
+          }
+        } catch (error) {
+          console.error('Error en reconexión:', error)
+          // Si falla, programar otro intento
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.handleReconnect()
           }
         }
       }, delay)
     } else {
-      console.error('Máximo número de intentos de reconexión alcanzado')
+      console.error('Máximo número de intentos de reconexión alcanzado, reintentando en 30 segundos...')
+      // Resetear intentos después de un tiempo para permitir reconexión futura
+      setTimeout(() => {
+        this.reconnectAttempts = 0
+        console.log('Reiniciando intentos de reconexión')
+      }, 30000)
     }
   }
 
@@ -314,6 +334,81 @@ class SocketService {
       this.socket.emit(event, data)
     }
   }
+
+  // Método para mantener la conexión activa
+  keepAlive() {
+    if (this.socket && this.socket.connected) {
+      // Enviar un ping para mantener la conexión activa
+      this.socket.emit('ping')
+      console.log('Ping enviado para mantener conexión activa')
+    } else {
+      console.log('Socket no conectado, no se puede enviar ping')
+    }
+  }
+
+  // Método para verificar y reconectar si es necesario
+  async ensureConnection(): Promise<boolean> {
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      console.log('No hay token disponible para conexión')
+      return false
+    }
+
+    if (this.socket?.connected) {
+      console.log('Socket ya está conectado')
+      return true
+    }
+
+    try {
+      console.log('Verificando conexión, reconectando si es necesario...')
+      await this.connect(token)
+      return true
+    } catch (error) {
+      console.error('Error al verificar/conectar socket:', error)
+      return false
+    }
+  }
+
+  // Método para verificar el estado de la conexión
+  isConnectionHealthy(): boolean {
+    if (!this.socket) {
+      return false
+    }
+    
+    // Verificar si el socket está conectado y no hay errores recientes
+    return this.socket.connected && !this.socket.disconnected
+  }
+
+  // Método para forzar reconexión
+  async forceReconnect(): Promise<boolean> {
+    console.log('Forzando reconexión del socket...')
+    
+    // Desconectar primero si hay una conexión existente
+    if (this.socket) {
+      this.socket.disconnect()
+      this.socket = null
+    }
+    
+    // Resetear estado
+    this.isConnecting = false
+    this.connectionPromise = null
+    this.reconnectAttempts = 0
+    
+    // Intentar conectar nuevamente
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      console.error('No hay token disponible para reconexión forzada')
+      return false
+    }
+    
+    try {
+      await this.connect(token)
+      return true
+    } catch (error) {
+      console.error('Error en reconexión forzada:', error)
+      return false
+    }
+  }
 }
 
 export const socketService = new SocketService()
@@ -343,6 +438,10 @@ export const useSocket = () => {
     removeListener: socketService.removeListener.bind(socketService),
     emit: socketService.emit.bind(socketService),
     off: socketService.off.bind(socketService),
-    refreshToken: socketService.refreshToken.bind(socketService)
+    refreshToken: socketService.refreshToken.bind(socketService),
+    keepAlive: socketService.keepAlive.bind(socketService),
+    ensureConnection: socketService.ensureConnection.bind(socketService),
+    isConnectionHealthy: socketService.isConnectionHealthy.bind(socketService),
+    forceReconnect: socketService.forceReconnect.bind(socketService)
   }
 }

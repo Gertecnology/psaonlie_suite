@@ -1,15 +1,106 @@
+/* eslint-disable no-console */
 import { useNotifications } from '@/context/notifications-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Wifi, WifiOff, RefreshCw } from 'lucide-react'
+import { Wifi, WifiOff, RefreshCw, TestTube, Database } from 'lucide-react'
+import { usePersistentSocket } from '@/hooks/use-persistent-socket'
+import { useNotificationsApi } from '@/hooks/use-notifications-api'
 
 export function NotificationsTest() {
-  const { notifications, unreadCount, isConnected, connectionError, markAsRead, removeNotification, clearAll } = useNotifications()
+  const { notifications, unreadCount, isConnected, connectionError, markAsRead, removeNotification, clearAll, reconnect, forceReconnect: contextForceReconnect } = useNotifications()
+  const { ensureConnection, forceReconnect, isConnectionHealthy, keepAlive } = usePersistentSocket()
+  
+  // Hook directo de la API para pruebas
+  const {
+    unreadCount: apiUnreadCount,
+    notifications: apiNotifications,
+    isLoading: apiLoading,
+    error: apiError,
+    refreshUnreadCount,
+    refreshNotifications,
+    markAsRead: apiMarkAsRead,
+    markAllAsRead: apiMarkAllAsRead,
+    clearError
+  } = useNotificationsApi()
 
-  const handleReconnect = () => {
-    // El hook maneja la reconexión automáticamente
-    window.location.reload()
+  const handleReconnect = async () => {
+    console.log('Iniciando reconexión manual...')
+    await reconnect()
+  }
+
+  const handleForceReconnect = async () => {
+    console.log('Iniciando reconexión forzada...')
+    const success = await forceReconnect()
+    if (success) {
+      console.log('Reconexión forzada exitosa')
+    } else {
+      console.error('Reconexión forzada falló')
+    }
+  }
+
+  const handleContextForceReconnect = async () => {
+    console.log('Iniciando reconexión forzada desde contexto...')
+    await contextForceReconnect()
+  }
+
+  const handleEnsureConnection = async () => {
+    console.log('Verificando conexión...')
+    const success = await ensureConnection()
+    if (success) {
+      console.log('Conexión verificada exitosamente')
+    } else {
+      console.error('No se pudo verificar la conexión')
+    }
+  }
+
+  const handleKeepAlive = () => {
+    console.log('Enviando ping para mantener conexión activa...')
+    keepAlive()
+  }
+
+  const handleTestNotification = () => {
+    // Simular una notificación de prueba
+    const testNotification = {
+      id: `test-${Date.now()}`,
+      title: 'Notificación de Prueba',
+      message: 'Esta es una notificación de prueba para verificar el flujo',
+      type: 'SISTEMA' as const,
+      priority: 'MEDIUM' as const,
+      data: {
+        empresaNombre: 'Sistema de Pruebas',
+        motivo: 'Prueba de notificaciones'
+      },
+      createdAt: new Date().toISOString(),
+      isRead: false
+    }
+    
+    // Agregar directamente a las notificaciones para probar
+    console.log('Agregando notificación de prueba:', testNotification)
+    // Esto simularía lo que haría el socket
+  }
+
+  const handleRefreshApiData = async () => {
+    console.log('Actualizando datos de la API...')
+    await Promise.all([
+      refreshUnreadCount(),
+      refreshNotifications()
+    ])
+  }
+
+  const handleTestApiMarkAsRead = async () => {
+    if (apiNotifications.length > 0) {
+      const firstNotification = apiNotifications[0]
+      console.log('Probando marcar como leída desde API:', firstNotification.id)
+      await apiMarkAsRead(firstNotification.id)
+    } else {
+      console.log('No hay notificaciones para probar')
+    }
+  }
+
+  const handleTestApiMarkAllAsRead = async () => {
+    console.log('Probando marcar todas como leídas desde API...')
+    await apiMarkAllAsRead()
   }
 
   return (
@@ -83,18 +174,106 @@ export function NotificationsTest() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-medium">Notificaciones no leídas:</span>
+                <span className="font-medium">Notificaciones no leídas (Contexto):</span>
                 <Badge variant="secondary">
                   {unreadCount}
                 </Badge>
               </div>
 
-              {!isConnected && (
-                <Button onClick={handleReconnect} className="w-fit">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Notificaciones no leídas (API):</span>
+                <Badge variant="secondary">
+                  {apiUnreadCount}
+                </Badge>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Conexión saludable:</span>
+                {isConnectionHealthy() ? (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    Sí
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">
+                    No
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Estado API:</span>
+                {apiLoading ? (
+                  <Badge variant="secondary">
+                    Cargando...
+                  </Badge>
+                ) : apiError ? (
+                  <Badge variant="destructive">
+                    Error: {apiError}
+                  </Badge>
+                ) : (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    OK
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                {!isConnected && (
+                  <Button onClick={handleReconnect} className="w-fit">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Reconectar
+                  </Button>
+                )}
+                
+                <Button onClick={handleForceReconnect} variant="outline" className="w-fit">
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Reconectar
+                  Forzar Reconexión
                 </Button>
-              )}
+                
+                <Button onClick={handleContextForceReconnect} variant="outline" className="w-fit">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Forzar Reconexión (Contexto)
+                </Button>
+                
+                <Button onClick={handleEnsureConnection} variant="outline" className="w-fit">
+                  <Wifi className="w-4 h-4 mr-2" />
+                  Verificar Conexión
+                </Button>
+                
+                <Button onClick={handleKeepAlive} variant="outline" className="w-fit">
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Ping
+                </Button>
+                
+                <Button onClick={handleTestNotification} variant="outline" className="w-fit">
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Test Notificación
+                </Button>
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={handleRefreshApiData} variant="outline" className="w-fit">
+                  <Database className="w-4 h-4 mr-2" />
+                  Actualizar API
+                </Button>
+                
+                <Button onClick={handleTestApiMarkAsRead} variant="outline" className="w-fit">
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Test Marcar Leída
+                </Button>
+                
+                <Button onClick={handleTestApiMarkAllAsRead} variant="outline" className="w-fit">
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Test Marcar Todas
+                </Button>
+                
+                {apiError && (
+                  <Button onClick={clearError} variant="outline" className="w-fit">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Limpiar Error
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
