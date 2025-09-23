@@ -16,6 +16,7 @@ import './index.css'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
 import { AuthProvider } from './context/auth-context'
+import { NotificationsProvider } from './context/notifications-context'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,7 +94,9 @@ if (!rootElement.innerHTML) {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>
             <FontProvider>
-              <RouterProvider router={router} />
+              <NotificationsProvider>
+                <RouterProvider router={router} />
+              </NotificationsProvider>
             </FontProvider>
           </ThemeProvider>
         </QueryClientProvider>

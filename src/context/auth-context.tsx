@@ -61,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    // Limpiar estado de inicialización del socket
+    sessionStorage.removeItem('socket-initialized');
+    sessionStorage.removeItem('socket-state');
   };
 
   return (

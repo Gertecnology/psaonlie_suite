@@ -4,6 +4,7 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { HeaderNotifications } from '@/components/notifications/header-notifications'
 
 interface PageLayoutProps {
   /** Título principal de la página */
@@ -24,6 +25,8 @@ interface PageLayoutProps {
   showSearch?: boolean
   /** Si mostrar los controles del header (search, theme, profile) */
   showHeaderControls?: boolean
+  /** Si mostrar el indicador de notificaciones */
+  showNotifications?: boolean
 }
 
 export function PageLayout({
@@ -36,6 +39,7 @@ export function PageLayout({
   className = '',
   showSearch = true,
   showHeaderControls = true,
+  showNotifications = true,
 }: PageLayoutProps) {
   return (
     <>
@@ -44,6 +48,7 @@ export function PageLayout({
         {showSearch && <Search />}
         {showHeaderControls && (
           <div className='ml-auto flex items-center space-x-4'>
+            {showNotifications && <HeaderNotifications />}
             <ThemeSwitch />
             <ProfileDropdown />
           </div>
