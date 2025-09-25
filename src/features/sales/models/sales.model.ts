@@ -1,4 +1,5 @@
-import { ParadaHomologada } from '../services/sales.service'
+import { ParadaHomologada, Servicio, ServiceCharge } from '../services/sales.service'
+import { VentaExitosa } from '../services/confirmar-venta'
 
 // Re-export types from service for consistency
 export type {
@@ -8,6 +9,11 @@ export type {
   ServiciosSearchParams,
   ServiceCharge
 } from '../services/sales.service'
+
+// Re-export types from confirmar-venta service
+export type {
+  VentaExitosa
+} from '../services/confirmar-venta'
 
 // Additional types for the sales page
 export interface SearchFormData {
@@ -106,4 +112,49 @@ export interface LiberarBloqueoRequest {
 export interface LiberarBloqueoResponse {
   exitoso: boolean
   mensaje: string
+}
+
+// Round Trip Types
+export interface TripData {
+  origen?: ParadaHomologada | null
+  destino?: ParadaHomologada | null
+  fecha?: Date | null
+  servicio?: Servicio
+  empresaId?: string // UUID de la empresa
+  serviceCharge?: ServiceCharge // Cargo por servicio de la empresa
+  asientos?: Asiento[]
+  codigoReferencia?: string
+  ventaConfirmada?: VentaExitosa
+}
+
+export interface RoundTripSearchData {
+  ida: TripData
+  vuelta?: TripData
+}
+
+export type RoundTripStep = 'search' | 'ida-seats' | 'servicios-vuelta' | 'vuelta-seats' | 'checkout' | 'payment'
+
+export interface RoundTripContextType {
+  roundTripData: RoundTripSearchData
+  currentStep: RoundTripStep
+  setRoundTripData: (data: Partial<RoundTripSearchData>) => void
+  setCurrentStep: (step: RoundTripStep) => void
+  resetRoundTrip: () => void
+}
+
+// Extended client form values for checkout
+export type ClientWithSeat = {
+  seatNumber?: number
+  tripType?: 'ida' | 'vuelta'
+  tripLabel?: string
+  passengerNumber?: number
+} & {
+  nombre: string
+  apellido: string
+  numeroDocumento?: string
+  telefono?: string
+  email: string
+  fechaNacimiento?: string
+  nacionalidad?: string
+  empresaId?: string
 }

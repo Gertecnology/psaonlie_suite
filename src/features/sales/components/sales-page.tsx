@@ -10,21 +10,23 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ParadaSearch } from './paradas/parada-search'
 import { ServiciosList } from './servicios-list'
 import { useGetServicios } from '../hooks/use-get-servicios'
+import { useRoundTrip } from '../context/round-trip-context'
 import type { SearchFormData, SearchFilters } from '../models/sales.model'
 
 export function SalesPage() {
+  const { roundTripData, setRoundTripData } = useRoundTrip()
+  
   const [searchData, setSearchData] = useState<SearchFormData>({
-    origen: null,
-    destino: null,
-    fechaIda: null,
-    fechaVuelta: null,
+    origen: roundTripData.ida.origen || null,
+    destino: roundTripData.ida.destino || null,
+    fechaIda: roundTripData.ida.fecha || null,
+    fechaVuelta: roundTripData.vuelta?.fecha || null,
   })
   
-  const [showVuelta, setShowVuelta] = useState(false)
+  const [showVuelta, setShowVuelta] = useState(!!roundTripData.vuelta?.fecha)
   const [showFilters, setShowFilters] = useState(false)
   const [shouldSearch, setShouldSearch] = useState(false)
   const [filters, setFilters] = useState<SearchFilters>({
-
     asientosMinimos: 2,
   })
 
@@ -52,6 +54,19 @@ export function SalesPage() {
 
   const handleSearch = () => {
     if (canSearch) {
+      // Guardar datos en el contexto
+      setRoundTripData({
+        ida: {
+          origen: searchData.origen,
+          destino: searchData.destino,
+          fecha: searchData.fechaIda
+        },
+        vuelta: showVuelta && searchData.fechaVuelta ? {
+          origen: searchData.destino, // Invertir origen y destino para vuelta
+          destino: searchData.origen,
+          fecha: searchData.fechaVuelta
+        } : undefined
+      })
       setShouldSearch(true)
     }
   }
@@ -70,6 +85,25 @@ export function SalesPage() {
       horaHasta: '22:00',
       asientosMinimos: 2,
     })
+    // Limpiar también el contexto
+    setRoundTripData({
+      ida: {
+        origen: null,
+        destino: null,
+        fecha: null
+      }
+    })
+  }
+
+  const handleVueltaToggle = (checked: boolean) => {
+    setShowVuelta(checked)
+    if (checked && searchData.origen && searchData.destino) {
+      // Invertir origen y destino para la vuelta
+      setSearchData(prev => ({
+        ...prev,
+        fechaVuelta: null // Reset fecha de vuelta cuando se activa
+      }))
+    }
   }
 
   const canSearch = searchData.origen && searchData.destino && searchData.fechaIda
@@ -203,7 +237,7 @@ export function SalesPage() {
               <Checkbox
                 id="vuelta"
                 checked={showVuelta}
-                onCheckedChange={(checked) => setShowVuelta(checked === true)}
+                onCheckedChange={handleVueltaToggle}
               />
               <label htmlFor="vuelta" className="text-sm font-medium">
                 Incluir vuelta

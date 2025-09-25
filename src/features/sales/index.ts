@@ -3,6 +3,16 @@ export { SalesPage } from './components/sales-page'
 export { DateFilters } from './components/date-filters'
 export { ServiciosList } from './components/servicios-list'
 
+// Round Trip Components
+export { RoundTripFlow } from './components/round-trip-flow'
+export { RoundTripStepper } from './components/round-trip-stepper'
+export { RoundTripSeatSelectionPage } from './components/asientos/round-trip-seat-selection-page'
+export { RoundTripCheckoutPage } from './components/checkout/round-trip-checkout-page'
+export { RoundTripPaymentPage } from './components/payment/round-trip-payment-page'
+
+// Context
+export { RoundTripProvider, useRoundTrip } from './context/round-trip-context'
+
 // Paradas components
 export * from './components/paradas'
 
@@ -48,5 +58,11 @@ export type {
   BloquearAsientosRequest,
   BloquearAsientosResponse,
   LiberarBloqueoRequest,
-  LiberarBloqueoResponse
+  LiberarBloqueoResponse,
+  // Round Trip Types
+  TripData,
+  RoundTripSearchData,
+  RoundTripStep,
+  RoundTripContextType,
+  ClientWithSeat
 } from './models/sales.model'
