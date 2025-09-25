@@ -89,6 +89,20 @@ export const useToggleUserStatus = () => {
   })
 }
 
+// Hook para resetear la contraseña de un usuario
+export const useResetUserPassword = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) => 
+      usersService.resetUserPassword(id, newPassword),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['user', variables.id] })
+    },
+  })
+}
+
 // Hook para manejar filtros y paginación
 export const useUsersFilters = () => {
   const [filters, setFilters] = useState<UsersQueryParams>({

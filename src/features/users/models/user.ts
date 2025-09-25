@@ -46,8 +46,8 @@ export interface UpdateUserRequest {
   firstName?: string
   lastName?: string
   roleIds?: string[]
-  profileImage?: File
   isActive?: boolean
+  isVerified?: boolean
 }
 
 export interface UsersQueryParams {

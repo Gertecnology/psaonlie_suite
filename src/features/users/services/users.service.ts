@@ -211,31 +211,40 @@ class UsersService {
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
-    const formData = new FormData()
+    // Según la API, solo se pueden actualizar estos campos específicos
+    const updateData: Record<string, unknown> = {}
     
     if (userData.firstName) {
-      formData.append('firstName', userData.firstName)
+      updateData.firstName = userData.firstName
     }
     
     if (userData.lastName) {
-      formData.append('lastName', userData.lastName)
+      updateData.lastName = userData.lastName
     }
     
     if (userData.roleIds && userData.roleIds.length > 0) {
-      userData.roleIds.forEach(roleId => {
-        formData.append('roleIds', roleId)
-      })
-    }
-    
-    if (userData.profileImage) {
-      formData.append('profileImage', userData.profileImage)
+      updateData.roleIds = userData.roleIds
     }
     
     if (userData.isActive !== undefined) {
-      formData.append('isActive', String(userData.isActive))
+      updateData.isActive = userData.isActive
     }
 
-    return this.requestWithFormData<User>(`/api/usuarios/${id}`, formData, 'PUT')
+    if (userData.isVerified !== undefined) {
+      updateData.isVerified = userData.isVerified
+    }
+
+    return this.request<User>(`/api/usuarios/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    })
+  }
+
+  async resetUserPassword(id: string, newPassword: string): Promise<{message: string}> {
+    return this.request<{message: string}>(`/api/usuarios/${id}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    })
   }
 
   async deleteUser(id: string): Promise<void> {

@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
+import { Switch } from '@/components/ui/switch'
 import {
   Sheet,
   SheetClose,
@@ -25,7 +26,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { useRoles, useCreateUser, useUpdateUser } from '../hooks/use-users'
+import { useRoles, useCreateUser, useUpdateUser, useResetUserPassword } from '../hooks/use-users'
 import { User } from '../models/user'
 
 const formSchema = z
@@ -40,6 +41,8 @@ const formSchema = z
     roleIds: z.array(z.string()).optional(),
     confirmPassword: z.string().transform((pwd) => pwd.trim()),
     profileImage: z.instanceof(File).optional(),
+    isActive: z.boolean(),
+    isVerified: z.boolean(),
     isEdit: z.boolean(),
   })
   .superRefine(({ isEdit, password, confirmPassword }, ctx) => {
@@ -100,10 +103,15 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
   const { data: roles, isLoading: rolesLoading } = useRoles()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
+  const resetPassword = useResetUserPassword()
   
   // Estado para previsualización de la imagen de perfil
   const [profilePreview, setProfilePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  
+  // Estado para el modal de resetear contraseña
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
   
   const form = useForm<UserForm>({
     resolver: zodResolver(formSchema),
@@ -115,6 +123,8 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
       confirmPassword: '',
       roleIds: [],
       profileImage: undefined,
+      isActive: true,
+      isVerified: false,
       isEdit,
     },
   })
@@ -130,6 +140,8 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           confirmPassword: '',
           roleIds: currentRow.roles?.map(role => role.id) || [],
           profileImage: undefined,
+          isActive: currentRow.isActive,
+          isVerified: currentRow.isVerified,
           isEdit,
         })
         // Establecer el preview con la URL de la imagen de perfil
@@ -143,6 +155,8 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           confirmPassword: '',
           roleIds: [],
           profileImage: undefined,
+          isActive: true,
+          isVerified: false,
           isEdit,
         })
         setProfilePreview(null)
@@ -172,10 +186,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
       updateUser.mutate(
         { 
           id: currentRow.id, 
-          userData: {
-            ...updateData,
-            profileImage: profileImage || undefined,
-          }
+          userData: updateData
         },
         {
           onSuccess: () => {
@@ -200,7 +211,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
         }
       )
     } else {
-      const { confirmPassword, isEdit, ...createData } = values
+      const { confirmPassword, isEdit, isActive, isVerified, ...createData } = values
       
       // Asegurar que roleIds no esté vacío
       const finalCreateData = {
@@ -236,6 +247,40 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
         },
       })
     }
+  }
+
+  const handleResetPassword = () => {
+    if (!currentRow?.id || !newPassword.trim()) return
+
+    resetPassword.mutate(
+      { id: currentRow.id, newPassword: newPassword.trim() },
+      {
+        onSuccess: () => {
+          setShowResetPassword(false)
+          setNewPassword('')
+          import('sonner').then(({ toast }) => {
+            toast.success('Contraseña reseteada', {
+              description: 'La contraseña ha sido reseteada exitosamente.',
+              duration: 3000,
+            })
+          })
+        },
+        onError: (error: unknown) => {
+          import('sonner').then(({ toast }) => {
+            let message = 'Ha ocurrido un error al resetear la contraseña.'
+            if (error instanceof Error) {
+              message = error.message
+            } else if (typeof error === 'string') {
+              message = error
+            }
+            toast.error('Error al resetear', {
+              description: message,
+              duration: 3000,
+            })
+          })
+        },
+      }
+    )
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -391,6 +436,60 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                 </FormItem>
               )}
             />
+            {isEdit && (
+              <>
+                <FormField
+                  control={form.control}
+                  name='isActive'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm'>
+                      <div className='space-y-0.5'>
+                        <FormLabel>Activo</FormLabel>
+                        <div className='text-sm text-muted-foreground'>
+                          Indica si el usuario está activo.
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='isVerified'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm'>
+                      <div className='space-y-0.5'>
+                        <FormLabel>Verificado</FormLabel>
+                        <div className='text-sm text-muted-foreground'>
+                          Indica si el usuario está verificado.
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <div className='flex justify-end'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setShowResetPassword(true)}
+                    className='text-orange-600 hover:text-orange-700'
+                  >
+                    Resetear Contraseña
+                  </Button>
+                </div>
+              </>
+            )}
           </form>
         </Form>
         <SheetFooter className='gap-2'>
@@ -408,6 +507,43 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           </Button>
         </SheetFooter>
       </SheetContent>
+      
+      {/* Modal para resetear contraseña */}
+      {showResetPassword && (
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+          <div className='bg-background p-6 rounded-lg shadow-lg w-96'>
+            <h3 className='text-lg font-semibold mb-4'>Resetear Contraseña</h3>
+            <p className='text-sm text-muted-foreground mb-4'>
+              Ingresa la nueva contraseña para {currentRow?.email}
+            </p>
+            <Input
+              type='password'
+              placeholder='Nueva contraseña'
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className='mb-4'
+            />
+            <div className='flex justify-end gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setShowResetPassword(false)
+                  setNewPassword('')
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleResetPassword}
+                disabled={!newPassword.trim() || resetPassword.isPending}
+                className='bg-orange-600 hover:bg-orange-700'
+              >
+                {resetPassword.isPending ? 'Reseteando...' : 'Resetear'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sheet>
   )
 }
