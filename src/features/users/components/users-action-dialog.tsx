@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { userRoles } from '../data/data'
+import { useRoles } from '../hooks/use-users'
 import { User } from '../models/user'
 
 const formSchema = z
@@ -93,6 +93,8 @@ interface Props {
 
 export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
   const isEdit = !!currentRow
+  const { data: roles, isLoading: rolesLoading } = useRoles()
+  
   const form = useForm<UserForm>({
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
@@ -217,12 +219,13 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
                     <SelectDropdown
                       defaultValue={field.value?.[0] || ''}
                       onValueChange={(value) => field.onChange([value])}
-                      placeholder='Seleccionar un rol'
+                      placeholder={rolesLoading ? 'Cargando roles...' : 'Seleccionar un rol'}
+                      disabled={rolesLoading}
                       className='col-span-4'
-                      items={userRoles.map(({ label, value }) => ({
-                        label,
-                        value,
-                      }))}
+                      items={roles?.map((role) => ({
+                        label: role.name,
+                        value: role.id,
+                      })) || []}
                     />
                     <FormMessage className='col-span-4 col-start-3' />
                   </FormItem>

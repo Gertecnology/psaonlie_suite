@@ -3,11 +3,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersService } from '../services/users.service'
 import { 
   User, 
+  Role,
   UsersResponse, 
   CreateUserRequest, 
   UpdateUserRequest, 
   UsersQueryParams 
 } from '../models/user'
+
+// Hook para obtener la lista de roles
+export const useRoles = () => {
+  return useQuery<Role[]>({
+    queryKey: ['roles'],
+    queryFn: () => usersService.getRoles(),
+    staleTime: 10 * 60 * 1000, // 10 minutos (los roles cambian menos frecuentemente)
+  })
+}
 
 // Hook para obtener la lista de usuarios
 export const useUsers = (params: UsersQueryParams = {}) => {

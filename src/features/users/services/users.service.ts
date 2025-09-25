@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { 
   User, 
+  Role,
   UsersResponse, 
   CreateUserRequest, 
   UpdateUserRequest, 
@@ -214,6 +215,19 @@ class UsersService {
 
   async toggleUserStatus(id: string, isActive: boolean): Promise<User> {
     return this.updateUser(id, { isActive })
+  }
+
+  /**
+   * Obtener todos los roles disponibles
+   */
+  async getRoles(): Promise<Role[]> {
+    try {
+      const roles = await this.request<Role[]>('/api/roles')
+      return roles
+    } catch (error) {
+      console.error('Error al obtener roles:', error)
+      throw error
+    }
   }
 }
 
