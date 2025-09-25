@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { 
   User, 
+  Role,
   UsersResponse, 
   CreateUserRequest, 
   UpdateUserRequest, 
@@ -82,7 +83,20 @@ class UsersService {
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
       
-      throw new Error(`Error ${response.status}: ${response.statusText}`)
+      // Intentar obtener el mensaje de error del servidor
+      let errorMessage = `Error ${response.status}: ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        }
+      } catch {
+        // Si no se puede parsear el JSON, usar el mensaje por defecto
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -122,7 +136,20 @@ class UsersService {
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
       
-      throw new Error(`Error ${response.status}: ${response.statusText}`)
+      // Intentar obtener el mensaje de error del servidor
+      let errorMessage = `Error ${response.status}: ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        }
+      } catch {
+        // Si no se puede parsear el JSON, usar el mensaje por defecto
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -154,9 +181,11 @@ class UsersService {
   async createUser(userData: CreateUserRequest): Promise<User> {
     const formData = new FormData()
     
+    // Campos obligatorios
     formData.append('email', userData.email)
     formData.append('password', userData.password)
     
+    // Campos opcionales
     if (userData.firstName) {
       formData.append('firstName', userData.firstName)
     }
@@ -165,45 +194,57 @@ class UsersService {
       formData.append('lastName', userData.lastName)
     }
     
+    // Roles - enviar solo si existen
     if (userData.roleIds && userData.roleIds.length > 0) {
       userData.roleIds.forEach(roleId => {
         formData.append('roleIds', roleId)
       })
     }
     
+    // Imagen de perfil - enviar solo si existe
     if (userData.profileImage) {
       formData.append('profileImage', userData.profileImage)
     }
 
-    return this.requestWithFormData<User>('/api/usuarios', formData, 'POST')
+    const response = await this.requestWithFormData<{message: string, user: User}>('/api/usuarios', formData, 'POST')
+    return response.user
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
-    const formData = new FormData()
+    // Según la API, solo se pueden actualizar estos campos específicos
+    const updateData: Record<string, unknown> = {}
     
     if (userData.firstName) {
-      formData.append('firstName', userData.firstName)
+      updateData.firstName = userData.firstName
     }
     
     if (userData.lastName) {
-      formData.append('lastName', userData.lastName)
+      updateData.lastName = userData.lastName
     }
     
     if (userData.roleIds && userData.roleIds.length > 0) {
-      userData.roleIds.forEach(roleId => {
-        formData.append('roleIds', roleId)
-      })
-    }
-    
-    if (userData.profileImage) {
-      formData.append('profileImage', userData.profileImage)
+      updateData.roleIds = userData.roleIds
     }
     
     if (userData.isActive !== undefined) {
-      formData.append('isActive', String(userData.isActive))
+      updateData.isActive = userData.isActive
     }
 
-    return this.requestWithFormData<User>(`/api/usuarios/${id}`, formData, 'PUT')
+    if (userData.isVerified !== undefined) {
+      updateData.isVerified = userData.isVerified
+    }
+
+    return this.request<User>(`/api/usuarios/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    })
+  }
+
+  async resetUserPassword(id: string, newPassword: string): Promise<{message: string}> {
+    return this.request<{message: string}>(`/api/usuarios/${id}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    })
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -214,6 +255,19 @@ class UsersService {
 
   async toggleUserStatus(id: string, isActive: boolean): Promise<User> {
     return this.updateUser(id, { isActive })
+  }
+
+  /**
+   * Obtener todos los roles disponibles
+   */
+  async getRoles(): Promise<Role[]> {
+    try {
+      const roles = await this.request<Role[]>('/api/roles')
+      return roles
+    } catch (error) {
+      console.error('Error al obtener roles:', error)
+      throw error
+    }
   }
 }
 

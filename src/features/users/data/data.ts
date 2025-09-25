@@ -1,8 +1,7 @@
 import {
-  IconCash,
   IconShield,
-  IconUsersGroup,
-  IconUserShield,
+  IconCrown,
+  IconBuildingStore,
 } from '@tabler/icons-react'
 
 // Mapeo de estados de usuario para colores de badges
@@ -26,21 +25,15 @@ export const userRoles = [
     description: 'Administrador del sistema con acceso completo',
   },
   {
-    label: 'Super Administrador',
-    value: 'superadmin',
-    icon: IconUserShield,
-    description: 'Super administrador con todos los permisos',
-  },
-  {
-    label: 'Gerente',
-    value: 'manager',
-    icon: IconUsersGroup,
-    description: 'Gerente con permisos de gestión',
+    label: 'Propietario',
+    value: 'owner',
+    icon: IconCrown,
+    description: 'Propietario con permisos de gestión empresarial',
   },
   {
     label: 'Vendedor',
-    value: 'cashier',
-    icon: IconCash,
+    value: 'vendedor',
+    icon: IconBuildingStore,
     description: 'Vendedor con permisos de venta y consulta',
   },
 ] as const

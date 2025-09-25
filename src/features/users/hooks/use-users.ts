@@ -3,11 +3,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersService } from '../services/users.service'
 import { 
   User, 
+  Role,
   UsersResponse, 
   CreateUserRequest, 
   UpdateUserRequest, 
   UsersQueryParams 
 } from '../models/user'
+
+// Hook para obtener la lista de roles
+export const useRoles = () => {
+  return useQuery<Role[]>({
+    queryKey: ['roles'],
+    queryFn: () => usersService.getRoles(),
+    staleTime: 10 * 60 * 1000, // 10 minutos (los roles cambian menos frecuentemente)
+  })
+}
 
 // Hook para obtener la lista de usuarios
 export const useUsers = (params: UsersQueryParams = {}) => {
@@ -72,6 +82,20 @@ export const useToggleUserStatus = () => {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 
       usersService.toggleUserStatus(id, isActive),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['user', variables.id] })
+    },
+  })
+}
+
+// Hook para resetear la contraseña de un usuario
+export const useResetUserPassword = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) => 
+      usersService.resetUserPassword(id, newPassword),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', variables.id] })
