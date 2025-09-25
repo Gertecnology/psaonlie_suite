@@ -83,7 +83,20 @@ class UsersService {
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
       
-      throw new Error(`Error ${response.status}: ${response.statusText}`)
+      // Intentar obtener el mensaje de error del servidor
+      let errorMessage = `Error ${response.status}: ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        }
+      } catch {
+        // Si no se puede parsear el JSON, usar el mensaje por defecto
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -123,7 +136,20 @@ class UsersService {
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
       }
       
-      throw new Error(`Error ${response.status}: ${response.statusText}`)
+      // Intentar obtener el mensaje de error del servidor
+      let errorMessage = `Error ${response.status}: ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        }
+      } catch {
+        // Si no se puede parsear el JSON, usar el mensaje por defecto
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -155,9 +181,11 @@ class UsersService {
   async createUser(userData: CreateUserRequest): Promise<User> {
     const formData = new FormData()
     
+    // Campos obligatorios
     formData.append('email', userData.email)
     formData.append('password', userData.password)
     
+    // Campos opcionales
     if (userData.firstName) {
       formData.append('firstName', userData.firstName)
     }
@@ -166,17 +194,20 @@ class UsersService {
       formData.append('lastName', userData.lastName)
     }
     
+    // Roles - enviar solo si existen
     if (userData.roleIds && userData.roleIds.length > 0) {
       userData.roleIds.forEach(roleId => {
         formData.append('roleIds', roleId)
       })
     }
     
+    // Imagen de perfil - enviar solo si existe
     if (userData.profileImage) {
       formData.append('profileImage', userData.profileImage)
     }
 
-    return this.requestWithFormData<User>('/api/usuarios', formData, 'POST')
+    const response = await this.requestWithFormData<{message: string, user: User}>('/api/usuarios', formData, 'POST')
+    return response.user
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {

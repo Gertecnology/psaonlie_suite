@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { IconAlertTriangle } from '@tabler/icons-react'
-import { showSubmittedData } from '@/utils/show-submitted-data'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { useDeleteUser } from '../hooks/use-users'
 import { User } from '../models/user'
 
 interface Props {
@@ -17,12 +17,37 @@ interface Props {
 
 export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
   const [value, setValue] = useState('')
+  const deleteUser = useDeleteUser()
 
   const handleDelete = () => {
     if (value.trim() !== currentRow.email) return
 
-    onOpenChange(false)
-    showSubmittedData(currentRow, 'El siguiente usuario ha sido eliminado:')
+    deleteUser.mutate(currentRow.id, {
+      onSuccess: () => {
+        onOpenChange(false)
+        setValue('')
+        import('sonner').then(({ toast }) => {
+          toast.success('Usuario eliminado', {
+            description: `El usuario ${currentRow.email} ha sido eliminado correctamente.`,
+            duration: 3000,
+          })
+        })
+      },
+      onError: (error: unknown) => {
+        import('sonner').then(({ toast }) => {
+          let message = 'Ha ocurrido un error al eliminar el usuario.'
+          if (error instanceof Error) {
+            message = error.message
+          } else if (typeof error === 'string') {
+            message = error
+          }
+          toast.error('Error al eliminar', {
+            description: message,
+            duration: 3000,
+          })
+        })
+      },
+    })
   }
 
   return (
@@ -30,7 +55,7 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={value.trim() !== currentRow.email}
+      disabled={value.trim() !== currentRow.email || deleteUser.isPending}
       title={
         <span className='text-destructive'>
           <IconAlertTriangle
@@ -59,6 +84,7 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder='Ingresa el email para confirmar la eliminación.'
+              disabled={deleteUser.isPending}
             />
           </Label>
 
@@ -70,7 +96,7 @@ export function UsersDeleteDialog({ open, onOpenChange, currentRow }: Props) {
           </Alert>
         </div>
       }
-      confirmText='Eliminar'
+      confirmText={deleteUser.isPending ? 'Eliminando...' : 'Eliminar'}
       destructive
     />
   )
