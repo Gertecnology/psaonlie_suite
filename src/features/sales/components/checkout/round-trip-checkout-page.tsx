@@ -116,10 +116,8 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
       const ventas = []
 
       // Venta de IDA
-      // Calcular totales con cargo por servicio
+      // Calcular subtotal (solo precio de asientos)
       const subtotalIda = roundTripData.ida.asientos!.reduce((total, asiento) => total + asiento.precio, 0)
-      const serviceChargeIda = calculateServiceCharge(subtotalIda, roundTripData.ida.serviceCharge)
-      const totalIda = subtotalIda + serviceChargeIda
 
       const ventaIda = {
         bloqueoCodigoReferencia: roundTripData.ida.codigoReferencia!,
@@ -131,7 +129,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
         destinoId: roundTripData.ida.destino!.id,
         metodoPago: 'EFECTIVO', // Se puede cambiar después en el pago
         estadoPago: 'PENDIENTE',
-        importeTotal: totalIda,
+        importeTotal: subtotalIda,
         asiento: roundTripData.ida.asientos!.map((asiento, index) => ({
           Nroasiento: asiento.numero,
           Precio: asiento.precio,
@@ -142,10 +140,8 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
 
       // Venta de VUELTA (si existe)
       if (roundTripData.vuelta?.servicio && roundTripData.vuelta?.codigoReferencia) {
-        // Calcular totales con cargo por servicio para vuelta
+        // Calcular subtotal para vuelta (solo precio de asientos)
         const subtotalVuelta = roundTripData.vuelta.asientos!.reduce((total, asiento) => total + asiento.precio, 0)
-        const serviceChargeVuelta = calculateServiceCharge(subtotalVuelta, roundTripData.vuelta.serviceCharge)
-        const totalVuelta = subtotalVuelta + serviceChargeVuelta
 
         const ventaVuelta = {
           bloqueoCodigoReferencia: roundTripData.vuelta.codigoReferencia,
@@ -157,7 +153,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
           destinoId: roundTripData.vuelta.destino!.id,
           metodoPago: 'EFECTIVO', // Se puede cambiar después en el pago
           estadoPago: 'PENDIENTE',
-          importeTotal: totalVuelta,
+          importeTotal: subtotalVuelta,
           asiento: roundTripData.vuelta.asientos!.map((asiento, index) => ({
             Nroasiento: asiento.numero,
             Precio: asiento.precio,

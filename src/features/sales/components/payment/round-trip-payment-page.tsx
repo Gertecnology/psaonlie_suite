@@ -159,88 +159,58 @@ export function RoundTripPaymentPage() {
         <div className="lg:col-span-2 space-y-4">
           {/* Viaje de Ida */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Bus className="h-4 w-4" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Bus className="h-3 w-3" />
                 Viaje de Ida
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-medium">{roundTripData.ida.origen?.nombre}</p>
-                  <p className="text-sm text-muted-foreground">Origen</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-red-600" />
-                <div>
-                  <p className="font-medium">{roundTripData.ida.destino?.nombre}</p>
-                  <p className="text-sm text-muted-foreground">Destino</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{roundTripData.ida.fecha?.toISOString().split('T')[0]}</p>
-                    <p className="text-xs text-muted-foreground">Fecha</p>
-                  </div>
+                  <MapPin className="h-3 w-3 text-blue-600" />
+                  <span className="text-sm font-medium">{roundTripData.ida.origen?.nombre}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{roundTripData.ida.servicio?.Embarque}</p>
-                    <p className="text-xs text-muted-foreground">Hora</p>
-                  </div>
+                  <MapPin className="h-3 w-3 text-red-600" />
+                  <span className="text-sm font-medium">{roundTripData.ida.destino?.nombre}</span>
                 </div>
               </div>
 
-              <Separator />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>{roundTripData.ida.fecha?.toISOString().split('T')[0]}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{roundTripData.ida.servicio?.Embarque}</span>
+                </div>
+              </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Asientos Seleccionados:</p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Asientos:</p>
                 {roundTripData.ida.asientos && roundTripData.ida.asientos.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1">
                     {roundTripData.ida.asientos.map((asiento, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        Asiento {asiento.numero} - {asiento.tipo} - Piso {asiento.piso}
+                      <Badge key={index} variant="secondary" className="text-xs px-2 py-0">
+                        {asiento.numero} - {asiento.tipo}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No se encontraron asientos seleccionados</p>
+                  <p className="text-xs text-muted-foreground">No se encontraron asientos</p>
                 )}
               </div>
 
-              {/* Información de la venta de ida */}
+              {/* Estado de la venta de ida */}
               {roundTripData.ida.ventaConfirmada && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-sm font-medium">Número de Transacción</p>
-                      <p className="text-xs text-muted-foreground font-mono">{roundTripData.ida.ventaConfirmada.numeroTransaccion}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm font-medium">Estado</p>
-                      <Badge variant="outline" className="text-xs">
-                        {roundTripData.ida.ventaConfirmada.estado}
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium">Mensaje</p>
-                      <p className="text-xs text-muted-foreground">{roundTripData.ida.ventaConfirmada.mensaje}</p>
-                    </div>
-                  </div>
-                </>
+                <div className="flex items-center justify-between pt-1 border-t">
+                  <span className="text-xs text-muted-foreground">Estado:</span>
+                  <Badge variant="outline" className="text-xs">
+                    {roundTripData.ida.ventaConfirmada.estado}
+                  </Badge>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -248,88 +218,58 @@ export function RoundTripPaymentPage() {
           {/* Viaje de Vuelta */}
           {roundTripData.vuelta && (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Bus className="h-4 w-4" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Bus className="h-3 w-3" />
                   Viaje de Vuelta
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-blue-600" />
-                  <div>
-                    <p className="font-medium">{roundTripData.vuelta.origen?.nombre}</p>
-                    <p className="text-sm text-muted-foreground">Origen</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-red-600" />
-                  <div>
-                    <p className="font-medium">{roundTripData.vuelta.destino?.nombre}</p>
-                    <p className="text-sm text-muted-foreground">Destino</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-2 gap-3">
+              <CardContent className="pt-0 space-y-2">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-3 w-3 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{roundTripData.vuelta.fecha?.toISOString().split('T')[0]}</p>
-                      <p className="text-xs text-muted-foreground">Fecha</p>
-                    </div>
+                    <MapPin className="h-3 w-3 text-blue-600" />
+                    <span className="text-sm font-medium">{roundTripData.vuelta.origen?.nombre}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{roundTripData.vuelta.servicio?.Embarque}</p>
-                      <p className="text-xs text-muted-foreground">Hora</p>
-                    </div>
+                    <MapPin className="h-3 w-3 text-red-600" />
+                    <span className="text-sm font-medium">{roundTripData.vuelta.destino?.nombre}</span>
                   </div>
                 </div>
 
-                <Separator />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    <span>{roundTripData.vuelta.fecha?.toISOString().split('T')[0]}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{roundTripData.vuelta.servicio?.Embarque}</span>
+                  </div>
+                </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Asientos Seleccionados:</p>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Asientos:</p>
                   {roundTripData.vuelta.asientos && roundTripData.vuelta.asientos.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       {roundTripData.vuelta.asientos.map((asiento, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          Asiento {asiento.numero} - {asiento.tipo} - Piso {asiento.piso}
+                        <Badge key={index} variant="secondary" className="text-xs px-2 py-0">
+                          {asiento.numero} - {asiento.tipo}
                         </Badge>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No se encontraron asientos seleccionados</p>
+                    <p className="text-xs text-muted-foreground">No se encontraron asientos</p>
                   )}
                 </div>
 
-                {/* Información de la venta de vuelta */}
+                {/* Estado de la venta de vuelta */}
                 {roundTripData.vuelta.ventaConfirmada && (
-                  <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-sm font-medium">Número de Transacción</p>
-                        <p className="text-xs text-muted-foreground font-mono">{roundTripData.vuelta.ventaConfirmada.numeroTransaccion}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium">Estado</p>
-                        <Badge variant="outline" className="text-xs">
-                          {roundTripData.vuelta.ventaConfirmada.estado}
-                        </Badge>
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium">Mensaje</p>
-                        <p className="text-xs text-muted-foreground">{roundTripData.vuelta.ventaConfirmada.mensaje}</p>
-                      </div>
-                    </div>
-                  </>
+                  <div className="flex items-center justify-between pt-1 border-t">
+                    <span className="text-xs text-muted-foreground">Estado:</span>
+                    <Badge variant="outline" className="text-xs">
+                      {roundTripData.vuelta.ventaConfirmada.estado}
+                    </Badge>
+                  </div>
                 )}
               </CardContent>
             </Card>
