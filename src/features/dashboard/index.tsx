@@ -4,12 +4,13 @@ import { useClientesList } from './hooks/use-clientes-list'
 import { VentasList } from './components/ventas-list'
 import { SalesReport } from './components/sales-report'
 import { CompanySalesReport } from './components/company-sales-report'
+import { LiquidationReport } from './components/liquidation-report'
 import { StatisticsSearchParams } from './models/statistics.model'
 import { useVentasList } from './hooks/use-ventas-list'
 import { VentasSearchParams } from './models/sales.model'
 import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download, FileText, Building2 } from 'lucide-react'
+import { Download, FileText, Building2, Calculator } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -64,7 +65,7 @@ export default function Dashboard() {
               Generar Reporte
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Download className="h-5 w-5" />
@@ -75,14 +76,18 @@ export default function Dashboard() {
               </DialogDescription>
             </DialogHeader>
             <Tabs value={activeReportTab} onValueChange={setActiveReportTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="general" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="general" className="flex items-center gap-2 text-sm">
                   <FileText className="h-4 w-4" />
                   Reporte General
                 </TabsTrigger>
-                <TabsTrigger value="company" className="flex items-center gap-2">
+                <TabsTrigger value="company" className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4" />
                   Por Empresa
+                </TabsTrigger>
+                <TabsTrigger value="liquidation" className="flex items-center gap-2 text-sm">
+                  <Calculator className="h-4 w-4" />
+                  Liquidación
                 </TabsTrigger>
               </TabsList>
               
@@ -97,6 +102,12 @@ export default function Dashboard() {
               
               <TabsContent value="company" className="mt-4">
                 <CompanySalesReport 
+                  onDownload={() => setIsReportDialogOpen(false)}
+                />
+              </TabsContent>
+              
+              <TabsContent value="liquidation" className="mt-4">
+                <LiquidationReport 
                   onDownload={() => setIsReportDialogOpen(false)}
                 />
               </TabsContent>
