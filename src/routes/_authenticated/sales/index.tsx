@@ -13,7 +13,7 @@ function RouteComponent() {
       <PageLayout
         title="Ventas"
         description="Busca y gestiona los servicios de transporte disponibles."
-        showSearch={false}
+        showSearch={true}
       >
         <RoundTripFlow />
       </PageLayout>

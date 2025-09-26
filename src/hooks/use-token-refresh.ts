@@ -49,7 +49,7 @@ export const useTokenRefresh = (options: UseTokenRefreshOptions = {}) => {
         localStorage.removeItem('user')
         
         // Opcional: redirigir al login
-        window.location.href = '/login'
+        window.location.href = '/sign-in'
       }
       
       onRefreshError?.(error as Error)

@@ -56,7 +56,7 @@ export default function Dashboard() {
     <PageLayout
       title="Bienvenido a PasajeOnline"
       description="Panel de control principal del sistema"
-      showSearch={false}
+      showSearch={true}
       actions={
         <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
           <DialogTrigger asChild>

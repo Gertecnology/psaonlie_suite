@@ -35,15 +35,12 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
 
   const refreshUnreadCount = useCallback(async () => {
     if (!isAuthenticated) {
-      console.log('Usuario no autenticado, saltando actualización de conteo')
       return
     }
 
     try {
-      console.log('Actualizando conteo de notificaciones no leídas...')
       const count = await notificationsService.getUnreadCount()
       setUnreadCount(count)
-      console.log('Conteo actualizado:', count)
     } catch (error) {
       console.error('Error al actualizar conteo de notificaciones:', error)
       setError(error instanceof Error ? error.message : 'Error desconocido')
@@ -52,18 +49,15 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
 
   const refreshNotifications = useCallback(async () => {
     if (!isAuthenticated) {
-      console.log('Usuario no autenticado, saltando actualización de notificaciones')
       return
     }
 
     try {
-      console.log('Actualizando lista de notificaciones...')
       const response = await notificationsService.getAllNotifications({
         limit: 10,
         sortOrder: 'DESC'
       })
       setNotifications(response.items)
-      console.log('Notificaciones actualizadas:', response.items.length)
     } catch (error) {
       console.error('Error al actualizar notificaciones:', error)
       setError(error instanceof Error ? error.message : 'Error desconocido')
@@ -72,7 +66,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      console.log('Marcando notificación como leída:', notificationId)
       await notificationsService.markAsRead(notificationId)
       
       // Actualizar el estado local
@@ -86,8 +79,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
       
       // Actualizar el conteo
       setUnreadCount(prev => Math.max(0, prev - 1))
-      
-      console.log('Notificación marcada como leída exitosamente')
     } catch (error) {
       console.error('Error al marcar notificación como leída:', error)
       setError(error instanceof Error ? error.message : 'Error desconocido')
@@ -96,7 +87,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      console.log('Marcando todas las notificaciones como leídas...')
       await notificationsService.markAllAsRead()
       
       // Actualizar el estado local
@@ -106,8 +96,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
       
       // Resetear el conteo
       setUnreadCount(0)
-      
-      console.log('Todas las notificaciones marcadas como leídas exitosamente')
     } catch (error) {
       console.error('Error al marcar todas las notificaciones como leídas:', error)
       setError(error instanceof Error ? error.message : 'Error desconocido')
@@ -116,7 +104,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      console.log('Eliminando notificación:', notificationId)
       await notificationsService.deleteNotification(notificationId)
       
       // Actualizar el estado local
@@ -127,8 +114,6 @@ export function useNotificationsApi(): UseNotificationsApiReturn {
       if (notificationToDelete && !notificationToDelete.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1))
       }
-      
-      console.log('Notificación eliminada exitosamente')
     } catch (error) {
       console.error('Error al eliminar notificación:', error)
       setError(error instanceof Error ? error.message : 'Error desconocido')
