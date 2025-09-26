@@ -199,62 +199,47 @@ export function PaymentPage() {
         {/* Resumen del Viaje */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Bus className="h-4 w-4" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Bus className="h-3 w-3" />
                 Resumen del Viaje
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-medium">{search.origen}</p>
-                  <p className="text-sm text-muted-foreground">Origen</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-red-600" />
-                <div>
-                  <p className="font-medium">{search.destino}</p>
-                  <p className="text-sm text-muted-foreground">Destino</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{search.fecha}</p>
-                    <p className="text-xs text-muted-foreground">Fecha</p>
-                  </div>
+                  <MapPin className="h-3 w-3 text-blue-600" />
+                  <span className="text-sm font-medium">{search.origen}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{search.hora}</p>
-                    <p className="text-xs text-muted-foreground">Hora</p>
-                  </div>
+                  <MapPin className="h-3 w-3 text-red-600" />
+                  <span className="text-sm font-medium">{search.destino}</span>
                 </div>
               </div>
 
-              <Separator />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>{search.fecha}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{search.hora}</span>
+                </div>
+              </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Asientos Seleccionados:</p>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Asientos:</p>
                 {asientos.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1">
                     {asientos.map((asiento, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        Asiento {asiento.numero} - {asiento.tipo} - Piso {asiento.piso}
+                      <Badge key={index} variant="secondary" className="text-xs px-2 py-0">
+                        {asiento.numero} - {asiento.tipo}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No se encontraron asientos seleccionados</p>
+                  <p className="text-xs text-muted-foreground">No se encontraron asientos</p>
                 )}
               </div>
             </CardContent>
@@ -262,29 +247,20 @@ export function PaymentPage() {
 
           {/* Información de la Venta */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Información de la Reserva
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CheckCircle className="h-3 w-3" />
+                Estado de la Reserva
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm font-medium">Número de Transacción</p>
-                <p className="text-xs text-muted-foreground font-mono">{numeroTransaccion}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium">Estado</p>
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Estado:</span>
                 <Badge variant="outline" className="text-xs">
                   {search.estado}
                 </Badge>
               </div>
-
-              <div>
-                <p className="text-sm font-medium">Mensaje</p>
-                <p className="text-xs text-muted-foreground">{search.mensaje}</p>
-              </div>
+              <p className="text-xs text-muted-foreground">{search.mensaje}</p>
             </CardContent>
           </Card>
         </div>

@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import type { EmpresaServicios, Servicio, ParadaHomologada } from '../models/sales.model'
+import { useRoundTrip } from '../context/round-trip-context'
+import type { EmpresaServicios, Servicio, ParadaHomologada, ServiceCharge } from '../models/sales.model'
 
 interface ServiciosListProps {
   data: EmpresaServicios[]
@@ -11,6 +12,7 @@ interface ServiciosListProps {
   className?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
+  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
 }
 
 const getCalidadColor = (calidad: string) => {
@@ -55,42 +57,47 @@ const formatPrice = (price: string) => {
 
 function ServicioCard({ 
   servicio, 
-  empresaId, 
+  empresaId: _empresaId, 
   empresaNombre,
-  empresaLogo,
-  serviceCharge,
+  empresaLogo: _empresaLogo,
+  serviceCharge: _serviceCharge,
   origen, 
-  destino 
+  destino,
+  onServiceSelect
 }: { 
   servicio: Servicio
   empresaId: string
   empresaNombre: string
   empresaLogo?: string
-  serviceCharge?: string
+  serviceCharge?: ServiceCharge
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
+  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
 }) {
+  const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
+
   const handleSeatSelection = () => {
     if (!origen || !destino) return
 
-    // Create URL with search parameters
-    const searchParams = new URLSearchParams({
-      servicioId: servicio.Id,
-      origenId: origen.id,
-      destinoId: destino.id,
-      empresaId: empresaId,
-      empresa: empresaNombre,
-      origen: origen.nombre,
-      destino: destino.nombre,
-      fecha: servicio.Fec || new Date().toISOString().split('T')[0],
-      hora: servicio.Embarque || '00:00',
-      empresaBoleto: servicio.Emp, 
-      calidad: servicio.Calidad, 
-      ...(serviceCharge && { serviceCharge }),
-    })
+    if (onServiceSelect) {
+      // Si hay callback personalizado, usarlo
+      onServiceSelect(servicio, _empresaId, _serviceCharge)
+    } else {
+      // Comportamiento por defecto para ida
+      setRoundTripData({
+        ida: {
+          origen: roundTripData.ida.origen,
+          destino: roundTripData.ida.destino,
+          fecha: roundTripData.ida.fecha,
+          servicio: servicio,
+          empresaId: _empresaId, // Guardar el UUID de la empresa
+          serviceCharge: _serviceCharge // Guardar el cargo por servicio
+        }
+      })
 
-    // Navigate to seats page
-    window.location.href = `/sales/seats?${searchParams.toString()}`
+      // Ir al paso de selección de asientos de ida
+      setCurrentStep('ida-seats')
+    }
   }
 
   return (
@@ -98,9 +105,9 @@ function ServicioCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {empresaLogo ? (
+            {_empresaLogo ? (
               <img 
-                src={empresaLogo} 
+                src={_empresaLogo} 
                 alt={`Logo ${empresaNombre}`}
                 className="h-6 w-6 object-contain rounded"
                 onError={(e) => {
@@ -110,7 +117,7 @@ function ServicioCard({
                 }}
               />
             ) : null}
-            <Bus className={`h-4 w-4 text-muted-foreground ${empresaLogo ? 'hidden' : ''}`} />
+            <Bus className={`h-4 w-4 text-muted-foreground ${_empresaLogo ? 'hidden' : ''}`} />
             <span className="font-medium text-sm">{empresaNombre}</span>
           </div>
           <Badge className={getCalidadColor(servicio.Calidad)}>
@@ -174,11 +181,13 @@ function ServicioCard({
 function EmpresaSection({ 
   empresa, 
   origen, 
-  destino 
+  destino,
+  onServiceSelect
 }: { 
   empresa: EmpresaServicios
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
+  onServiceSelect?: (servicio: Servicio, empresaId: string) => void
 }) {
   return (
     <div className="space-y-4">
@@ -191,24 +200,25 @@ function EmpresaSection({
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {empresa.data.map((servicio) => (
-          <ServicioCard 
-            key={servicio.Id} 
-            servicio={servicio} 
-            empresaId={empresa.id}
-            empresaNombre={empresa.empresa}
-            empresaLogo={empresa.imageUrl}
-            serviceCharge={empresa.serviceCharge?.porcentaje}
-            origen={origen}
-            destino={destino}
-          />
-        ))}
+                {empresa.data.map((servicio) => (
+                  <ServicioCard 
+                    key={servicio.Id} 
+                    servicio={servicio} 
+                    empresaId={empresa.id}
+                    empresaNombre={empresa.empresa}
+                    empresaLogo={empresa.imageUrl}
+                    serviceCharge={empresa.serviceCharge}
+                    origen={origen}
+                    destino={destino}
+                    onServiceSelect={onServiceSelect}
+                  />
+                ))}
       </div>
     </div>
   )
 }
 
-export function ServiciosList({ data, isLoading, className, origen, destino }: ServiciosListProps) {
+export function ServiciosList({ data, isLoading, className, origen, destino, onServiceSelect }: ServiciosListProps) {
   if (isLoading) {
     return (
       <div className={className}>
@@ -268,6 +278,7 @@ export function ServiciosList({ data, isLoading, className, origen, destino }: S
             empresa={empresa} 
             origen={origen}
             destino={destino}
+            onServiceSelect={onServiceSelect}
           />
         ))}
       </div>
