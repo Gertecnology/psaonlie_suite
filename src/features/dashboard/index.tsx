@@ -135,6 +135,7 @@ export default function Dashboard() {
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
               <h3 className="font-semibold">Total Ventas</h3>
               <p className="text-2xl font-bold">{statistics.generales.totalVentas}</p>
+              <p className="text-sm text-muted-foreground">Monto total: Gs. {statistics.generales.montoTotal.toLocaleString()}</p>
             </div>
             
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">

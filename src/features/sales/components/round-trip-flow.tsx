@@ -1,5 +1,4 @@
 import { useRoundTrip } from '../context/round-trip-context'
-import { RoundTripStepper } from './round-trip-stepper'
 import { SalesPage } from './sales-page'
 import { ServiciosVueltaPage } from './servicios-vuelta-page'
 import { RoundTripSeatSelectionPage } from './asientos/round-trip-seat-selection-page'
@@ -58,13 +57,8 @@ export function RoundTripFlow() {
     }
   }
 
-  const hasVuelta = !!roundTripData.vuelta?.fecha
-
   return (
     <div className="space-y-4">
-      {/* Stepper para mostrar progreso */}
-      <RoundTripStepper currentStep={currentStep} hasVuelta={hasVuelta} />
-      
       {/* Contenido del paso actual */}
       {renderCurrentStep()}
     </div>

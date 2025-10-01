@@ -97,6 +97,26 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       return <div>{documento || '-'}</div>
     },
   },
+    {
+    accessorKey: 'numerosBoleto',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='N° Boleto' />
+    ),
+    cell: ({ row }) => {
+      const numerosBoleto = row.getValue('numerosBoleto') as string
+      const totalBoletos = row.original.totalBoletos
+      return (
+        <div className='flex flex-col'>
+          <div className='font-medium'>{numerosBoleto || '-'}</div>
+          {totalBoletos > 0 && (
+            <div className='text-sm text-muted-foreground'>
+              {totalBoletos} boleto{totalBoletos > 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )
+    },
+  },
   {
     accessorKey: 'empresaNombre',
     header: ({ column }) => (
@@ -175,26 +195,6 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
     },
   },
   {
-    accessorKey: 'numerosBoleto',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='N° Boleto' />
-    ),
-    cell: ({ row }) => {
-      const numerosBoleto = row.getValue('numerosBoleto') as string
-      const totalBoletos = row.original.totalBoletos
-      return (
-        <div className='flex flex-col'>
-          <div className='font-medium'>{numerosBoleto || '-'}</div>
-          {totalBoletos > 0 && (
-            <div className='text-sm text-muted-foreground'>
-              {totalBoletos} boleto{totalBoletos > 1 ? 's' : ''}
-            </div>
-          )}
-        </div>
-      )
-    },
-  },
-  {
     accessorKey: 'estadoPago',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Estado' />
@@ -216,16 +216,26 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
     header: 'Facturas',
     cell: ({ row }) => {
       const venta = row.original
+      const isPaid = venta.estadoPago === 'PAGADO'
+      
+      if (isPaid) {
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => props?.onInvoiceClick?.(venta)}
+            className="h-8 w-8 p-0"
+          >
+            <FileText className="h-4 w-4" />
+            <span className="sr-only">Ver factura</span>
+          </Button>
+        )
+      }
+      
       return (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => props?.onInvoiceClick?.(venta)}
-          className="h-8 w-8 p-0"
-        >
-          <FileText className="h-4 w-4" />
-          <span className="sr-only">Ver factura</span>
-        </Button>
+        <div className="flex items-center justify-center h-8 w-8 text-muted-foreground text-xs">
+          <span className="text-center">-</span>
+        </div>
       )
     },
     enableSorting: false,
