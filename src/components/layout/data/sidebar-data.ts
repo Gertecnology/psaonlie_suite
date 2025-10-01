@@ -8,6 +8,7 @@ import {
   IconCurrencyDollar,
   IconUsers,
   IconBell,
+  IconFileReport,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -38,13 +39,18 @@ export const sidebarData: SidebarData = {
   ],
   navGroups: [
     {
-      title: 'General',
+      title: 'Principal',
       items: [
         {
           title: 'Dashboard',
           url: '/',
           icon: IconLayoutDashboard,
         },
+      ],
+    },
+    {
+      title: 'Gestión de Servicios',
+      items: [
         {
           title: 'Destinos',
           url: '/destinations',
@@ -55,21 +61,41 @@ export const sidebarData: SidebarData = {
           url: '/companies',
           icon: IconBuilding,
         },
-        {
-          title: 'Clientes',
-          url: '/clients',
-          icon: IconUsers,
-        },
+      ],
+    },
+    {
+      title: 'Gestión de Usuarios',
+      items: [
         {
           title: 'Usuarios',
           url: '/users',
           icon: IconUserCog,
         },
         {
+          title: 'Clientes',
+          url: '/clients',
+          icon: IconUsers,
+        },
+      ],
+    },
+    {
+      title: 'Ventas',
+      items: [
+        {
           title: 'Ventas',
           url: '/sales',
           icon: IconShoppingCart,
-        }
+        },
+      ],
+    },
+    {
+      title: 'Reportes',
+      items: [
+        {
+          title: 'Reportes',
+          url: '/reports',
+          icon: IconFileReport,
+        },
       ],
     },
     {

@@ -31,6 +31,7 @@ import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedSalesIndexRouteImport } from './routes/_authenticated/sales/index'
+import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedDestinationsIndexRouteImport } from './routes/_authenticated/destinations/index'
 import { Route as AuthenticatedCompaniesIndexRouteImport } from './routes/_authenticated/companies/index'
@@ -162,6 +163,12 @@ const AuthenticatedSalesIndexRoute = AuthenticatedSalesIndexRouteImport.update({
   path: '/sales/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsIndexRoute =
+  AuthenticatedReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHelpCenterIndexRoute =
   AuthenticatedHelpCenterIndexRouteImport.update({
     id: '/help-center/',
@@ -308,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/destinations': typeof AuthenticatedDestinationsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
   '/sales': typeof AuthenticatedSalesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -347,6 +355,7 @@ export interface FileRoutesByTo {
   '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/destinations': typeof AuthenticatedDestinationsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
   '/sales': typeof AuthenticatedSalesIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -391,6 +400,7 @@ export interface FileRoutesById {
   '/_authenticated/companies/': typeof AuthenticatedCompaniesIndexRoute
   '/_authenticated/destinations/': typeof AuthenticatedDestinationsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
+  '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/sales/': typeof AuthenticatedSalesIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/destinations'
     | '/help-center'
+    | '/reports'
     | '/sales'
     | '/settings/'
     | '/tasks'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/destinations'
     | '/help-center'
+    | '/reports'
     | '/sales'
     | '/settings'
     | '/tasks'
@@ -516,6 +528,7 @@ export interface FileRouteTypes {
     | '/_authenticated/companies/'
     | '/_authenticated/destinations/'
     | '/_authenticated/help-center/'
+    | '/_authenticated/reports/'
     | '/_authenticated/sales/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
@@ -691,6 +704,13 @@ declare module '@tanstack/react-router' {
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof AuthenticatedSalesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/': {
+      id: '/_authenticated/reports/'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/help-center/': {
@@ -871,6 +891,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompaniesIndexRoute: typeof AuthenticatedCompaniesIndexRoute
   AuthenticatedDestinationsIndexRoute: typeof AuthenticatedDestinationsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
+  AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
@@ -892,6 +913,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompaniesIndexRoute: AuthenticatedCompaniesIndexRoute,
   AuthenticatedDestinationsIndexRoute: AuthenticatedDestinationsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
+  AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
