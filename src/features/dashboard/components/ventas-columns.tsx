@@ -6,22 +6,32 @@ import { FileText } from 'lucide-react'
 import { type Venta } from '../models/sales.model'
 import { DataTableColumnHeader } from '@/features/companies/components/data-table-column-header'
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | null | undefined) => {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return 'Gs. 0'
+  }
   return new Intl.NumberFormat('es-PY', {
     style: 'currency',
     currency: 'PYG',
     minimumFractionDigits: 0
-  }).format(amount)
+  }) .format(amount)
 }
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-PY', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  try {
+    if (!dateString) return 'Sin fecha'
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Fecha inválida'
+    return date.toLocaleDateString('es-PY', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return 'Error de fecha'
+  }
 }
 
 const getEstadoPagoBadgeVariant = (estado: string) => {
@@ -79,10 +89,13 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
     ),
     cell: ({ row }) => {
       const cliente = row.original.cliente
+      if (!cliente) {
+        return <div className='text-muted-foreground'>Sin datos de cliente</div>
+      }
       return (
         <div className='flex flex-col'>
-          <div className='font-medium'>{cliente.nombre} {cliente.apellido}</div>
-          <div className='text-sm text-muted-foreground'>{cliente.email}</div>
+          <div className='font-medium'>{cliente.nombre || 'Sin nombre'} {cliente.apellido || 'Sin apellido'}</div>
+          <div className='text-sm text-muted-foreground'>{cliente.email || 'Sin email'}</div>
         </div>
       )
     },
@@ -93,7 +106,8 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       <DataTableColumnHeader column={column} title='Documento' />
     ),
     cell: ({ row }) => {
-      const documento = row.original.cliente.numeroDocumento
+      const cliente = row.original.cliente
+      const documento = cliente?.numeroDocumento
       return <div>{documento || '-'}</div>
     },
   },
@@ -126,8 +140,8 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       const venta = row.original
       return (
         <div className='flex flex-col'>
-          <div className='font-medium'>{venta.empresaNombre}</div>
-          <div className='text-sm text-muted-foreground'>{venta.empresaBoleto}</div>
+          <div className='font-medium'>{venta.empresaNombre || 'Sin empresa'}</div>
+          <div className='text-sm text-muted-foreground'>{ venta.empresaBoleto || '-'}</div>
         </div>
       )
     },
@@ -138,7 +152,8 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       <DataTableColumnHeader column={column} title='Origen' />
     ),
     cell: ({ row }) => {
-      return <div className='max-w-32 truncate'>{row.getValue('origenNombre')}</div>
+      const origen = row.getValue('origenNombre') as string
+      return <div className='max-w-32 truncate'>{origen || 'Sin origen'}</div>
     },
   },
   {
@@ -147,7 +162,8 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       <DataTableColumnHeader column={column} title='Destino' />
     ),
     cell: ({ row }) => {
-      return <div className='max-w-32 truncate'>{row.getValue('destinoNombre')}</div>
+      const destino = row.getValue('destinoNombre') as string
+      return <div className='max-w-32 truncate'>{destino || 'Sin destino'}</div>
     },
   },
   {
@@ -177,7 +193,7 @@ export const createVentasColumns = (props?: VentasColumnsProps): ColumnDef<Venta
       const porcentaje = row.getValue('porcentajeComisionSnapshot') as number
       return (
         <div className='flex items-center gap-1'>
-          <div className='font-medium'>{porcentaje}%</div>
+          <div className='font-medium'>{porcentaje || 0}%</div>
           <div className='text-sm text-muted-foreground'>
             ({formatCurrency(row.original.comisionTotal)})
           </div>
