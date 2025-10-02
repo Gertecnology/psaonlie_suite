@@ -216,7 +216,7 @@ export function ExportFiltersComponent({
             {/* Filtros de Fecha */}
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-cols-fr">
               <div className="space-y-1.5 w-full">
-                <Label className="text-xs sm:text-sm">Desde Venta</Label>
+                <Label className="text-xs sm:text-sm">Fecha Venta Desde</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -238,7 +238,7 @@ export function ExportFiltersComponent({
               </div>
 
               <div className="space-y-1.5 w-full">
-                <Label>Fecha de Venta Hasta</Label>
+                <Label className="text-xs sm:text-sm">Fecha de Venta Hasta</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -260,7 +260,7 @@ export function ExportFiltersComponent({
               </div>
 
               <div className="space-y-1.5 w-full">
-                <Label>Fecha de Viaje Desde</Label>
+                <Label className="text-xs sm:text-sm">Fecha de Viaje Desde</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -282,7 +282,7 @@ export function ExportFiltersComponent({
               </div>
 
               <div className="space-y-1.5 w-full">
-                <Label>Fecha de Viaje Hasta</Label>
+                <Label className="text-xs sm:text-sm">Fecha de Viaje Hasta</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
