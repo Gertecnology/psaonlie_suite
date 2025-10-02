@@ -19,6 +19,10 @@ import {
   SORT_BY_OPTIONS,
   SORT_ORDER_OPTIONS,
 } from '../models/reports.model'
+import { useEmpresasList } from '../../dashboard/hooks/use-empresas-list'
+import { useUsers } from '../../users/hooks/use-users'
+import { useClientesList } from '../../clients/hooks/use-clients'
+import { useGetDestinations } from '../../destinations/hooks/use-get-destinations'
 
 interface ExportFiltersProps {
   filters: ExportFilters
@@ -34,6 +38,17 @@ export function ExportFiltersComponent({
   isExporting 
 }: ExportFiltersProps) {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+
+  // Fetch data from APIs
+  const { data: empresasData, isLoading: isLoadingEmpresas } = useEmpresasList()
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ limit: 1000 }) // Get all users for the selector
+  const { data: clientesData, isLoading: isLoadingClientes } = useClientesList({ 
+    page: 1,
+    limit: 100,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC'
+  }) // Get all clients for the selector
+  const { data: destinosData, isLoading: isLoadingDestinos } = useGetDestinations()
 
   const updateFilter = (key: keyof ExportFilters, value: string | number | undefined) => {
     onFiltersChange({
@@ -58,17 +73,17 @@ export function ExportFiltersComponent({
           Filtros de Exportación
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-3">
         {/* Filtros Básicos */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 auto-cols-fr">
           {/* Formato de Exportación */}
-          <div className="space-y-2">
-            <Label htmlFor="formato">Formato de Exportación</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="formato" className="text-xs sm:text-sm">Formato</Label>
             <Select
               value={filters.formato || 'xlsx'}
               onValueChange={(value) => updateFilter('formato', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Seleccionar formato" />
               </SelectTrigger>
               <SelectContent>
@@ -82,13 +97,13 @@ export function ExportFiltersComponent({
           </div>
 
           {/* Estado de Pago */}
-          <div className="space-y-2">
-            <Label htmlFor="estadoPago">Estado de Pago</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="estadoPago" className="text-xs sm:text-sm">Estado Pago</Label>
             <Select
               value={filters.estadoPago || 'all'}
               onValueChange={(value) => updateFilter('estadoPago', value === 'all' ? undefined : value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
@@ -103,13 +118,13 @@ export function ExportFiltersComponent({
           </div>
 
           {/* Estado de Venta */}
-          <div className="space-y-2">
-            <Label htmlFor="estadoVenta">Estado de Venta</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="estadoVenta" className="text-xs sm:text-sm">Estado Venta</Label>
             <Select
               value={filters.estadoVenta || 'all'}
               onValueChange={(value) => updateFilter('estadoVenta', value === 'all' ? undefined : value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
@@ -124,13 +139,13 @@ export function ExportFiltersComponent({
           </div>
 
           {/* Método de Pago */}
-          <div className="space-y-2">
-            <Label htmlFor="metodoPago">Método de Pago</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="metodoPago" className="text-xs sm:text-sm">Método Pago</Label>
             <Select
               value={filters.metodoPago || 'all'}
               onValueChange={(value) => updateFilter('metodoPago', value === 'all' ? undefined : value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Todos los métodos" />
               </SelectTrigger>
               <SelectContent>
@@ -145,13 +160,13 @@ export function ExportFiltersComponent({
           </div>
 
           {/* Ordenamiento */}
-          <div className="space-y-2">
-            <Label htmlFor="sortBy">Ordenar por</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="sortBy" className="text-xs sm:text-sm">Ordenar por</Label>
             <Select
               value={filters.sortBy || 'fechaVenta'}
               onValueChange={(value) => updateFilter('sortBy', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Seleccionar campo" />
               </SelectTrigger>
               <SelectContent>
@@ -165,13 +180,13 @@ export function ExportFiltersComponent({
           </div>
 
           {/* Dirección de Ordenamiento */}
-          <div className="space-y-2">
-            <Label htmlFor="sortOrder">Dirección</Label>
+          <div className="space-y-1.5 w-full">
+            <Label htmlFor="sortOrder" className="text-xs sm:text-sm">Dirección</Label>
             <Select
               value={filters.sortOrder || 'DESC'}
               onValueChange={(value) => updateFilter('sortOrder', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 w-full min-w-0">
                 <SelectValue placeholder="Seleccionar dirección" />
               </SelectTrigger>
               <SelectContent>
@@ -197,16 +212,16 @@ export function ExportFiltersComponent({
               )}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 mt-4">
+          <CollapsibleContent className="space-y-2 mt-2">
             {/* Filtros de Fecha */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Fecha de Venta Desde</Label>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-cols-fr">
+              <div className="space-y-1.5 w-full">
+                <Label className="text-xs sm:text-sm">Desde Venta</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {filters.fechaVentaDesde ? format(new Date(filters.fechaVentaDesde), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
@@ -222,13 +237,13 @@ export function ExportFiltersComponent({
                 </Popover>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label>Fecha de Venta Hasta</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {filters.fechaVentaHasta ? format(new Date(filters.fechaVentaHasta), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
@@ -244,13 +259,13 @@ export function ExportFiltersComponent({
                 </Popover>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label>Fecha de Viaje Desde</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {filters.fechaViajeDesde ? format(new Date(filters.fechaViajeDesde), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
@@ -266,13 +281,13 @@ export function ExportFiltersComponent({
                 </Popover>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label>Fecha de Viaje Hasta</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {filters.fechaViajeHasta ? format(new Date(filters.fechaViajeHasta), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
@@ -290,10 +305,11 @@ export function ExportFiltersComponent({
             </div>
 
             {/* Filtros de Importe */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 auto-cols-fr">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="importeMinimo">Importe Mínimo</Label>
                 <Input
+                  className="h-10 w-full min-w-0"
                   id="importeMinimo"
                   type="number"
                   placeholder="0"
@@ -302,9 +318,10 @@ export function ExportFiltersComponent({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="importeMaximo">Importe Máximo</Label>
                 <Input
+                  className="h-10 w-full min-w-0"
                   id="importeMaximo"
                   type="number"
                   placeholder="999999"
@@ -315,10 +332,10 @@ export function ExportFiltersComponent({
             </div>
 
             {/* Filtros de Texto */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-cols-fr">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="numeroTransaccion">Número de Transacción</Label>
-                <Input
+                <Input className="h-10 w-full min-w-0"
                   id="numeroTransaccion"
                   placeholder="Ingrese número de transacción"
                   value={filters.numeroTransaccion || ''}
@@ -326,9 +343,9 @@ export function ExportFiltersComponent({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="nombreEmpresa">Nombre de Empresa</Label>
-                <Input
+                <Input className="h-10 w-full min-w-0"
                   id="nombreEmpresa"
                   placeholder="Ingrese nombre de empresa"
                   value={filters.nombreEmpresa || ''}
@@ -336,9 +353,9 @@ export function ExportFiltersComponent({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="referenciaPago">Referencia de Pago</Label>
-                <Input
+                <Input className="h-10 w-full min-w-0"
                   id="referenciaPago"
                   placeholder="Ingrese referencia de pago"
                   value={filters.referenciaPago || ''}
@@ -346,9 +363,9 @@ export function ExportFiltersComponent({
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5 w-full">
                 <Label htmlFor="bancardTransactionId">ID Transacción Bancard</Label>
-                <Input
+                <Input className="h-10 w-full min-w-0"
                   id="bancardTransactionId"
                   placeholder="Ingrese ID de transacción"
                   value={filters.bancardTransactionId || ''}
@@ -357,53 +374,97 @@ export function ExportFiltersComponent({
               </div>
             </div>
 
-            {/* Filtros de IDs */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="empresaId">ID de Empresa</Label>
-                <Input
-                  id="empresaId"
-                  placeholder="Ingrese ID de empresa"
-                  value={filters.empresaId || ''}
-                  onChange={(e) => updateFilter('empresaId', e.target.value)}
-                />
+            {/* Filtros de Entidades */}
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-cols-fr">
+              <div className="space-y-1.5 w-full">
+                <Label htmlFor="empresaId">Empresa</Label>
+                <Select
+                  value={filters.empresaId || 'all'}
+                  onValueChange={(value) => updateFilter('empresaId', value === 'all' ? undefined : value)}
+                  disabled={isLoadingEmpresas}
+                >
+                  <SelectTrigger className="h-10 w-full min-w-0">
+                    <SelectValue placeholder={isLoadingEmpresas ? "Cargando empresas..." : "Seleccionar empresa"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las empresas</SelectItem>
+                    {empresasData?.data?.map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="usuarioId">ID de Usuario</Label>
-                <Input
-                  id="usuarioId"
-                  placeholder="Ingrese ID de usuario"
-                  value={filters.usuarioId || ''}
-                  onChange={(e) => updateFilter('usuarioId', e.target.value)}
-                />
+              <div className="space-y-1.5 w-full">
+                <Label htmlFor="usuarioId">Usuario</Label>
+                <Select
+                  value={filters.usuarioId || 'all'}
+                  onValueChange={(value) => updateFilter('usuarioId', value === 'all' ? undefined : value)}
+                  disabled={isLoadingUsers}
+                >
+                  <SelectTrigger className="h-10 w-full min-w-0">
+                    <SelectValue placeholder={isLoadingUsers ? "Cargando usuarios..." : "Seleccionar usuario"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los usuarios</SelectItem>
+                    {usersData?.data?.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="clienteId">ID de Cliente</Label>
-                <Input
-                  id="clienteId"
-                  placeholder="Ingrese ID de cliente"
-                  value={filters.clienteId || ''}
-                  onChange={(e) => updateFilter('clienteId', e.target.value)}
-                />
+              <div className="space-y-1.5 w-full">
+                <Label htmlFor="clienteId">Cliente</Label>
+                <Select
+                  value={filters.clienteId || 'all'}
+                  onValueChange={(value) => updateFilter('clienteId', value === 'all' ? undefined : value)}
+                  disabled={isLoadingClientes}
+                >
+                  <SelectTrigger className="h-10 w-full min-w-0">
+                    <SelectValue placeholder={isLoadingClientes ? "Cargando clientes..." : "Seleccionar cliente"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los clientes</SelectItem>
+                    {clientesData?.data?.map((clienteData) => (
+                      <SelectItem key={clienteData.cliente.id} value={clienteData.cliente.id}>
+                        {clienteData.cliente.nombreCompleto} ({clienteData.cliente.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="origenId">ID de Origen</Label>
-                <Input
-                  id="origenId"
-                  placeholder="Ingrese ID de origen"
-                  value={filters.origenId || ''}
-                  onChange={(e) => updateFilter('origenId', e.target.value)}
-                />
+              <div className="space-y-1.5 w-full">
+                <Label htmlFor="origenId">Destino/Origen</Label>
+                <Select
+                  value={filters.origenId || 'all'}
+                  onValueChange={(value) => updateFilter('origenId', value === 'all' ? undefined : value)}
+                  disabled={isLoadingDestinos}
+                >
+                  <SelectTrigger className="h-10 w-full min-w-0">
+                    <SelectValue placeholder={isLoadingDestinos ? "Cargando destinos..." : "Seleccionar destino/origen"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los destinos/orígenes</SelectItem>
+                    {destinosData?.items?.map((destino) => (
+                      <SelectItem key={destino.id} value={destino.id}>
+                        {destino.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
 
         {/* Botones de Acción */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+        <div className="flex flex-col xs:flex-row gap-3 pt-3 border-t">
           <Button
             onClick={onExport}
             disabled={isExporting || !hasActiveFilters}
@@ -416,7 +477,7 @@ export function ExportFiltersComponent({
             variant="outline"
             onClick={clearFilters}
             disabled={isExporting}
-            className="flex-1 sm:flex-none"
+            className="flex-1 xs:flex-none"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Limpiar Filtros
@@ -425,7 +486,7 @@ export function ExportFiltersComponent({
 
         {/* Información de Filtros Activos */}
         {hasActiveFilters && (
-          <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+          <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
             <strong>Filtros activos:</strong> {Object.keys(filters).filter(key => 
               filters[key as keyof ExportFilters] !== undefined && 
               filters[key as keyof ExportFilters] !== null && 

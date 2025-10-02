@@ -13,7 +13,7 @@ export const exportVentas = async (filters: ExportFilters): Promise<Blob> => {
     }
   })
 
-  const response = await fetch(`${API_URL}/admin/ventas/exportar?${params.toString()}`, {
+  const response = await fetch(`${API_URL}/api/admin/ventas/exportar?${params.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
