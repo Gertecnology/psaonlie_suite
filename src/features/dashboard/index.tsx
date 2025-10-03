@@ -2,6 +2,7 @@ import { PageLayout } from '@/components/layout/page-layout'
 import { useSalesStatistics } from './hooks/use-sales-statistics'
 import { useClientesList } from './hooks/use-clientes-list'
 import { VentasList } from './components/ventas-list'
+import { EarningsByCompaniesCard } from './components/earnings-by-companies-card'
 import { StatisticsSearchParams } from './models/statistics.model'
 
 export default function Dashboard() {
@@ -28,7 +29,7 @@ export default function Dashboard() {
       description="Panel de control principal del sistema"
       showSearch={true}
     >
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Statistics Cards */}
         {isLoading && (
           <div className="col-span-full text-center py-8">
@@ -64,6 +65,11 @@ export default function Dashboard() {
               <h3 className="font-semibold">Total Service Charges</h3>
               <p className="text-2xl font-bold">Gs. {statistics.generales.totalServiceCharges.toLocaleString()}</p>
             </div>
+            
+            <EarningsByCompaniesCard 
+              companies={statistics.porEmpresa} 
+              isLoading={statisticsLoading} 
+            />
           </>
         )}
       </div>
