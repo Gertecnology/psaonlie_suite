@@ -3,19 +3,12 @@ import { useSalesStatistics } from './hooks/use-sales-statistics'
 import { useClientesList } from './hooks/use-clientes-list'
 import { VentasList } from './components/ventas-list'
 import { EarningsByCompaniesCard } from './components/earnings-by-companies-card'
+import { StatisticsFilterModal } from './components/statistics-filter-modal'
 import { StatisticsSearchParams } from './models/statistics.model'
+import { useState } from 'react'
 
 export default function Dashboard() {
-  
-  // Example usage of the statistics hook
-  const statisticsParams: StatisticsSearchParams = {
-    // You can add date filters here
-    // fechaDesde: '2025-01-01',
-    // fechaHasta: '2025-12-31',
-    // empresaId: 'specific-company-id',
-    // agruparPor: 'dia' // or 'semana', 'mes'
-  }
-
+  const [statisticsParams, setStatisticsParams] = useState<StatisticsSearchParams>({})
 
   const { data: statistics, isLoading: statisticsLoading, error: statisticsError } = useSalesStatistics(statisticsParams)
   const { data: clients, isLoading: clientsLoading, error: clientsError } = useClientesList()
@@ -23,11 +16,22 @@ export default function Dashboard() {
   const isLoading = statisticsLoading || clientsLoading
   const error = statisticsError || clientsError
 
+  const handleApplyFilters = (filters: StatisticsSearchParams) => {
+    setStatisticsParams(filters)
+  }
+
   return (
     <PageLayout
       title="Bienvenido a PasajeOnline"
       description="Panel de control principal del sistema"
       showSearch={true}
+      actions={
+        <StatisticsFilterModal 
+          onApplyFilters={handleApplyFilters}
+          currentFilters={statisticsParams}
+          isLoading={statisticsLoading}
+        />
+      }
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Statistics Cards */}
