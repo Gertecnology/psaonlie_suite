@@ -120,64 +120,71 @@ export function SalesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Main Search Row */}
-          <div className="grid gap-3 lg:grid-cols-4 md:grid-cols-2">
-            <ParadaSearch
-              value={searchData.origen}
-              onValueChange={(origen) => setSearchData(prev => ({ ...prev, origen }))}
-              placeholder="Seleccionar origen..."
-              label="Origen"
-            />
-            
-            <ParadaSearch
-              value={searchData.destino}
-              onValueChange={(destino) => setSearchData(prev => ({ ...prev, destino }))}
-              placeholder="Seleccionar destino..."
-              label="Destino"
-            />
+          <div className="space-y-4 lg:space-y-0">
+            {/* Desktop: All items in one line */}
+            <div className="hidden lg:grid lg:grid-cols-5 gap-4 items-end">
+              <ParadaSearch
+                value={searchData.origen}
+                onValueChange={(origen) => setSearchData(prev => ({ ...prev, origen }))}
+                placeholder="Seleccionar origen..."
+                label="Origen"
+              />
+              
+              <ParadaSearch
+                value={searchData.destino}
+                onValueChange={(destino) => setSearchData(prev => ({ ...prev, destino }))}
+                placeholder="Seleccionar destino..."
+                label="Destino"
+              />
 
-            {/* Compact Date Filters */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Fechas</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal text-sm h-9"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {searchData.fechaIda ? format(searchData.fechaIda, "dd/MM", { locale: es }) : "Fecha de Ida"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={searchData.fechaIda || undefined}
-                        onSelect={(date) => setSearchData(prev => ({ ...prev, fechaIda: date || null }))}
-                        disabled={(date) => {
-                          const today = new Date()
-                          today.setHours(0, 0, 0, 0)
-                          return date < today
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
+              {/* Fecha de Ida */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Fecha de Ida</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal text-sm h-9"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {searchData.fechaIda ? format(searchData.fechaIda, "dd/MM", { locale: es }) : "Seleccionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={searchData.fechaIda || undefined}
+                          onSelect={(date) => setSearchData(prev => ({ ...prev, fechaIda: date || null }))}
+                          disabled={(date) => {
+                            const today = new Date()
+                            today.setHours(0, 0, 0, 0)
+                            return date < today
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {searchData.fechaIda && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSearchData(prev => ({ ...prev, fechaIda: null }))}
+                      className="h-9 w-9 p-0 flex-shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-                
-                {searchData.fechaIda && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSearchData(prev => ({ ...prev, fechaIda: null }))}
-                    className="h-9 w-9 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-                
-                {showVuelta && (
-                  <>
+              </div>
+
+              {/* Fecha de Vuelta */}
+              {showVuelta && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Fecha de Vuelta</label>
+                  <div className="flex items-center gap-2">
                     <div className="flex-1">
                       <Popover>
                         <PopoverTrigger asChild>
@@ -186,7 +193,7 @@ export function SalesPage() {
                             className="w-full justify-start text-left font-normal text-sm h-9"
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {searchData.fechaVuelta ? format(searchData.fechaVuelta, "dd/MM", { locale: es }) : "Fecha de Vuelta"}
+                            {searchData.fechaVuelta ? format(searchData.fechaVuelta, "dd/MM", { locale: es }) : "Seleccionar"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -208,31 +215,152 @@ export function SalesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setSearchData(prev => ({ ...prev, fechaVuelta: null }))}
-                        className="h-9 w-9 p-0"
+                        className="h-9 w-9 p-0 flex-shrink-0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     )}
-                  </>
-                )}
-              </div>
-            </div>
+                  </div>
+                </div>
+              )}
 
-            {/* Action Buttons */}
-            <div className="flex items-end gap-2">
+              {/* Search Button */}
               <Button 
                 onClick={handleSearch}
                 disabled={!canSearch}
-                className="flex-1 h-9"
+                className="h-9"
               >
                 <Search className="h-4 w-4 mr-2" />
                 Buscar
               </Button>
             </div>
+
+            {/* Mobile/Tablet: Vertical layout */}
+            <div className="lg:hidden space-y-4">
+              {/* Origin and Destination */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ParadaSearch
+                  value={searchData.origen}
+                  onValueChange={(origen) => setSearchData(prev => ({ ...prev, origen }))}
+                  placeholder="Seleccionar origen..."
+                  label="Origen"
+                />
+                
+                <ParadaSearch
+                  value={searchData.destino}
+                  onValueChange={(destino) => setSearchData(prev => ({ ...prev, destino }))}
+                  placeholder="Seleccionar destino..."
+                  label="Destino"
+                />
+              </div>
+
+              {/* Date Filters */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Fechas</label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Fecha de Ida */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Fecha de Ida</label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-left font-normal text-sm h-9"
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {searchData.fechaIda ? format(searchData.fechaIda, "dd/MM", { locale: es }) : "Seleccionar"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={searchData.fechaIda || undefined}
+                              onSelect={(date) => setSearchData(prev => ({ ...prev, fechaIda: date || null }))}
+                              disabled={(date) => {
+                                const today = new Date()
+                                today.setHours(0, 0, 0, 0)
+                                return date < today
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      {searchData.fechaIda && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSearchData(prev => ({ ...prev, fechaIda: null }))}
+                          className="h-9 w-9 p-0 flex-shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Fecha de Vuelta */}
+                  {showVuelta && (
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Fecha de Vuelta</label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal text-sm h-9"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {searchData.fechaVuelta ? format(searchData.fechaVuelta, "dd/MM", { locale: es }) : "Seleccionar"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={searchData.fechaVuelta || undefined}
+                                onSelect={(date) => setSearchData(prev => ({ ...prev, fechaVuelta: date || null }))}
+                                disabled={(date) => {
+                                  const minDate = searchData.fechaIda || new Date()
+                                  return date < minDate
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        
+                        {searchData.fechaVuelta && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSearchData(prev => ({ ...prev, fechaVuelta: null }))}
+                            className="h-9 w-9 p-0 flex-shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Search Button */}
+                <Button 
+                  onClick={handleSearch}
+                  disabled={!canSearch}
+                  className="w-full h-9"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Buscar
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Secondary Controls Row */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="vuelta"
@@ -249,20 +377,20 @@ export function SalesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
-                className="h-8"
+                className="h-8 flex-1 sm:flex-none"
               >
                 <Filter className="h-4 w-4 mr-1" />
-                Filtros
+                <span className="hidden sm:inline">Filtros</span>
               </Button>
               
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClear}
-                className="h-8"
+                className="h-8 flex-1 sm:flex-none"
               >
                 <RotateCcw className="h-4 w-4 mr-1" />
-                Limpiar
+                <span className="hidden sm:inline">Limpiar</span>
               </Button>
             </div>
           </div>

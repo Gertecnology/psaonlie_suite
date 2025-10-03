@@ -16,13 +16,11 @@ class SocketService {
   connect(accessToken: string): Promise<Socket> {
     // Si ya hay una conexión activa, devolverla
     if (this.socket?.connected) {
-      console.log('Socket ya conectado, reutilizando conexión existente')
       return Promise.resolve(this.socket)
     }
 
     // Si hay una conexión en progreso, devolver la promesa existente
     if (this.isConnecting && this.connectionPromise) {
-      console.log('Conexión en progreso, esperando...')
       return this.connectionPromise
     }
 
@@ -31,7 +29,6 @@ class SocketService {
     this.isConnecting = true
     this.connectionPromise = new Promise((resolve, reject) => {
       const initializeConnection = async () => {
-        console.log('Intentando conectar con token:', accessToken ? 'Token presente' : 'Sin token')
 
         // Verificar si el token está próximo a expirar antes de conectar
         const tokenValid = await this.checkAndRefreshToken()
@@ -60,7 +57,6 @@ class SocketService {
         })
 
       this.socket.on('connect', () => {
-        console.log('Socket conectado:', this.socket?.id)
         this.reconnectAttempts = 0
         this.isConnecting = false
         
@@ -84,7 +80,6 @@ class SocketService {
         
         // Solo reconectar si no fue una desconexión intencional
         if (reason !== 'io client disconnect' && reason !== 'io server disconnect') {
-          console.log('Iniciando reconexión automática por desconexión inesperada')
           this.handleReconnect()
         } else {
           console.log('Desconexión intencional, no reconectando automáticamente')
@@ -96,7 +91,6 @@ class SocketService {
         
         // Si el error es de JWT expirado, intentar refrescar el token
         if (error && typeof error === 'object' && 'details' in error && error.details === 'jwt expired') {
-          console.log('JWT expirado detectado en error handler, intentando refrescar token...')
           const refreshed = await this.refreshTokenAndReconnect()
           if (!refreshed) {
             console.error('No se pudo refrescar el token, desconectando socket')
@@ -110,7 +104,6 @@ class SocketService {
         console.error('Auth Error Socket:', error)
         
         if (error && typeof error === 'object' && 'details' in error && error.details === 'jwt expired') {
-          console.log('JWT expirado detectado en auth_error handler, intentando refrescar token...')
           const refreshed = await this.refreshTokenAndReconnect()
           if (!refreshed) {
             console.error('No se pudo refrescar el token, desconectando socket')
@@ -122,12 +115,10 @@ class SocketService {
       // Escuchar cualquier evento que pueda contener errores de autenticación
       this.socket.onAny((eventName, ...args) => {
         if (eventName.includes('error') || eventName.includes('auth')) {
-          console.log(`Evento ${eventName}:`, args)
           
           // Buscar errores de JWT en cualquier argumento
           for (const arg of args) {
             if (arg && typeof arg === 'object' && 'details' in arg && arg.details === 'jwt expired') {
-              console.log('JWT expirado detectado en evento personalizado, intentando refrescar token...')
               this.refreshTokenAndReconnect()
               break
             }
@@ -178,7 +169,6 @@ class SocketService {
   // Método para refrescar el token y reconectar
   private async refreshTokenAndReconnect() {
     try {
-      console.log('Intentando refrescar token para reconectar socket...')
       const storedRefreshToken = localStorage.getItem('refreshToken')
       
       if (!storedRefreshToken) {
@@ -193,7 +183,6 @@ class SocketService {
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       
-      console.log('Token refrescado exitosamente, reconectando socket...')
       
       // Desconectar socket actual
       if (this.socket) {
@@ -213,7 +202,6 @@ class SocketService {
   private async handleReconnect() {
     // No reconectar si ya estamos conectados
     if (this.socket?.connected) {
-      console.log('Socket ya está conectado, saltando reconexión')
       return
     }
 

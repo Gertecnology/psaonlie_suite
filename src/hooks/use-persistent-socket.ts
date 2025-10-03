@@ -20,10 +20,6 @@ export function usePersistentSocket() {
     
     // Si el socket está realmente conectado, usar ese estado
     if (actualConnected && actualSocketId) {
-      console.log('Socket realmente conectado, usando estado real:', { 
-        isConnected: actualConnected, 
-        socketId: actualSocketId 
-      })
       return {
         isConnected: actualConnected,
         connectionError: null,
@@ -32,7 +28,6 @@ export function usePersistentSocket() {
     }
     
     // Si no está conectado, no usar sessionStorage para evitar estados incorrectos
-    console.log('Socket no conectado, iniciando con estado desconectado')
     return {
       isConnected: false,
       connectionError: null,
@@ -65,7 +60,6 @@ export function usePersistentSocket() {
 
   const connectSocket = useCallback(async (accessToken: string) => {
     try {
-      console.log('Intentando conectar socket persistente...')
       await socketService.connect(accessToken)
       updateConnectionState(true)
       return true
@@ -77,7 +71,6 @@ export function usePersistentSocket() {
   }, [updateConnectionState])
 
   const disconnectSocket = useCallback(() => {
-    console.log('Desconectando socket persistente...')
     socketService.disconnect()
     updateConnectionState(false)
   }, [updateConnectionState])
@@ -95,11 +88,6 @@ export function usePersistentSocket() {
     // Si el estado real es diferente al estado actual, sincronizar
     setSocketState(prev => {
       if (actualConnected !== prev.isConnected || actualSocketId !== prev.socketId) {
-        console.log('Sincronizando estado del socket al montar:', { 
-          actualConnected, 
-          actualSocketId,
-          currentState: prev
-        })
         
         return {
           ...prev,
@@ -122,15 +110,9 @@ export function usePersistentSocket() {
       setSocketState(prev => {
         // Solo actualizar si hay cambios reales o la conexión no está saludable
         if (actualConnected !== prev.isConnected || actualSocketId !== prev.socketId || !isHealthy) {
-          console.log('Estado del socket actualizado:', { 
-            isConnected: actualConnected, 
-            socketId: actualSocketId,
-            isHealthy
-          })
           
           // Si la conexión no está saludable pero debería estar conectada, intentar reconectar
           if (!isHealthy && actualConnected) {
-            console.log('Conexión no saludable, intentando reconectar...')
             socketService.ensureConnection().catch(error => {
               console.error('Error al verificar conexión:', error)
             })

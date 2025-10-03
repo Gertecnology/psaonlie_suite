@@ -9,8 +9,7 @@ export const useNotifications = () => {
   const { accessToken, isAuthenticated } = useAuth()
   const { connectSocket, disconnectSocket, socket, addListener } = useSocket()
 
-  const handleNewNotification = useCallback((data: unknown) => {
-    console.log('Nueva notificación recibida:', data)
+  const handleNewNotification = useCallback((_data: unknown) => {
     // Aquí puedes agregar lógica adicional cuando llegue una notificación
     // Por ejemplo, mostrar un toast o actualizar algún estado
   }, [])
@@ -18,12 +17,10 @@ export const useNotifications = () => {
   const handleConnect = useCallback(() => {
     setIsConnected(true)
     setConnectionError(null)
-    console.log('Socket conectado')
   }, [])
 
   const handleDisconnect = useCallback(() => {
     setIsConnected(false)
-    console.log('Socket desconectado')
   }, [])
 
   const handleConnectError = useCallback((error: unknown) => {
