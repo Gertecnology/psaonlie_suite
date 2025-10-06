@@ -310,6 +310,7 @@ export function ExportFiltersComponent({
                 <Label htmlFor="importeMinimo">Importe Mínimo</Label>
                 <Input
                   className="h-10 w-full min-w-0"
+                  min={0}
                   id="importeMinimo"
                   type="number"
                   placeholder="0"
@@ -322,6 +323,7 @@ export function ExportFiltersComponent({
                 <Label htmlFor="importeMaximo">Importe Máximo</Label>
                 <Input
                   className="h-10 w-full min-w-0"
+                  min={0}
                   id="importeMaximo"
                   type="number"
                   placeholder="999999"
@@ -464,7 +466,7 @@ export function ExportFiltersComponent({
         </Collapsible>
 
         {/* Botones de Acción */}
-        <div className="flex flex-col xs:flex-row gap-3 pt-3 border-t">
+        <div className="flex xs:flex-row gap-3 pt-3 border-t">
           <Button
             onClick={onExport}
             disabled={isExporting || !hasActiveFilters}
