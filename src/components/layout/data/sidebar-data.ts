@@ -9,6 +9,7 @@ import {
   IconUsers,
   IconBell,
   IconFileReport,
+  IconExternalLink,
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 
@@ -114,8 +115,14 @@ export const sidebarData: SidebarData = {
               title: 'Notificaciones',
               url: '/settings/notifications',
               icon: IconBell,
-            }
+            },
+            {
+              title: 'Datos externos',
+              url: '/settings/external-data',
+              icon: IconExternalLink,
+            },
           ],
+
         },
       ],
     },
