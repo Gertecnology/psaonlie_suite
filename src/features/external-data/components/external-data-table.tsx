@@ -1,4 +1,5 @@
-import { useState } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useMemo } from 'react'
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,9 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [pageSize, setPageSize] = useState(50)
 
+  // Memoizar los filtros para evitar re-renders innecesarios
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
+
   const {
     data,
     totalItems,
@@ -40,7 +44,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
     allDataCount,
     filteredDataCount,
   } = useExternalData({
-    filters,
+    filters: memoizedFilters,
     pageSize,
     searchTerm,
   })
@@ -199,7 +203,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                     </TableCell>
                     <TableCell>{item.formaPago}</TableCell>
                     <TableCell>
-                      <div className="max-w-24 truncate" title={item.contacto}>
+                      <div className="max-w-24" title={item.contacto}>
                         {item.contacto}
                       </div>
                     </TableCell>

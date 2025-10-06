@@ -53,10 +53,9 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
 
   // Resetear página cuando cambian los filtros o búsqueda
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1)
-    }
-  }, [filters, searchTerm])
+    setCurrentPage(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(filters), searchTerm])
 
   const goToPage = (page: number) => {
     setCurrentPage(page)
