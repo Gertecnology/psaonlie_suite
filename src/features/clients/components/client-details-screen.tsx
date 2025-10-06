@@ -195,9 +195,6 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
         </div>
       </div>
 
-      {/* Estadísticas del cliente */}
-      <ClientStats client={client} />
-
       {/* Información del Cliente */}
       <Card>
         <CardHeader>
@@ -336,6 +333,9 @@ export function ClientDetailsScreen({ client, onBack }: ClientDetailsScreenProps
           )}
         </CardContent>
       </Card>
+              
+      {/* Estadísticas del cliente */}
+      <ClientStats client={client} />
 
       {/* Historial de Compras */}
       <Card>
