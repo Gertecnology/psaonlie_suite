@@ -64,7 +64,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Total Ventas del Mes</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">Total Ventas</h3>
                 </div>
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-foreground">{statistics.generales.totalVentas}</p>
