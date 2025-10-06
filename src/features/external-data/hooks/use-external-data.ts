@@ -37,7 +37,7 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
 
   // Aplicar paginación
   const paginatedData = useMemo(() => {
-    if (!filteredData.length) {
+    if (!filteredData || filteredData.length === 0) {
       return {
         items: [],
         totalItems: 0,
@@ -53,7 +53,9 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
 
   // Resetear página cuando cambian los filtros o búsqueda
   useEffect(() => {
-    setCurrentPage(1)
+    if (currentPage !== 1) {
+      setCurrentPage(1)
+    }
   }, [filters, searchTerm])
 
   const goToPage = (page: number) => {
@@ -62,13 +64,13 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
 
   const goToNextPage = () => {
     if (paginatedData.hasNextPage) {
-      setCurrentPage(currentPage + 1)
+      setCurrentPage(prev => prev + 1)
     }
   }
 
   const goToPreviousPage = () => {
     if (paginatedData.hasPreviousPage) {
-      setCurrentPage(currentPage - 1)
+      setCurrentPage(prev => prev - 1)
     }
   }
 

@@ -45,6 +45,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
     searchTerm,
   })
 
+
   const formatTime = (time: string) => {
     // Si el tiempo ya está en formato HH:mm, devolverlo tal como está
     if (time.match(/^\d{2}:\d{2}$/)) {
@@ -109,7 +110,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 'Cargando datos...'
               ) : (
                 <>
-                  Mostrando {data.length} de {filteredDataCount} registros 
+                  Página {currentPage} de {totalPages} - Mostrando {data.length} de {filteredDataCount} registros 
                   {searchTerm && ` (${allDataCount} total)`}
                 </>
               )}
@@ -175,15 +176,15 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : data.length === 0 ? (
+              ) : !data || data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {searchTerm ? 'No se encontraron resultados para la búsqueda' : 'No hay datos disponibles'}
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((item) => (
-                  <TableRow key={item.id}>
+                data.map((item, index) => (
+                  <TableRow key={`${item.id}-${currentPage}-${index}`}>
                     <TableCell className="font-medium">{item.empresa}</TableCell>
                     <TableCell>{item.destino}</TableCell>
                     <TableCell>
@@ -221,7 +222,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => goToPage(1)}
-                disabled={!hasPreviousPage}
+                disabled={!hasPreviousPage || isLoading}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
@@ -230,7 +231,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={goToPreviousPage}
-                disabled={!hasPreviousPage}
+                disabled={!hasPreviousPage || isLoading}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -255,6 +256,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                       size="sm"
                       onClick={() => goToPage(pageNum)}
                       className="w-8 h-8 p-0"
+                      disabled={isLoading}
                     >
                       {pageNum}
                     </Button>
@@ -266,7 +268,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={goToNextPage}
-                disabled={!hasNextPage}
+                disabled={!hasNextPage || isLoading}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -275,7 +277,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => goToPage(totalPages)}
-                disabled={!hasNextPage}
+                disabled={!hasNextPage || isLoading}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
