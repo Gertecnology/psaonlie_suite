@@ -51,21 +51,34 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
 
 
   const formatTime = (time: string) => {
+    if (!time) return '-'
+    
     // Si el tiempo ya está en formato HH:mm, devolverlo tal como está
     if (time.match(/^\d{2}:\d{2}$/)) {
       return time
     }
+    
+    // Si está en formato HH:mm:ss, extraer solo HH:mm
+    if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      return time.substring(0, 5) // Toma solo los primeros 5 caracteres (HH:mm)
+    }
+    
     // Si es un timestamp o formato diferente, intentar formatearlo
     try {
       const date = new Date(time)
-      return date.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      })
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        })
+      }
     } catch {
-      return time
+      // Si falla el parsing, devolver el valor original
     }
+    
+    // Si no es un formato reconocido, devolver tal como está
+    return time
   }
 
   const formatDays = (days: string) => {
