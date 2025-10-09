@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalDataService, ExternalDataFilters, ExternalDataItem } from '../services/external-data.service'
+import { ExternalDataService, ExternalDataFilters, PaginatedExternalDataResponse } from '../services/external-data.service'
 
 interface UseExternalDataOptions {
   filters?: ExternalDataFilters
@@ -12,44 +12,38 @@ interface UseExternalDataOptions {
  * Hook para manejar la obtención y paginación de datos externos
  */
 export function useExternalData(options: UseExternalDataOptions = {}) {
-  const { filters = {}, pageSize = 50, searchTerm = '' } = options
+  const { filters = {}, pageSize = 10, searchTerm = '' } = options
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Query para obtener todos los datos
+  // Memoizar los filtros de consulta incluyendo paginación
+  const queryFilters = useMemo(() => ({
+    ...filters,
+    page: currentPage,
+    limit: pageSize,
+    // Si hay término de búsqueda, usarlo como filtro de empresa
+    ...(searchTerm && { empresa: searchTerm }),
+  }), [filters, currentPage, pageSize, searchTerm])
+
+  // Query para obtener datos paginados
   const {
-    data: allData,
+    data: response,
     isLoading,
     error,
     refetch,
-  } = useQuery<ExternalDataItem[]>({
-    queryKey: ['external-data', filters],
-    queryFn: () => ExternalDataService.getExternalData(filters),
+  } = useQuery<PaginatedExternalDataResponse>({
+    queryKey: ['external-data', queryFilters],
+    queryFn: () => ExternalDataService.getExternalData(queryFilters),
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos
     retry: 2,
   })
 
-  // Filtrar datos por búsqueda
-  const filteredData = useMemo(() => {
-    if (!allData) return []
-    return ExternalDataService.filterDataBySearch(allData, searchTerm)
-  }, [allData, searchTerm])
-
-  // Aplicar paginación
-  const paginatedData = useMemo(() => {
-    if (!filteredData || filteredData.length === 0) {
-      return {
-        items: [],
-        totalItems: 0,
-        totalPages: 0,
-        currentPage: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      }
-    }
-
-    return ExternalDataService.paginateData(filteredData, currentPage, pageSize)
-  }, [filteredData, currentPage, pageSize])
+  // Extraer datos de la respuesta
+  const data = response?.data?.items || []
+  const totalItems = response?.data?.total || 0
+  const totalPages = response?.data?.totalPages || 0
+  const hasNextPage = currentPage < totalPages
+  const hasPreviousPage = currentPage > 1
 
   // Resetear página cuando cambian los filtros o búsqueda
   useEffect(() => {
@@ -62,25 +56,25 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
   }
 
   const goToNextPage = () => {
-    if (paginatedData.hasNextPage) {
+    if (hasNextPage) {
       setCurrentPage(prev => prev + 1)
     }
   }
 
   const goToPreviousPage = () => {
-    if (paginatedData.hasPreviousPage) {
+    if (hasPreviousPage) {
       setCurrentPage(prev => prev - 1)
     }
   }
 
   return {
     // Datos paginados
-    data: paginatedData.items,
-    totalItems: paginatedData.totalItems,
-    totalPages: paginatedData.totalPages,
-    currentPage: paginatedData.currentPage,
-    hasNextPage: paginatedData.hasNextPage,
-    hasPreviousPage: paginatedData.hasPreviousPage,
+    data,
+    totalItems,
+    totalPages,
+    currentPage,
+    hasNextPage,
+    hasPreviousPage,
     
     // Estados
     isLoading,
@@ -91,9 +85,5 @@ export function useExternalData(options: UseExternalDataOptions = {}) {
     goToNextPage,
     goToPreviousPage,
     refetch,
-    
-    // Información adicional
-    allDataCount: allData?.length || 0,
-    filteredDataCount: filteredData.length,
   }
 }

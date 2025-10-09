@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Calendar as CalendarIcon, Filter, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar as CalendarIcon, Filter, RotateCcw, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,8 @@ import { useEmpresasList } from '../../dashboard/hooks/use-empresas-list'
 import { useUsers } from '../../users/hooks/use-users'
 import { useClientesList } from '../../clients/hooks/use-clients'
 import { useGetDestinations } from '../../destinations/hooks/use-get-destinations'
+import { usePreviewReports } from '../hooks/use-preview-reports'
+import { PreviewTable } from './preview-table'
 
 interface ExportFiltersProps {
   filters: ExportFilters
@@ -38,6 +40,7 @@ export function ExportFiltersComponent({
   isExporting 
 }: ExportFiltersProps) {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   // Fetch data from APIs
   const { data: empresasData, isLoading: isLoadingEmpresas } = useEmpresasList()
@@ -50,22 +53,66 @@ export function ExportFiltersComponent({
   }) // Get all clients for the selector
   const { data: destinosData, isLoading: isLoadingDestinos } = useGetDestinations()
 
+  // Preview functionality
+  const { 
+    previewData, 
+    totalCount, 
+    isLoadingPreview, 
+    error: previewError, 
+    loadPreview, 
+    clearPreview 
+  } = usePreviewReports()
+
   const updateFilter = (key: keyof ExportFilters, value: string | number | undefined) => {
-    onFiltersChange({
+    const newFilters = {
       ...filters,
       [key]: value === '' ? undefined : value,
-    })
+    }
+    onFiltersChange(newFilters)
+    
+    // Auto-cargar previsualización si hay filtros activos
+    if (showPreview) {
+      const hasActiveFilters = Object.values(newFilters).some(v => 
+        v !== undefined && v !== null && v !== ''
+      )
+      if (hasActiveFilters) {
+        loadPreview(newFilters)
+      } else {
+        clearPreview()
+      }
+    }
   }
 
   const clearFilters = () => {
     onFiltersChange({})
+    clearPreview()
   }
 
   const hasActiveFilters = Object.values(filters).some(value => 
     value !== undefined && value !== null && value !== ''
   )
 
+  const handlePreviewToggle = () => {
+    if (!showPreview) {
+      setShowPreview(true)
+      if (hasActiveFilters) {
+        loadPreview(filters)
+      }
+    } else {
+      setShowPreview(false)
+      clearPreview()
+    }
+  }
+
+  // Auto-cargar previsualización cuando se monta el componente si hay filtros
+  useEffect(() => {
+    if (showPreview && hasActiveFilters) {
+      loadPreview(filters)
+    }
+  }, [showPreview, hasActiveFilters, filters, loadPreview])
+
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -477,6 +524,16 @@ export function ExportFiltersComponent({
           
           <Button
             variant="outline"
+            onClick={handlePreviewToggle}
+            disabled={isExporting || !hasActiveFilters}
+            className="flex-1 xs:flex-none"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {showPreview ? 'Ocultar' : 'Previsualizar'}
+          </Button>
+          
+          <Button
+            variant="outline"
             onClick={clearFilters}
             disabled={isExporting}
             className="flex-1 xs:flex-none"
@@ -498,5 +555,17 @@ export function ExportFiltersComponent({
         )}
       </CardContent>
     </Card>
+
+    {/* Previsualización de Datos */}
+    {showPreview && (
+      <PreviewTable
+        data={previewData?.data || []}
+        totalCount={totalCount}
+        isLoading={isLoadingPreview}
+        error={previewError}
+        onRefresh={() => loadPreview(filters)}
+      />
+    )}
+  </>
   )
 }

@@ -6,6 +6,8 @@ export interface ExternalDataFilters {
   empresa?: string
   destino?: string
   diasSemana?: string // separados por coma
+  page?: number // Página para paginación
+  limit?: number // Límite de resultados por página
 }
 
 export interface ExternalDataItem {
@@ -16,9 +18,22 @@ export interface ExternalDataItem {
   empresa: string
   boleteria: string
   tiposServicio: string
-  itinerarioobservacion: string
+  itinerarioObservacion: string
   formaPago: string
-  contacto: string
+  contacto: string | null
+}
+
+export interface PaginatedExternalDataResponse {
+  success: boolean
+  statusCode: number
+  message: string
+  data: {
+    items: ExternalDataItem[]
+    total: number
+    page: string
+    limit: string
+    totalPages: number
+  }
 }
 
 /**
@@ -26,11 +41,11 @@ export interface ExternalDataItem {
  */
 export class ExternalDataService {
   /**
-   * Obtiene todos los datos externos con filtros opcionales
-   * @param filters - Filtros opcionales para la consulta
-   * @returns Promise con array de datos externos
+   * Obtiene datos externos paginados con filtros opcionales
+   * @param filters - Filtros opcionales para la consulta incluyendo paginación
+   * @returns Promise con respuesta paginada de datos externos
    */
-  static async getExternalData(filters: ExternalDataFilters = {}): Promise<ExternalDataItem[]> {
+  static async getExternalData(filters: ExternalDataFilters = {}): Promise<PaginatedExternalDataResponse> {
     const params = new URLSearchParams()
     
     // Agregar filtros solo si tienen valor
@@ -39,6 +54,10 @@ export class ExternalDataService {
     if (filters.empresa) params.append('empresa', filters.empresa)
     if (filters.destino) params.append('destino', filters.destino)
     if (filters.diasSemana) params.append('diasSemana', filters.diasSemana)
+    
+    // Agregar parámetros de paginación
+    if (filters.page) params.append('page', filters.page.toString())
+    if (filters.limit) params.append('limit', filters.limit.toString())
 
     const response = await fetch(`${API_URL}/api/datos-externos?${params.toString()}`, {
       method: 'GET',
@@ -46,63 +65,33 @@ export class ExternalDataService {
         'Content-Type': 'application/json',
       },
     })
+    
+    if (!response.ok) {
+      throw new Error(`Error al obtener datos externos: ${response.status} ${response.statusText}`)
+    }
+    
     return response.json()
   }
 
   /**
-   * Aplica paginación del lado del cliente a los datos
-   * @param data - Array de datos a paginar
-   * @param page - Página actual (empezando en 1)
-   * @param pageSize - Tamaño de página
-   * @returns Objeto con datos paginados y metadatos
-   */
-  static paginateData<T>(
-    data: T[], 
-    page: number, 
-    pageSize: number
-  ): {
-    items: T[]
-    totalItems: number
-    totalPages: number
-    currentPage: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-  } {
-    const totalItems = data.length
-    const totalPages = Math.ceil(totalItems / pageSize)
-    const startIndex = (page - 1) * pageSize
-    const endIndex = startIndex + pageSize
-    const items = data.slice(startIndex, endIndex)
-
-    return {
-      items,
-      totalItems,
-      totalPages,
-      currentPage: page,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    }
-  }
-
-  /**
-   * Filtra datos del lado del cliente por texto
-   * @param data - Array de datos a filtrar
+   * Busca datos externos con término de búsqueda
    * @param searchTerm - Término de búsqueda
-   * @returns Array de datos filtrados
+   * @param filters - Filtros adicionales
+   * @returns Promise con respuesta paginada de datos externos
    */
-  static filterDataBySearch(data: ExternalDataItem[], searchTerm: string): ExternalDataItem[] {
-    if (!searchTerm.trim()) return data
-
-    const term = searchTerm.toLowerCase()
-    return data.filter(item => 
-      item.empresa.toLowerCase().includes(term) ||
-      item.destino.toLowerCase().includes(term) ||
-      item.horario.toLowerCase().includes(term) ||
-      item.dias.toLowerCase().includes(term) ||
-      item.boleteria.toLowerCase().includes(term) ||
-      item.tiposServicio.toLowerCase().includes(term) ||
-      item.formaPago.toLowerCase().includes(term) ||
-      item.contacto.toLowerCase().includes(term)
-    )
+  static async searchExternalData(
+    searchTerm: string, 
+    filters: ExternalDataFilters = {}
+  ): Promise<PaginatedExternalDataResponse> {
+    // Para búsqueda, podemos usar el campo 'empresa' o 'destino' como filtro
+    // dependiendo de lo que soporte el API
+    const searchFilters: ExternalDataFilters = {
+      ...filters,
+      // Si el API soporta búsqueda general, podríamos agregar un parámetro 'search'
+      // Por ahora, usamos empresa como filtro de búsqueda
+      empresa: searchTerm || filters.empresa,
+    }
+    
+    return this.getExternalData(searchFilters)
   }
 }

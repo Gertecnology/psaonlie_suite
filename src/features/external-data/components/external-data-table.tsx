@@ -23,7 +23,7 @@ interface ExternalDataTableProps {
 
 export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(10)
 
   // Memoizar los filtros para evitar re-renders innecesarios
   const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
@@ -41,8 +41,6 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
     goToNextPage,
     goToPreviousPage,
     refetch,
-    allDataCount,
-    filteredDataCount,
   } = useExternalData({
     filters: memoizedFilters,
     pageSize,
@@ -127,8 +125,8 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 'Cargando datos...'
               ) : (
                 <>
-                  Página {currentPage} de {totalPages} - Mostrando {data.length} de {filteredDataCount} registros 
-                  {searchTerm && ` (${allDataCount} total)`}
+                  Página {currentPage} de {totalPages} - Mostrando {data.length} de {totalItems} registros
+                  {searchTerm && ` (filtrado por: "${searchTerm}")`}
                 </>
               )}
             </CardDescription>
@@ -159,10 +157,10 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="10">10</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
                 <SelectItem value="100">100</SelectItem>
-                <SelectItem value="200">200</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -179,6 +177,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 <TableHead>Días</TableHead>
                 <TableHead>Boletería</TableHead>
                 <TableHead>Servicios</TableHead>
+                <TableHead>Observaciones</TableHead>
                 <TableHead>Pago</TableHead>
                 <TableHead>Contacto</TableHead>
               </TableRow>
@@ -186,7 +185,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <RefreshCw className="h-6 w-6 animate-spin mr-2" />
                       Cargando datos...
@@ -195,7 +194,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 </TableRow>
               ) : !data || data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {searchTerm ? 'No se encontraron resultados para la búsqueda' : 'No hay datos disponibles'}
                   </TableCell>
                 </TableRow>
@@ -214,10 +213,15 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                         {item.tiposServicio}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="max-w-48 truncate" title={item.itinerarioObservacion}>
+                        {item.itinerarioObservacion}
+                      </div>
+                    </TableCell>
                     <TableCell>{item.formaPago}</TableCell>
                     <TableCell>
-                      <div className="max-w-24" title={item.contacto}>
-                        {item.contacto}
+                      <div className="max-w-24" title={item.contacto || ''}>
+                        {item.contacto || '-'}
                       </div>
                     </TableCell>
                   </TableRow>
