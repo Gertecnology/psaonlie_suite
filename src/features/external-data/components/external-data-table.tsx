@@ -1,4 +1,5 @@
-import { useState } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useMemo } from 'react'
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +23,10 @@ interface ExternalDataTableProps {
 
 export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(10)
+
+  // Memoizar los filtros para evitar re-renders innecesarios
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
 
   const {
     data,
@@ -37,30 +41,42 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
     goToNextPage,
     goToPreviousPage,
     refetch,
-    allDataCount,
-    filteredDataCount,
   } = useExternalData({
-    filters,
+    filters: memoizedFilters,
     pageSize,
     searchTerm,
   })
 
+
   const formatTime = (time: string) => {
+    if (!time) return '-'
+    
     // Si el tiempo ya está en formato HH:mm, devolverlo tal como está
     if (time.match(/^\d{2}:\d{2}$/)) {
       return time
     }
+    
+    // Si está en formato HH:mm:ss, extraer solo HH:mm
+    if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      return time.substring(0, 5) // Toma solo los primeros 5 caracteres (HH:mm)
+    }
+    
     // Si es un timestamp o formato diferente, intentar formatearlo
     try {
       const date = new Date(time)
-      return date.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      })
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        })
+      }
     } catch {
-      return time
+      // Si falla el parsing, devolver el valor original
     }
+    
+    // Si no es un formato reconocido, devolver tal como está
+    return time
   }
 
   const formatDays = (days: string) => {
@@ -109,8 +125,8 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 'Cargando datos...'
               ) : (
                 <>
-                  Mostrando {data.length} de {filteredDataCount} registros 
-                  {searchTerm && ` (${allDataCount} total)`}
+                  Página {currentPage} de {totalPages} - Mostrando {data.length} de {totalItems} registros
+                  {searchTerm && ` (filtrado por: "${searchTerm}")`}
                 </>
               )}
             </CardDescription>
@@ -141,10 +157,10 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="10">10</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
                 <SelectItem value="100">100</SelectItem>
-                <SelectItem value="200">200</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -161,6 +177,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 <TableHead>Días</TableHead>
                 <TableHead>Boletería</TableHead>
                 <TableHead>Servicios</TableHead>
+                <TableHead>Observaciones</TableHead>
                 <TableHead>Pago</TableHead>
                 <TableHead>Contacto</TableHead>
               </TableRow>
@@ -168,22 +185,22 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     <div className="flex items-center justify-center">
                       <RefreshCw className="h-6 w-6 animate-spin mr-2" />
                       Cargando datos...
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : data.length === 0 ? (
+              ) : !data || data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {searchTerm ? 'No se encontraron resultados para la búsqueda' : 'No hay datos disponibles'}
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((item) => (
-                  <TableRow key={item.id}>
+                data.map((item, index) => (
+                  <TableRow key={`${item.id}-${currentPage}-${index}`}>
                     <TableCell className="font-medium">{item.empresa}</TableCell>
                     <TableCell>{item.destino}</TableCell>
                     <TableCell>
@@ -196,10 +213,15 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                         {item.tiposServicio}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="max-w-48 truncate" title={item.itinerarioObservacion}>
+                        {item.itinerarioObservacion}
+                      </div>
+                    </TableCell>
                     <TableCell>{item.formaPago}</TableCell>
                     <TableCell>
-                      <div className="max-w-24 truncate" title={item.contacto}>
-                        {item.contacto}
+                      <div className="max-w-24" title={item.contacto || ''}>
+                        {item.contacto || '-'}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -221,7 +243,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => goToPage(1)}
-                disabled={!hasPreviousPage}
+                disabled={!hasPreviousPage || isLoading}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
@@ -230,7 +252,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={goToPreviousPage}
-                disabled={!hasPreviousPage}
+                disabled={!hasPreviousPage || isLoading}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -255,6 +277,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                       size="sm"
                       onClick={() => goToPage(pageNum)}
                       className="w-8 h-8 p-0"
+                      disabled={isLoading}
                     >
                       {pageNum}
                     </Button>
@@ -266,7 +289,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={goToNextPage}
-                disabled={!hasNextPage}
+                disabled={!hasNextPage || isLoading}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -275,7 +298,7 @@ export function ExternalDataTable({ filters = {} }: ExternalDataTableProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => goToPage(totalPages)}
-                disabled={!hasNextPage}
+                disabled={!hasNextPage || isLoading}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
