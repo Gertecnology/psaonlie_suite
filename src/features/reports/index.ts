@@ -2,6 +2,8 @@
 export { ReportsPage } from './components/reports-page'
 export { ExportFiltersComponent } from './components/export-filters'
 export { PreviewTable } from './components/preview-table'
+export { FiltersModal } from './components/filters-modal'
+export { VentasPreviewTable } from './components/ventas-preview-table'
 
 // Hooks
 export { useExportReports } from './hooks/use-export-reports'
