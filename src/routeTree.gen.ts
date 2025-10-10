@@ -43,7 +43,6 @@ import { Route as ClerkauthSignUpRouteImport } from './routes/clerk/(auth)/sign-
 import { Route as ClerkauthSignInRouteImport } from './routes/clerk/(auth)/sign-in'
 import { Route as AuthenticatedSettingsServiceChargesRouteImport } from './routes/_authenticated/settings/service-charges'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
-import { Route as AuthenticatedSettingsExternalDataRouteImport } from './routes/_authenticated/settings/external-data'
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
@@ -52,6 +51,8 @@ import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authent
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
 import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
 import { Route as AuthenticatedCompaniesIdRouteImport } from './routes/_authenticated/companies/$id'
+import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
+import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
 
 const ClerkRouteRoute = ClerkRouteRouteImport.update({
   id: '/clerk',
@@ -232,12 +233,6 @@ const AuthenticatedSettingsNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
-const AuthenticatedSettingsExternalDataRoute =
-  AuthenticatedSettingsExternalDataRouteImport.update({
-    id: '/external-data',
-    path: '/external-data',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
 const AuthenticatedSettingsDisplayRoute =
   AuthenticatedSettingsDisplayRouteImport.update({
     id: '/display',
@@ -285,6 +280,18 @@ const AuthenticatedCompaniesIdRoute =
     path: '/companies/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsExternalDataIndexRoute =
+  AuthenticatedSettingsExternalDataIndexRouteImport.update({
+    id: '/external-data/',
+    path: '/external-data/',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsExternalDataDayConfigurationRoute =
+  AuthenticatedSettingsExternalDataDayConfigurationRouteImport.update({
+    id: '/external-data/day-configuration',
+    path: '/external-data/day-configuration',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
@@ -311,7 +318,6 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
-  '/settings/external-data': typeof AuthenticatedSettingsExternalDataRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/clerk/sign-in': typeof ClerkauthSignInRoute
@@ -328,6 +334,8 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRoutesByTo {
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
@@ -352,7 +360,6 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
-  '/settings/external-data': typeof AuthenticatedSettingsExternalDataRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/clerk/sign-in': typeof ClerkauthSignInRoute
@@ -369,6 +376,8 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -398,7 +407,6 @@ export interface FileRoutesById {
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
-  '/_authenticated/settings/external-data': typeof AuthenticatedSettingsExternalDataRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/clerk/(auth)/sign-in': typeof ClerkauthSignInRoute
@@ -415,6 +423,8 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/_authenticated/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -443,7 +453,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
-    | '/settings/external-data'
     | '/settings/notifications'
     | '/settings/service-charges'
     | '/clerk/sign-in'
@@ -460,6 +469,8 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/tasks'
     | '/users'
+    | '/settings/external-data/day-configuration'
+    | '/settings/external-data'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/clerk'
@@ -484,7 +495,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
-    | '/settings/external-data'
     | '/settings/notifications'
     | '/settings/service-charges'
     | '/clerk/sign-in'
@@ -501,6 +511,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/users'
+    | '/settings/external-data/day-configuration'
+    | '/settings/external-data'
   id:
     | '__root__'
     | '/_authenticated'
@@ -529,7 +541,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
-    | '/_authenticated/settings/external-data'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/service-charges'
     | '/clerk/(auth)/sign-in'
@@ -546,6 +557,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
+    | '/_authenticated/settings/external-data/day-configuration'
+    | '/_authenticated/settings/external-data/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -803,13 +816,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
-    '/_authenticated/settings/external-data': {
-      id: '/_authenticated/settings/external-data'
-      path: '/external-data'
-      fullPath: '/settings/external-data'
-      preLoaderRoute: typeof AuthenticatedSettingsExternalDataRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
     '/_authenticated/settings/display': {
       id: '/_authenticated/settings/display'
       path: '/display'
@@ -866,6 +872,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCompaniesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/external-data/': {
+      id: '/_authenticated/settings/external-data/'
+      path: '/external-data'
+      fullPath: '/settings/external-data'
+      preLoaderRoute: typeof AuthenticatedSettingsExternalDataIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/external-data/day-configuration': {
+      id: '/_authenticated/settings/external-data/day-configuration'
+      path: '/external-data/day-configuration'
+      fullPath: '/settings/external-data/day-configuration'
+      preLoaderRoute: typeof AuthenticatedSettingsExternalDataDayConfigurationRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
   }
 }
 
@@ -873,10 +893,11 @@ interface AuthenticatedSettingsRouteRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsDisplayRoute: typeof AuthenticatedSettingsDisplayRoute
-  AuthenticatedSettingsExternalDataRoute: typeof AuthenticatedSettingsExternalDataRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
   AuthenticatedSettingsServiceChargesRoute: typeof AuthenticatedSettingsServiceChargesRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+  AuthenticatedSettingsExternalDataDayConfigurationRoute: typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  AuthenticatedSettingsExternalDataIndexRoute: typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 
 const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteChildren =
@@ -884,13 +905,15 @@ const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteCh
     AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
     AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
     AuthenticatedSettingsDisplayRoute: AuthenticatedSettingsDisplayRoute,
-    AuthenticatedSettingsExternalDataRoute:
-      AuthenticatedSettingsExternalDataRoute,
     AuthenticatedSettingsNotificationsRoute:
       AuthenticatedSettingsNotificationsRoute,
     AuthenticatedSettingsServiceChargesRoute:
       AuthenticatedSettingsServiceChargesRoute,
     AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+    AuthenticatedSettingsExternalDataDayConfigurationRoute:
+      AuthenticatedSettingsExternalDataDayConfigurationRoute,
+    AuthenticatedSettingsExternalDataIndexRoute:
+      AuthenticatedSettingsExternalDataIndexRoute,
   }
 
 const AuthenticatedSettingsRouteRouteWithChildren =
