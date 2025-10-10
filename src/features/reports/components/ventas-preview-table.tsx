@@ -1,16 +1,18 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Eye, EyeOff, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle, RefreshCw, FileSpreadsheet, FileText, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useState } from 'react'
 import { useVentasList } from '../../dashboard/hooks/use-ventas-list'
 import type { ExportFilters } from '../models/reports.model'
 import type { VentasSearchParams } from '../../dashboard/models/sales.model'
+import type { PreviewData } from '../services/preview.service'
+import { convertToCSV, convertToExcel, getTableColumns, flattenDataForTable } from '../utils/export-formatters'
 
 interface VentasPreviewTableProps {
   filters: ExportFilters
@@ -27,32 +29,96 @@ const formatCurrency = (amount: number): string => {
   }).format(amount)
 }
 
-// Función para obtener el color del badge según el estado
-const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  switch (status.toLowerCase()) {
-    case 'pagado':
-    case 'confirmado':
-    case 'pago_aprobado':
-      return 'default'
-    case 'pendiente':
-    case 'reservado':
-    case 'pendiente_pago':
-      return 'secondary'
-    case 'cancelado':
-    case 'anulado':
-    case 'expirado':
-    case 'fallido':
-      return 'destructive'
-    default:
-      return 'outline'
+// Función para formatear fecha sin hora
+const formatDateOnly = (dateString: string): string => {
+  try {
+    return format(new Date(dateString), 'dd/MM/yyyy', { locale: es })
+  } catch {
+    return dateString
   }
+}
+
+// Componente para mostrar tabla tipo Excel
+const ExcelPreviewTable = ({ data }: { data: unknown[] }) => {
+  const columns = getTableColumns()
+  const flattenedData = flattenDataForTable(data as PreviewData[])
+
+  // Calcular el ancho total de la tabla
+  const totalWidth = columns.reduce((sum, col) => sum + col.width, 0)
+
+  return (
+    <div className="border rounded-lg overflow-hidden bg-white">
+      <div className="h-[500px] overflow-auto">
+        <div style={{ minWidth: `${totalWidth}px` }}>
+          {/* Encabezados */}
+          <div className="sticky top-0 bg-gray-50 border-b z-10">
+            <div className="flex">
+              {columns.map((column) => (
+                <div
+                  key={column.key}
+                  className="px-3 py-2 text-xs font-medium text-gray-700 border-r border-gray-200 flex-shrink-0"
+                  style={{ width: column.width, minWidth: column.width }}
+                >
+                  {column.header}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Filas de datos */}
+          <div className="bg-white">
+            {flattenedData.map((row, index) => (
+              <div
+                key={row.id}
+                className={`flex border-b border-gray-100 hover:bg-gray-50 ${
+                  index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                }`}
+              >
+                {columns.map((column) => (
+                  <div
+                    key={column.key}
+                    className="px-3 py-2 text-xs text-gray-900 border-r border-gray-100 flex-shrink-0"
+                    style={{ width: column.width, minWidth: column.width }}
+                    title={String(row[column.key as keyof typeof row] || '')}
+                  >
+                    {column.key === 'importeTotal' || column.key === 'comisionTotal' ? (
+                      formatCurrency(Number(row[column.key as keyof typeof row] || 0))
+                    ) : column.key === 'fechaVenta' || column.key === 'fechaViaje' || column.key === 'createdAt' || column.key === 'updatedAt' ? (
+                      formatDateOnly(String(row[column.key as keyof typeof row] || ''))
+                    ) : (
+                      String(row[column.key as keyof typeof row] || '')
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Componente para mostrar vista CSV
+const CSVPreview = ({ data }: { data: unknown[] }) => {
+  const csvContent = convertToCSV(data as PreviewData[])
+
+  return (
+    <div className="border rounded-lg overflow-hidden bg-white">
+      <div className="h-[500px] overflow-auto">
+        <pre className="p-4 text-xs font-mono text-gray-900 whitespace-pre-wrap">
+          {csvContent}
+        </pre>
+      </div>
+    </div>
+  )
 }
 
 // Función para convertir ExportFilters a VentasSearchParams
 const convertFiltersToSearchParams = (filters: ExportFilters): VentasSearchParams => {
   const searchParams: VentasSearchParams = {
     page: 1,
-    limit: 20, // Mostrar solo 20 registros para previsualización
+    limit: 100, // Mostrar hasta 100 registros para previsualización
   }
 
   // Mapear filtros de estado
@@ -91,7 +157,7 @@ const convertFiltersToSearchParams = (filters: ExportFilters): VentasSearchParam
 }
 
 export function VentasPreviewTable({ filters, isVisible }: VentasPreviewTableProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true) // Mostrar automáticamente cuando hay datos
   
   // Convertir filtros a parámetros de búsqueda
   const searchParams = convertFiltersToSearchParams(filters)
@@ -187,11 +253,11 @@ export function VentasPreviewTable({ filters, isVisible }: VentasPreviewTablePro
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Previsualización de Datos
-          </div>
+             <CardTitle className="flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                 <Eye className="h-5 w-5" />
+                 Datos de Previsualización
+               </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-sm">
               {totalCount.toLocaleString()} registro{totalCount !== 1 ? 's' : ''} total
@@ -205,13 +271,53 @@ export function VentasPreviewTable({ filters, isVisible }: VentasPreviewTablePro
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {isExpanded ? 'Ocultar' : 'Mostrar'} Previsualización
-                </Button>
-              </CollapsibleTrigger>
-            </Collapsible>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const csvContent = convertToCSV(ventasData as unknown as PreviewData[])
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                const link = document.createElement('a')
+                const url = URL.createObjectURL(blob)
+                link.setAttribute('href', url)
+                link.setAttribute('download', 'preview_ventas.csv')
+                link.style.visibility = 'hidden'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+              }}
+              disabled={ventasData.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Descargar CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const excelBuffer = convertToExcel(ventasData as unknown as PreviewData[])
+                const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+                const link = document.createElement('a')
+                const url = URL.createObjectURL(blob)
+                link.setAttribute('href', url)
+                link.setAttribute('download', 'preview_ventas.xlsx')
+                link.style.visibility = 'hidden'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+              }}
+              disabled={ventasData.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Descargar Excel
+            </Button>
+                   <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+                     <CollapsibleTrigger asChild>
+                       <Button variant="outline" size="sm">
+                         {isExpanded ? 'Ocultar' : 'Mostrar'} Datos
+                       </Button>
+                     </CollapsibleTrigger>
+                   </Collapsible>
           </div>
         </CardTitle>
       </CardHeader>
@@ -244,74 +350,27 @@ export function VentasPreviewTable({ filters, isVisible }: VentasPreviewTablePro
                   </div>
                 </div>
 
-                {/* Tabla de previsualización */}
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[120px]">Transacción</TableHead>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Empresa</TableHead>
-                        <TableHead>Ruta</TableHead>
-                        <TableHead className="text-right">Importe</TableHead>
-                        <TableHead>Estado Pago</TableHead>
-                        <TableHead>Estado Venta</TableHead>
-                        <TableHead>Método</TableHead>
-                        <TableHead>Fechas</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {ventasData.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-mono text-sm">
-                            {item.numeroTransaccion}
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{item.cliente.nombre} {item.cliente.apellido}</div>
-                              <div className="text-sm text-muted-foreground">{item.cliente.email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">{item.empresaNombre}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-medium">{item.origenNombre}</div>
-                              <div className="text-muted-foreground">→ {item.destinoNombre}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(item.importeTotal)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusBadgeVariant(item.estadoPago)}>
-                              {item.estadoPago}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusBadgeVariant(item.estadoVenta)}>
-                              {item.estadoVenta}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {item.metodoPago}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div>Venta: {format(new Date(item.fechaVenta), 'dd/MM/yyyy', { locale: es })}</div>
-                              <div className="text-muted-foreground">
-                                Viaje: {format(new Date(item.fechaViaje), 'dd/MM/yyyy', { locale: es })}
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                {/* Vista de previsualización en formato tabla */}
+                <Tabs defaultValue="excel" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="excel" className="flex items-center gap-2">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Vista Excel
+                    </TabsTrigger>
+                    <TabsTrigger value="csv" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Vista CSV
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="excel" className="mt-4">
+                    <ExcelPreviewTable data={ventasData} />
+                  </TabsContent>
+                  
+                  <TabsContent value="csv" className="mt-4">
+                    <CSVPreview data={ventasData} />
+                  </TabsContent>
+                </Tabs>
 
                 {/* Nota informativa */}
                 {totalCount > ventasData.length && (
@@ -322,6 +381,11 @@ export function VentasPreviewTable({ filters, isVisible }: VentasPreviewTablePro
                     <p className="mt-1">
                       El archivo exportado contendrá todos los {totalCount.toLocaleString()} registros que coincidan con los filtros.
                     </p>
+                    {totalCount > 100 && (
+                      <p className="mt-1 text-xs">
+                        💡 Para ver más registros, ajusta los filtros o descarga el archivo completo.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

@@ -6,22 +6,50 @@ import type { ExportFilters } from '../models/reports.model'
 export interface PreviewData {
   id: string
   numeroTransaccion: string
+  empresaId: string
+  empresaNombre: string
+  usuarioId: string | null
+  clienteId: string
+  empresaBoleto: string
+  calidad: string
   fechaVenta: string
   fechaViaje: string
-  cliente: {
-    nombreCompleto: string
-    email: string
-  }
-  empresa: {
-    nombre: string
-  }
-  origen: string
-  destino: string
+  horaSalida: string
+  origenId: string
+  origenNombre: string
+  destinoId: string
+  destinoNombre: string
+  servicioId: string
+  asientosOriginales: string[]
   importeTotal: number
+  comisionTotal: number
+  serviceChargeIdSnapshot: string | null
+  serviceChargeNombreSnapshot: string | null
+  serviceChargeTipoSnapshot: string | null
+  serviceChargeMontoTotal: number
+  metodoPago: string
   estadoPago: string
   estadoVenta: string
-  metodoPago: string
-  referenciaPago?: string
+  estadoAsientos: string
+  fechaExpiracionPago: string | null
+  referenciaPago: string | null
+  bancardTransactionId: string
+  datosContacto: Record<string, unknown>
+  observaciones: string
+  createdAt: string
+  updatedAt: string
+  cliente: {
+    id: string
+    tipoDocumento: string
+    numeroDocumento: string
+    nombre: string
+    apellido: string
+    telefono: string
+    email: string
+    nacionalidad: string
+  }
+  totalBoletos: number
+  numerosBoleto: string
 }
 
 // Interface para la respuesta de previsualización

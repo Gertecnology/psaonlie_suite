@@ -168,17 +168,17 @@ export function PreviewTable({ data, totalCount, isLoading, error, onRefresh }: 
                           </TableCell>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{item.cliente.nombreCompleto}</div>
+                              <div className="font-medium">{item.cliente.nombre} {item.cliente.apellido}</div>
                               <div className="text-sm text-muted-foreground">{item.cliente.email}</div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{item.empresa.nombre}</div>
+                            <div className="font-medium">{item.empresaNombre}</div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              <div className="font-medium">{item.origen}</div>
-                              <div className="text-muted-foreground">→ {item.destino}</div>
+                              <div className="font-medium">{item.origenNombre}</div>
+                              <div className="text-muted-foreground">→ {item.destinoNombre}</div>
                             </div>
                           </TableCell>
                           <TableCell className="text-right font-medium">

@@ -107,7 +107,7 @@ export function FiltersModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="w-[90vw] max-w-5xl max-h-[90vh] overflow-hidden sm:max-w-5xl md:max-w-5xl lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -128,7 +128,7 @@ export function FiltersModal({
             {/* Filtros Básicos */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Configuración Básica</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <div className="grid gap-8 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                 {/* Formato de Exportación */}
                 <div className="space-y-2">
                   <Label htmlFor="formato">Formato de Exportación</Label>
@@ -194,7 +194,7 @@ export function FiltersModal({
             {/* Filtros de Estado */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Estados</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <div className="grid gap-8 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                 {/* Estado de Pago */}
                 <div className="space-y-2">
                   <Label htmlFor="estadoPago">Estado de Pago</Label>
@@ -263,7 +263,7 @@ export function FiltersModal({
             {/* Filtros de Fecha */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Fechas</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 {/* Fecha Venta Desde */}
                 <div className="space-y-2">
                   <Label>Fecha de Venta Desde</Label>
@@ -373,7 +373,7 @@ export function FiltersModal({
             {/* Filtros de Importe */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Importes</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="importeMinimo">Importe Mínimo</Label>
                   <Input
@@ -403,7 +403,7 @@ export function FiltersModal({
             {/* Filtros de Texto */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Búsqueda por Texto</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="numeroTransaccion">Número de Transacción</Label>
                   <Input
@@ -449,7 +449,7 @@ export function FiltersModal({
             {/* Filtros de Entidades */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Entidades</h3>
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="empresaId">Empresa</Label>
                   <Select
