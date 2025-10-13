@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { login as loginService, AuthResponse, RefreshTokenResponse } from '@/services/auth';
 import { useTokenRefresh } from '@/hooks/use-token-refresh';
+import { AuthErrorHandler } from '@/utils/auth-error-handler';
 
 interface AuthContextType {
   user: AuthResponse['user'] | null;
@@ -17,6 +18,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthResponse['user'] | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Create auth context object for AuthErrorHandler
+  const authContext = {
+    user,
+    isAuthenticated,
+    accessToken,
+    login: async (email: string, password: string) => {
+      const data = await loginService(email, password);
+      setUser(data.user);
+      setAccessToken(data.accessToken);
+      setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+    },
+    logout: () => {
+      setUser(null);
+      setAccessToken(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      // Limpiar estado de inicialización del socket
+      sessionStorage.removeItem('socket-initialized');
+      sessionStorage.removeItem('socket-state');
+    }
+  };
+
+  // Set the auth context for AuthErrorHandler
+  useEffect(() => {
+    AuthErrorHandler.setAuthContext(authContext);
+  }, [user, isAuthenticated, accessToken]);
 
   // Hook para refresh automático de tokens
   useTokenRefresh({
@@ -44,27 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const data = await loginService(email, password);
-    setUser(data.user);
-    setAccessToken(data.accessToken);
-    setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-  };
-
-  const logout = () => {
-    setUser(null);
-    setAccessToken(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    // Limpiar estado de inicialización del socket
-    sessionStorage.removeItem('socket-initialized');
-    sessionStorage.removeItem('socket-state');
-  };
+  const login = authContext.login;
+  const logout = authContext.logout;
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, accessToken, login, logout }}>

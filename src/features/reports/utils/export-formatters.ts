@@ -10,7 +10,7 @@ export const convertToCSV = (data: PreviewData[]): string => {
   data.forEach(item => {
     Object.keys(item).forEach(key => allKeys.add(key))
     // También incluir campos anidados del cliente
-    if (item.cliente) {
+    if (item.cliente && typeof item.cliente === 'object') {
       Object.keys(item.cliente).forEach(key => allKeys.add(`cliente.${key}`))
     }
   })
@@ -80,7 +80,7 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
     destinoId: item.destinoId,
     destinoNombre: item.destinoNombre,
     servicioId: item.servicioId,
-    asientosOriginales: item.asientosOriginales.join(', '),
+    asientosOriginales: item.asientosOriginales?.join(', ') || 'N/A',
     importeTotal: item.importeTotal,
     comisionTotal: item.comisionTotal,
     serviceChargeIdSnapshot: item.serviceChargeIdSnapshot,
@@ -97,15 +97,15 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
     observaciones: item.observaciones,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    // Campos del cliente
-    clienteId: item.cliente.id,
-    clienteTipoDocumento: item.cliente.tipoDocumento,
-    clienteNumeroDocumento: item.cliente.numeroDocumento,
-    clienteNombre: item.cliente.nombre,
-    clienteApellido: item.cliente.apellido,
-    clienteTelefono: item.cliente.telefono,
-    clienteEmail: item.cliente.email,
-    clienteNacionalidad: item.cliente.nacionalidad,
+    // Campos del cliente con validación null/undefined
+    clienteId: item.cliente?.id || 'N/A',
+    clienteTipoDocumento: item.cliente?.tipoDocumento || 'N/A',
+    clienteNumeroDocumento: item.cliente?.numeroDocumento || 'N/A',
+    clienteNombre: item.cliente?.nombre || 'N/A',
+    clienteApellido: item.cliente?.apellido || 'N/A',
+    clienteTelefono: item.cliente?.telefono || 'N/A',
+    clienteEmail: item.cliente?.email || 'N/A',
+    clienteNacionalidad: item.cliente?.nacionalidad || 'N/A',
     totalBoletos: item.totalBoletos,
     numerosBoleto: item.numerosBoleto,
   }))
@@ -206,15 +206,15 @@ export const flattenDataForTable = (data: PreviewData[]) => {
     id: item.id,
     numeroTransaccion: item.numeroTransaccion,
     empresaNombre: item.empresaNombre,
-    clienteNombre: `${item.cliente.nombre} ${item.cliente.apellido}`,
-    clienteEmail: item.cliente.email,
-    clienteTelefono: item.cliente.telefono,
+    clienteNombre: item.cliente ? `${item.cliente.nombre || ''} ${item.cliente.apellido || ''}`.trim() : 'N/A',
+    clienteEmail: item.cliente?.email || 'N/A',
+    clienteTelefono: item.cliente?.telefono || 'N/A',
     origenNombre: item.origenNombre,
     destinoNombre: item.destinoNombre,
     fechaVenta: item.fechaVenta,
     fechaViaje: item.fechaViaje,
     horaSalida: item.horaSalida,
-    asientosOriginales: item.asientosOriginales.join(', '),
+    asientosOriginales: item.asientosOriginales?.join(', ') || 'N/A',
     importeTotal: item.importeTotal,
     comisionTotal: item.comisionTotal,
     metodoPago: item.metodoPago,

@@ -50,6 +50,15 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error) => {
+      // Check if it's an authentication error (from our custom error messages)
+      if (error instanceof Error && (
+        error.message.includes('Sesión expirada') || 
+        error.message.includes('Session expired')
+      )) {
+        // Don't show toast or navigate here - let AuthErrorHandler handle it
+        return
+      }
+      
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
           toast.error('Session expired!')

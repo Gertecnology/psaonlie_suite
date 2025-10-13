@@ -38,7 +38,7 @@ export interface PreviewData {
   observaciones: string
   createdAt: string
   updatedAt: string
-  cliente: {
+  cliente?: {
     id: string
     tipoDocumento: string
     numeroDocumento: string
@@ -47,7 +47,7 @@ export interface PreviewData {
     telefono: string
     email: string
     nacionalidad: string
-  }
+  } | null
   totalBoletos: number
   numerosBoleto: string
 }
