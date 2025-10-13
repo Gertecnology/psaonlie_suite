@@ -168,8 +168,12 @@ export function PreviewTable({ data, totalCount, isLoading, error, onRefresh }: 
                           </TableCell>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{item.cliente.nombre} {item.cliente.apellido}</div>
-                              <div className="text-sm text-muted-foreground">{item.cliente.email}</div>
+                              <div className="font-medium">
+                                {item.cliente ? `${item.cliente.nombre || ''} ${item.cliente.apellido || ''}`.trim() : 'N/A'}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {item.cliente?.email || 'N/A'}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
