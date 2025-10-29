@@ -506,7 +506,7 @@ export function FiltersModal({
                       <SelectItem value="all">Todos los clientes</SelectItem>
                       {clientesData?.data?.map((clienteData) => (
                         <SelectItem key={clienteData.cliente.id} value={clienteData.cliente.id}>
-                          {clienteData.cliente.nombreCompleto} ({clienteData.cliente.email})
+                          {clienteData.cliente.nombreCompleto || 'N/A'} ({clienteData.cliente.email || 'N/A'})
                         </SelectItem>
                       ))}
                     </SelectContent>

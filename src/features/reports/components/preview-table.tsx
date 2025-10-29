@@ -162,52 +162,54 @@ export function PreviewTable({ data, totalCount, isLoading, error, onRefresh }: 
                     </TableHeader>
                     <TableBody>
                       {data.map((item) => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item?.id || 'unknown'}>
                           <TableCell className="font-mono text-sm">
-                            {item.numeroTransaccion}
+                            {item?.numeroTransaccion || 'N/A'}
                           </TableCell>
                           <TableCell>
                             <div>
                               <div className="font-medium">
-                                {item.cliente ? `${item.cliente.nombre || ''} ${item.cliente.apellido || ''}`.trim() : 'N/A'}
+                                {item?.cliente?.nombre || item?.cliente?.apellido 
+                                  ? `${item.cliente?.nombre || ''} ${item.cliente?.apellido || ''}`.trim() || 'N/A'
+                                  : 'N/A'}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {item.cliente?.email || 'N/A'}
+                                {item?.cliente?.email || 'N/A'}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{item.empresaNombre}</div>
+                            <div className="font-medium">{item?.empresaNombre || 'N/A'}</div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              <div className="font-medium">{item.origenNombre}</div>
-                              <div className="text-muted-foreground">→ {item.destinoNombre}</div>
+                              <div className="font-medium">{item?.origenNombre || 'N/A'}</div>
+                              <div className="text-muted-foreground">→ {item?.destinoNombre || 'N/A'}</div>
                             </div>
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(item.importeTotal)}
+                            {formatCurrency(item?.importeTotal || 0)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusBadgeVariant(item.estadoPago)}>
-                              {item.estadoPago}
+                            <Badge variant={getStatusBadgeVariant(item?.estadoPago || '')}>
+                              {item?.estadoPago || 'N/A'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusBadgeVariant(item.estadoVenta)}>
-                              {item.estadoVenta}
+                            <Badge variant={getStatusBadgeVariant(item?.estadoVenta || '')}>
+                              {item?.estadoVenta || 'N/A'}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {item.metodoPago}
+                              {item?.metodoPago || 'N/A'}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              <div>Venta: {format(new Date(item.fechaVenta), 'dd/MM/yyyy', { locale: es })}</div>
+                              <div>Venta: {item?.fechaVenta ? format(new Date(item.fechaVenta), 'dd/MM/yyyy', { locale: es }) : 'N/A'}</div>
                               <div className="text-muted-foreground">
-                                Viaje: {format(new Date(item.fechaViaje), 'dd/MM/yyyy', { locale: es })}
+                                Viaje: {item?.fechaViaje ? format(new Date(item.fechaViaje), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
                               </div>
                             </div>
                           </TableCell>
