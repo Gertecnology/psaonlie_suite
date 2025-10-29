@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useServiceChargeDialog } from '../store/use-service-charge-dialog'
 import { useAssignServiceChargeDialog } from '../store/use-assign-service-charge-dialog'
-import { useDeleteServiceCharge } from '../hooks/use-delete-service-charge'
+import { useServiceChargeDeleteDialog } from '../store/use-service-charge-delete-dialog'
 import { type ServiceCharge } from '../models/service-charge.model'
 
 interface ServiceChargeRowActionsProps {
@@ -20,7 +20,7 @@ interface ServiceChargeRowActionsProps {
 export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActionsProps) {
   const { openDialog } = useServiceChargeDialog()
   const { openDialog: openAssignDialog } = useAssignServiceChargeDialog()
-  const deleteServiceCharge = useDeleteServiceCharge()
+  const { openDialog: openDeleteDialog } = useServiceChargeDeleteDialog()
 
   const handleEdit = () => {
     openDialog('edit', serviceCharge)
@@ -31,32 +31,7 @@ export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActio
   }
 
   const handleDelete = () => {
-    if (confirm('¿Estás seguro de que quieres eliminar este cargo por servicio?')) {
-      deleteServiceCharge.mutate(serviceCharge.id, {
-        onSuccess: () => {
-          import('sonner').then(({ toast }) => {
-            toast.success('Cargo por servicio eliminado', {
-              description: 'El cargo por servicio se ha eliminado correctamente.',
-              duration: 3000,
-            })
-          })
-        },
-        onError: (error: unknown) => {
-          import('sonner').then(({ toast }) => {
-            let message = 'Ha ocurrido un error al eliminar el cargo por servicio.'
-            if (error instanceof Error) {
-              message = error.message
-            } else if (typeof error === 'string') {
-              message = error
-            }
-            toast.error('Error al eliminar', {
-              description: message,
-              duration: 3000,
-            })
-          })
-        },
-      })
-    }
+    openDeleteDialog(serviceCharge.id, serviceCharge.nombre)
   }
 
   return (
