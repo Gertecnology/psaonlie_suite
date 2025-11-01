@@ -15,7 +15,7 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
-  const search = useSearch({ from: '/(auth)/verify-email' })
+  const search = useSearch({ from: '/api/auth/verify-email' })
   const [isVerifying, setIsVerifying] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)

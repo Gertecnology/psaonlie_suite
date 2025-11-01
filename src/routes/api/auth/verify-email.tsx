@@ -6,7 +6,7 @@ const verifyEmailSearchSchema = z.object({
   token: z.string().optional(),
 })
 
-export const Route = createFileRoute('/(auth)/verify-email')({
+export const Route = createFileRoute('/api/auth/verify-email')({
   component: VerifyEmail,
   validateSearch: verifyEmailSearchSchema,
 })
