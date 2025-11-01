@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ClerkRouteRouteImport } from './routes/clerk/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthenticatedTestNotificationsRouteImport } from './routes/_authenticated/test-notifications'
 import { Route as AuthenticatedSocketMonitorRouteImport } from './routes/_authenticated/socket-monitor'
 import { Route as errors503RouteImport } from './routes/(errors)/503'
@@ -68,6 +69,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTestNotificationsRoute =
   AuthenticatedTestNotificationsRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/503': typeof errors503Route
   '/socket-monitor': typeof AuthenticatedSocketMonitorRoute
   '/test-notifications': typeof AuthenticatedTestNotificationsRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -358,6 +365,7 @@ export interface FileRoutesByTo {
   '/503': typeof errors503Route
   '/socket-monitor': typeof AuthenticatedSocketMonitorRoute
   '/test-notifications': typeof AuthenticatedTestNotificationsRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/(errors)/503': typeof errors503Route
   '/_authenticated/socket-monitor': typeof AuthenticatedSocketMonitorRoute
   '/_authenticated/test-notifications': typeof AuthenticatedTestNotificationsRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
@@ -453,6 +462,7 @@ export interface FileRouteTypes {
     | '/503'
     | '/socket-monitor'
     | '/test-notifications'
+    | '/auth/reset-password'
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/503'
     | '/socket-monitor'
     | '/test-notifications'
+    | '/auth/reset-password'
     | '/'
     | '/companies/$id'
     | '/destinations/$id'
@@ -543,6 +554,7 @@ export interface FileRouteTypes {
     | '/(errors)/503'
     | '/_authenticated/socket-monitor'
     | '/_authenticated/test-notifications'
+    | '/auth/reset-password'
     | '/_authenticated/'
     | '/_authenticated/companies/$id'
     | '/_authenticated/destinations/$id'
@@ -586,6 +598,7 @@ export interface RootRouteChildren {
   errors404Route: typeof errors404Route
   errors500Route: typeof errors500Route
   errors503Route: typeof errors503Route
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   ApiAuthVerifyEmailRoute: typeof ApiAuthVerifyEmailRoute
 }
 
@@ -611,6 +624,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/test-notifications': {
       id: '/_authenticated/test-notifications'
@@ -1044,6 +1064,7 @@ const rootRouteChildren: RootRouteChildren = {
   errors404Route: errors404Route,
   errors500Route: errors500Route,
   errors503Route: errors503Route,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   ApiAuthVerifyEmailRoute: ApiAuthVerifyEmailRoute,
 }
 export const routeTree = rootRouteImport

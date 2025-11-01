@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import {
   Card,
   CardContent,
@@ -6,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import AuthLayout from '../auth-layout'
 import { ForgotPasswordForm } from './components/forgot-password-form'
 
@@ -25,7 +27,14 @@ export default function ForgotPassword() {
           <ForgotPasswordForm />
         </CardContent>
         <CardFooter>
-
+          <Link to='/sign-in' className='w-full'>
+            <Button 
+              variant='outline' 
+              className='w-full border-[#4747F8] text-[#4747F8] hover:bg-[#4747F8] hover:text-white'
+            >
+              Volver al inicio de sesión
+            </Button>
+          </Link>
         </CardFooter>
       </Card>
     </AuthLayout>
