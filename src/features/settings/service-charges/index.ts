@@ -24,3 +24,4 @@ export { columns } from './components/columns'
 // Store
 export { useServiceChargeDialog } from './store/use-service-charge-dialog'
 export { useAssignServiceChargeDialog } from './store/use-assign-service-charge-dialog'
+export { useServiceChargeDeleteDialog } from './store/use-service-charge-delete-dialog'

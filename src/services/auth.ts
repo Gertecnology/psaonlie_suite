@@ -95,3 +95,45 @@ export async function forgotPassword(email: string) {
 
   return response.json();
 }
+
+export async function verifyEmail(token: string) {
+  const response = await fetch(`${API_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    redirect: 'manual', // Handle redirect manually to check status
+  });
+
+  // 302 means redirect (success or failure handled by backend redirect)
+  if (response.status === 302) {
+    // Get the redirect location from the response
+    const location = response.headers.get('Location');
+    return {
+      success: true,
+      redirect: location,
+      status: response.status,
+    };
+  }
+
+  // 400 means token invalid or expired
+  if (response.status === 400) {
+    let errorMessage = 'Token no proporcionado o inválido';
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // If can't parse JSON, use default message
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Other error statuses
+  if (!response.ok) {
+    throw new Error('Error al verificar el correo electrónico');
+  }
+
+  return response.json();
+}
