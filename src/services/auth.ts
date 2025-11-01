@@ -137,3 +137,42 @@ export async function verifyEmail(token: string) {
 
   return response.json();
 }
+
+export async function resetPassword(token: string, newPassword: string) {
+  const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token, newPassword }),
+  });
+
+  // 200 means success
+  if (response.status === 200) {
+    return {
+      success: true,
+      message: 'Contraseña actualizada exitosamente.',
+    };
+  }
+
+  // 400 means token invalid, expired, or password doesn't meet requirements
+  if (response.status === 400) {
+    let errorMessage = 'Token inválido, expirado, o contraseña no cumple los requisitos';
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      // If can't parse JSON, use default message
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Other error statuses
+  if (!response.ok) {
+    throw new Error('Error al restablecer la contraseña');
+  }
+
+  return response.json();
+}
