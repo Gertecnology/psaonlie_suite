@@ -69,7 +69,7 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-foreground">{statistics.generales.totalVentas}</p>
                   <p className="text-xs text-muted-foreground font-medium">
-                    Gs. {statistics.generales.montoTotal.toLocaleString()}
+                    Gs. {statistics.generales.montoCompletado.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-foreground">
-                    Gs. {statistics.generales.totalComisiones.toLocaleString()}
+                    Gs. {statistics.generales.comisionesPagadas.toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground font-medium">
                     Ingresos por comisión
@@ -130,7 +130,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-2xl font-bold text-foreground">
-                    Gs. {statistics.generales.totalServiceCharges.toLocaleString()}
+                    Gs. {statistics.generales.serviceChargesPagados.toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground font-medium">
                     Cargos por servicio
