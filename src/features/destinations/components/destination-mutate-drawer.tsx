@@ -175,7 +175,7 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div className="flex-1 overflow-y-auto px-3">
           {isUpdate && loadingDestination ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-3">
@@ -234,7 +234,7 @@ export function DestinationMutateDrawer({ open, onClose, initialData, isUpdate, 
           )}
         </div>
 
-        <SheetFooter className="pt-6 border-t flex-shrink-0">
+        <SheetFooter className="pt-6 flex-shrink-0">
           <div className="flex gap-3 w-full">
             <SheetClose asChild>
               <Button type="button" variant="outline" disabled={isLoading || (isUpdate && loadingDestination)} className="flex-1">

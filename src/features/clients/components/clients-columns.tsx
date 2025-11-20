@@ -1,7 +1,7 @@
 import { type ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, Edit, Trash2, ShoppingCart } from 'lucide-react'
+import { MoreHorizontal, Edit, ShoppingCart } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ClienteConEstadisticas } from '../models/clients.model'
 import { useClientDialog } from '../store/use-client-dialog'
-import { useClientsContext } from '../context/clients-context'
 
 interface ClientRowActionsProps {
   client: ClienteConEstadisticas
@@ -102,7 +101,6 @@ export const columns: ColumnDef<ClienteConEstadisticas>[] = [
 // eslint-disable-next-line react-refresh/only-export-components
 function ClientRowActions({ client, onViewDetails }: ClientRowActionsProps) {
   const { openDialog } = useClientDialog()
-  const { setSelectedClient, setIsDeleteDialogOpen } = useClientsContext()
 
   return (
     <DropdownMenu>
@@ -129,16 +127,7 @@ function ClientRowActions({ client, onViewDetails }: ClientRowActionsProps) {
           <Edit className='mr-2 h-4 w-4' />
           Editar
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            setSelectedClient(client)
-            setIsDeleteDialogOpen(true)
-          }}
-          className='text-destructive'
-        >
-          <Trash2 className='mr-2 h-4 w-4' />
-          Eliminar
-        </DropdownMenuItem>
+
       </DropdownMenuContent>
     </DropdownMenu>
   )
