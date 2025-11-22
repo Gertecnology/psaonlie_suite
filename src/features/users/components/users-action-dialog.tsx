@@ -26,6 +26,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useRoles, useCreateUser, useUpdateUser, useResetUserPassword } from '../hooks/use-users'
 import { User } from '../models/user'
 
@@ -294,6 +302,7 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
   const isPasswordTouched = !!form.formState.dirtyFields.password
 
   return (
+    <>
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className='flex flex-col overflow-y-auto'>
         <SheetHeader className='text-left'>
@@ -507,43 +516,45 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           </Button>
         </SheetFooter>
       </SheetContent>
-      
-      {/* Modal para resetear contraseña */}
-      {showResetPassword && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
-          <div className='bg-background p-6 rounded-lg shadow-lg w-96'>
-            <h3 className='text-lg font-semibold mb-4'>Resetear Contraseña</h3>
-            <p className='text-sm text-muted-foreground mb-4'>
-              Ingresa la nueva contraseña para {currentRow?.email}
-            </p>
-            <Input
-              type='password'
-              placeholder='Nueva contraseña'
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className='mb-4'
-            />
-            <div className='flex justify-end gap-2'>
-              <Button
-                variant='outline'
-                onClick={() => {
-                  setShowResetPassword(false)
-                  setNewPassword('')
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleResetPassword}
-                disabled={!newPassword.trim() || resetPassword.isPending}
-                className='bg-orange-600 hover:bg-orange-700'
-              >
-                {resetPassword.isPending ? 'Reseteando...' : 'Resetear'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </Sheet>
+    
+    {/* Modal para resetear contraseña */}
+    <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+      <DialogContent className='sm:max-w-md'>
+        <DialogHeader>
+          <DialogTitle>Resetear Contraseña</DialogTitle>
+          <DialogDescription>
+            Ingresa la nueva contraseña para {currentRow?.email}
+          </DialogDescription>
+        </DialogHeader>
+        <div className='space-y-4'>
+          <Input
+            type='text'
+            placeholder='Nueva contraseña'
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+        </div>
+        <DialogFooter className='gap-2 sm:gap-0'>
+          <Button
+            variant='outline'
+            onClick={() => {
+              setShowResetPassword(false)
+              setNewPassword('')
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleResetPassword}
+            disabled={!newPassword.trim() || resetPassword.isPending}
+            className='bg-orange-600 hover:bg-orange-700 ms-2'
+          >
+            {resetPassword.isPending ? 'Reseteando...' : 'Resetear'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

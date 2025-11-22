@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageLayout } from '@/components/layout/page-layout'
 import { columns } from './components/clients-columns'
 import { ClientsDialogs } from './components/clients-dialogs'
@@ -18,12 +18,30 @@ export default function Clients() {
   })
 
   const [selectedClient, setSelectedClient] = useState<ClienteConEstadisticas | null>(null)
+  
+  // Estado para el filtro de búsqueda
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Estado para debounce
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  
+  // Debounce para el término de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      // Reset a la primera página cuando cambia la búsqueda
+      setPagination(prev => ({ ...prev, pageIndex: 0 }))
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const searchParams = {
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     sortBy: 'createdAt' as const,
     sortOrder: 'DESC' as const,
+    ...(debouncedSearchTerm && { termino: debouncedSearchTerm }),
   }
 
   const { data: clientesData, isLoading, error } = useClientesList(searchParams)
@@ -97,6 +115,8 @@ export default function Clients() {
           pagination={pagination}
           onPaginationChange={setPagination}
           onViewClientDetails={handleViewClientDetails}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
         />
       </PageLayout>
 

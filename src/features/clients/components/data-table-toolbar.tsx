@@ -6,26 +6,33 @@ import { ClienteConEstadisticas } from '../models/clients.model'
 
 interface DataTableToolbarProps {
   table: Table<ClienteConEstadisticas>
+  searchTerm: string
+  onSearchTermChange: (value: string) => void
 }
 
-export function DataTableToolbar({ table }: DataTableToolbarProps) {
-  const isFiltered = table.getState().columnFilters.length > 0
+export function DataTableToolbar({ 
+  searchTerm, 
+  onSearchTermChange,
+}: DataTableToolbarProps) {
+  const hasFilters = searchTerm !== ''
+
+  const handleClearFilters = () => {
+    onSearchTermChange('')
+  }
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 items-center space-x-2'>
         <Input
-          placeholder='Buscar clientes...'
-          value={(table.getColumn('cliente.nombre')?.getFilterValue() as string) ?? ''}
-          onChange={(event) =>
-            table.getColumn('cliente.nombre')?.setFilterValue(event.target.value)
-          }
+          placeholder='Buscar por nombre, apellido, email...'
+          value={searchTerm}
+          onChange={(event) => onSearchTermChange(event.target.value)}
           className='h-8 w-[150px] lg:w-[250px]'
         />
-        {isFiltered && (
+        {hasFilters && (
           <Button
             variant='ghost'
-            onClick={() => table.resetColumnFilters()}
+            onClick={handleClearFilters}
             className='h-8 px-2 lg:px-3'
           >
             Limpiar filtros

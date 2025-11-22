@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { createFileRoute } from '@tanstack/react-router';
 import { DataTableToolbar } from '@/features/destinations/components/data-table-toolbar';
 import { PageLayout } from '@/components/layout';
+import { IconPlus } from '@tabler/icons-react';
 
 export default function DestinationsPage() {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
@@ -51,7 +52,7 @@ export default function DestinationsPage() {
         description="Gestiona los destinos de transporte y sus paradas homologadas."
         showSearch={true}
         actions={
-          <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
+          <Button onClick={() => openDialog('create')}>Crear destino <IconPlus size={18} /></Button>
         }
       >
         <div className="flex items-center justify-center h-64">
@@ -79,7 +80,7 @@ export default function DestinationsPage() {
       description="Gestiona los destinos de transporte y sus paradas homologadas."
       showSearch={true}
       actions={
-        <Button onClick={() => openDialog('create')}>Nuevo destino</Button>
+        <Button onClick={() => openDialog('create')}>Crear destino <IconPlus size={18} /></Button>
       }
     >
       <div className='-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12'>

@@ -1,10 +1,10 @@
-import { TrendingUp, Building2 } from 'lucide-react'
+import { Building2 } from 'lucide-react'
 
 interface CompanyEarnings {
   empresaId: string
   empresaNombre: string
   cantidad: number
-  monto: number
+  montoPagado: number
   comisiones: number
   serviceCharges: number
   porcentaje: number
@@ -61,7 +61,8 @@ export function EarningsByCompaniesCard({ companies, isLoading }: EarningsByComp
       </div>
       <div className="space-y-2 max-h-[80px] sm:max-h-[100px] lg:max-h-[120px] overflow-y-auto pr-2">
         {sortedCompanies.map((company) => {
-          const earnings = company.comisiones + company.serviceCharges
+         // const earnings = company.comisiones + company.serviceCharges
+          const earningsPagado = company.montoPagado
           return (
             <div key={company.empresaId} className="flex justify-between items-center py-1">
               <div className="space-y-0.5 flex-1 min-w-0">
@@ -74,9 +75,8 @@ export function EarningsByCompaniesCard({ companies, isLoading }: EarningsByComp
               </div>
               <div className="text-right space-y-0.5 flex-shrink-0">
                 <div className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs font-semibold text-foreground">
-                    Gs. {earnings.toLocaleString()}
+                    Gs. {earningsPagado.toLocaleString()}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">

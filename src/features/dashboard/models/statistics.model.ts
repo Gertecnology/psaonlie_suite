@@ -15,7 +15,9 @@ export interface GeneralStatistics {
   montoCompletado: number
   montoPendiente: number
   totalComisiones: number
+  comisionesPagadas: number
   totalServiceCharges: number
+  serviceChargesPagados: number
   serviceChargePromedioPorVenta: number
   totalBoletos: number
   tasaConversion: number
@@ -36,7 +38,7 @@ export interface CompanyStatistics {
   empresaId: string
   empresaNombre: string
   cantidad: number
-  monto: number
+  montoPagado: number
   comisiones: number
   serviceCharges: number
   porcentaje: number

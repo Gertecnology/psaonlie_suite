@@ -1,16 +1,12 @@
 import * as React from 'react'
 import {
   type ColumnDef,
-  type ColumnFiltersState,
   type OnChangeFn,
   type PaginationState,
   type SortingState,
   type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -34,6 +30,8 @@ interface DataTableProps {
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
   onViewClientDetails?: (client: ClienteConEstadisticas) => void
+  searchTerm: string
+  onSearchTermChange: (value: string) => void
 }
 
 export function DataTable({
@@ -43,13 +41,12 @@ export function DataTable({
   pagination,
   onPaginationChange,
   onViewClientDetails,
+  searchTerm,
+  onSearchTermChange,
 }: DataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const table = useReactTable({
@@ -63,27 +60,26 @@ export function DataTable({
       sorting,
       columnVisibility,
       rowSelection,
-      columnFilters,
       pagination,
     },
     enableRowSelection: true,
     manualPagination: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: onPaginationChange,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
   return (
     <div className='space-y-4'>
-      <DataTableToolbar table={table} />
+      <DataTableToolbar 
+        table={table}
+        searchTerm={searchTerm}
+        onSearchTermChange={onSearchTermChange}
+      />
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
