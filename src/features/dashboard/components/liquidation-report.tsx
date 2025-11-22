@@ -259,7 +259,7 @@ export function LiquidationReport({ onDownload }: LiquidationReportProps) {
                   <tr>
                     <td>${empresa.empresaNombre}</td>
                     <td style="text-align: right;">${empresa.cantidad}</td>
-                    <td style="text-align: right;">${formatCurrency(empresa.monto)}</td>
+                    <td style="text-align: right;">${formatCurrency(empresa.montoPagado)}</td>
                     <td style="text-align: right;">${formatCurrency(empresa.comisiones)}</td>
                     <td style="text-align: right;">${formatCurrency(empresa.serviceCharges)}</td>
                     <td style="text-align: right;">${formatPercentage(empresa.porcentaje)}</td>
