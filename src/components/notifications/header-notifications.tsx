@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { useState, useEffect } from 'react'
-import { Bell, Check, CheckCheck, X, AlertCircle, Info, AlertTriangle, Zap } from 'lucide-react'
+import { Bell, Check, CheckCheck, X, AlertCircle, Info, AlertTriangle, Zap, ChevronDown, ChevronUp, User, Building2, CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -65,6 +65,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [markingAsRead, setMarkingAsRead] = useState<Set<string>>(new Set())
+  const [expandedNotifications, setExpandedNotifications] = useState<Set<string>>(new Set())
   
   const {
     unreadCount,
@@ -152,6 +153,26 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
     setIsOpen(false)
   }
 
+  const toggleExpanded = (notificationId: string) => {
+    setExpandedNotifications(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(notificationId)) {
+        newSet.delete(notificationId)
+      } else {
+        newSet.add(notificationId)
+      }
+      return newSet
+    })
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-PY', {
+      style: 'currency',
+      currency: 'PYG',
+      minimumFractionDigits: 0
+    }).format(amount)
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -194,7 +215,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
           </div>
         </div>
 
-        <ScrollArea className="h-96">
+        <div className={`${isLoading || notifications.length === 0 ? 'min-h-[120px]' : ''}`}>
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -206,78 +227,160 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
               <p className="text-sm">No hay notificaciones</p>
             </div>
           ) : (
-             <div className="p-2">
-               {notifications.map((notification, index) => {
-                 const isMarkingAsRead = markingAsRead.has(notification.id)
-                 return (
-                   <div key={notification.id}>
-                     <div className={`p-3 rounded-lg border-l-4 transition-all duration-500 ease-in-out ${
-                       isMarkingAsRead 
-                         ? 'opacity-50 scale-95 bg-green-50 border-l-green-500' 
-                         : getPriorityColor(notification.priority)
-                     }`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-1">
-                        {getPriorityIcon(notification.priority)}
-                        <h4 className="font-medium text-sm line-clamp-1">
-                          {notification.title}
-                        </h4>
-                        <Badge variant="secondary" className={`text-xs ${getPriorityBadgeColor(notification.priority)}`}>
-                          {notification.priority}
-                        </Badge>
+            <ScrollArea className="max-h-[500px]">
+              <div className="p-2">
+                {notifications.map((notification, index) => {
+                  const isMarkingAsRead = markingAsRead.has(notification.id)
+                  const isExpanded = expandedNotifications.has(notification.id)
+                  return (
+                    <div key={notification.id}>
+                      <div className={`p-3 rounded-lg border-l-4 transition-all duration-500 ease-in-out ${
+                        isMarkingAsRead 
+                          ? 'opacity-50 scale-95 bg-green-50 border-l-green-500' 
+                          : getPriorityColor(notification.priority)
+                      }`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            {getPriorityIcon(notification.priority)}
+                            <h4 className="font-medium text-sm line-clamp-1">
+                              {notification.title}
+                            </h4>
+                            <Badge variant="secondary" className={`text-xs ${getPriorityBadgeColor(notification.priority)}`}>
+                              {notification.priority}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              disabled={isMarkingAsRead}
+                              className={`h-6 w-6 p-0 hover:bg-gray-200 transition-colors ${
+                                isMarkingAsRead ? 'bg-green-100 text-green-600' : ''
+                              }`}
+                              title={isMarkingAsRead ? "Marcando como leída..." : "Marcar como leída"}
+                            >
+                              <Check className={`w-3 h-3 ${isMarkingAsRead ? 'animate-pulse' : ''}`} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleClose}
+                              className="h-6 w-6 p-0 hover:bg-gray-200"
+                              title="Cerrar"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <p className={`text-sm text-gray-700 mb-2 ${!isExpanded ? 'line-clamp-2' : ''}`}>
+                          {notification.message}
+                        </p>
+
+                        {/* Detalles expandidos */}
+                        {isExpanded && notification.data && (
+                          <div className="mt-3 space-y-2 text-xs text-gray-600 bg-white/50 p-2 rounded">
+                            {notification.data.clienteNombre && (
+                              <div className="flex items-center gap-2">
+                                <User className="w-3 h-3" />
+                                <span className="font-medium">Cliente:</span>
+                                <span>{notification.data.clienteNombre}</span>
+                              </div>
+                            )}
+                            {notification.data.empresaNombre && (
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-3 h-3" />
+                                <span className="font-medium">Empresa:</span>
+                                <span>{notification.data.empresaNombre}</span>
+                              </div>
+                            )}
+                            {notification.data.metodoPago && (
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="w-3 h-3" />
+                                <span className="font-medium">Método de pago:</span>
+                                <span>{notification.data.metodoPago}</span>
+                              </div>
+                            )}
+                            {notification.data.importeTotal !== undefined && (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Importe:</span>
+                                <span>{formatCurrency(notification.data.importeTotal)}</span>
+                              </div>
+                            )}
+                            {notification.data.numeroTransaccion && (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Transacción:</span>
+                                <span className="font-mono text-xs">{notification.data.numeroTransaccion}</span>
+                              </div>
+                            )}
+                            {notification.data.authorizationNumber && (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Autorización:</span>
+                                <span className="font-mono text-xs">{notification.data.authorizationNumber}</span>
+                              </div>
+                            )}
+                            {notification.data.estadoPago && (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Estado:</span>
+                                <span>{notification.data.estadoPago}</span>
+                              </div>
+                            )}
+                            {notification.data.motivo && (
+                              <div className="flex items-start gap-2">
+                                <span className="font-medium">Motivo:</span>
+                                <span className="flex-1">{notification.data.motivo}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                          <span>
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                              locale: es
+                            })}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="capitalize">
+                              {notification.type.toLowerCase().replace('_', ' ')}
+                            </span>
+                            {notification.data && Object.keys(notification.data).length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleExpanded(notification.id)}
+                                className="h-6 px-2 text-xs hover:bg-white/50"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="w-3 h-3 mr-1" />
+                                    Ocultar
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-3 h-3 mr-1" />
+                                    Ver todo
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       
-                       <div className="flex items-center gap-1">
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => handleMarkAsRead(notification.id)}
-                           disabled={isMarkingAsRead}
-                           className={`h-6 w-6 p-0 hover:bg-gray-200 transition-colors ${
-                             isMarkingAsRead ? 'bg-green-100 text-green-600' : ''
-                           }`}
-                           title={isMarkingAsRead ? "Marcando como leída..." : "Marcar como leída"}
-                         >
-                           <Check className={`w-3 h-3 ${isMarkingAsRead ? 'animate-pulse' : ''}`} />
-                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleClose}
-                          className="h-6 w-6 p-0 hover:bg-gray-200"
-                          title="Cerrar"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
+                      {index < notifications.length - 1 && (
+                        <Separator className="my-2" />
+                      )}
                     </div>
-
-                    <p className="text-sm text-gray-700 mb-2 line-clamp-2">
-                      {notification.message}
-                    </p>
-
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        {formatDistanceToNow(new Date(notification.createdAt), {
-                          addSuffix: true,
-                          locale: es
-                        })}
-                      </span>
-                      <span className="capitalize">
-                        {notification.type.toLowerCase().replace('_', ' ')}
-                      </span>
-                     </div>
-                   </div>
-                   
-                   {index < notifications.length - 1 && (
-                     <Separator className="my-2" />
-                   )}
-                 </div>
-                 )
-               })}
-            </div>
+                  )
+                })}
+              </div>
+            </ScrollArea>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   )

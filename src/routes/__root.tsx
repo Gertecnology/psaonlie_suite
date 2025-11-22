@@ -23,7 +23,7 @@ function RootComponent() {
     <>
       <NavigationProgress />
       <Outlet />
-      <Toaster duration={50000} />
+      <Toaster duration={4000} />
     </>
   )
 }
