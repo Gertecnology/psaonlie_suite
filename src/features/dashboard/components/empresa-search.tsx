@@ -14,7 +14,7 @@ interface EmpresaSearchProps {
   className?: string
 }
 
-export function EmpresaSearch({ onEmpresaSelect, selectedEmpresaId, placeholder = "Buscar empresa...", className }: EmpresaSearchProps) {
+export function EmpresaSearch({ onEmpresaSelect, selectedEmpresaId, placeholder = "Buscar empresa...", className }: Readonly<EmpresaSearchProps>) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null)
@@ -74,7 +74,7 @@ export function EmpresaSearch({ onEmpresaSelect, selectedEmpresaId, placeholder 
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-[300px] p-0" align="start">
+        <PopoverContent className="w-[min(520px,calc(100vw-2rem))] p-0" align="start">
           <Command>
             <CommandInput 
               placeholder="Buscar por nombre de empresa..."
@@ -91,24 +91,22 @@ export function EmpresaSearch({ onEmpresaSelect, selectedEmpresaId, placeholder 
                     key={empresa.id}
                     value={empresa.nombre}
                     onSelect={() => handleSelect(empresa)}
-                    className="flex items-center justify-between"
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"
                   >
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="font-medium truncate">
+                    <div className="min-w-0">
+                      <span className="block font-medium truncate">
                         {empresa.nombre}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="block text-xs text-muted-foreground truncate">
                         Empresa Interna
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedEmpresa?.id === empresa.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </div>
+                    <Check
+                      className={cn(
+                        "h-4 w-4",
+                        selectedEmpresa?.id === empresa.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
                   </CommandItem>
                 ))}
               </CommandGroup>
