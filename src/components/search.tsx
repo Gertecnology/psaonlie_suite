@@ -1,18 +1,22 @@
 import { IconSearch } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { useSearch } from '@/context/search-context'
+import { getSystemShortcutLabel } from '@/utils/keyboard-shortcuts'
 import { Button } from './ui/button'
 
 interface Props {
   className?: string
-  type?: React.HTMLInputTypeAttribute
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type']
   placeholder?: string
 }
 
-export function Search({ className = '', placeholder = 'Buscar' }: Props) {
+export function Search({ className = '', type = 'button', placeholder = 'Buscar' }: Readonly<Props>) {
   const { setOpen } = useSearch()
+  const shortcutLabel = getSystemShortcutLabel('K')
+
   return (
     <Button
+      type={type}
       variant='outline'
       className={cn(
         'bg-muted/25 text-muted-foreground hover:bg-muted/50 relative h-8 w-full flex-1 justify-start rounded-md text-sm font-normal shadow-none sm:pr-12 md:w-40 md:flex-none lg:w-56 xl:w-64',
@@ -26,7 +30,7 @@ export function Search({ className = '', placeholder = 'Buscar' }: Props) {
       />
       <span className='ml-3'>{placeholder}</span>
       <kbd className='bg-muted pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex'>
-        <span className='text-xs'>⌘</span>K
+        <span className='text-xs'>{shortcutLabel}</span>
       </kbd>
     </Button>
   )

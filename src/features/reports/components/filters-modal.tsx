@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Filter, RotateCcw } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,9 +34,10 @@ import { useGetDestinations } from '../../destinations/hooks/use-get-destination
 interface FiltersModalProps {
   filters: ExportFilters
   onFiltersChange: (filters: ExportFilters) => void
-  onApply: () => void
+  onApply: (filters: ExportFilters) => void
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  hidePrimaryFilters?: boolean
 }
 
 export function FiltersModal({ 
@@ -44,8 +45,9 @@ export function FiltersModal({
   onFiltersChange, 
   onApply,
   isOpen,
-  onOpenChange
-}: FiltersModalProps) {
+  onOpenChange,
+  hidePrimaryFilters = false,
+}: Readonly<FiltersModalProps>) {
   const [localFilters, setLocalFilters] = useState<ExportFilters>(filters)
 
   // Fetch data from APIs
@@ -71,6 +73,16 @@ export function FiltersModal({
     }))
   }
 
+  const parseLocalDate = (value?: string) => {
+    if (!value) return undefined
+    return parseISO(value)
+  }
+
+  const formatDateForFilter = (date?: Date) => {
+    if (!date) return undefined
+    return format(date, 'yyyy-MM-dd')
+  }
+
   const clearAllFilters = () => {
     setLocalFilters({
       formato: 'xlsx',
@@ -81,7 +93,7 @@ export function FiltersModal({
 
   const handleApply = () => {
     onFiltersChange(localFilters)
-    onApply()
+    onApply(localFilters)
     onOpenChange(false)
   }
 
@@ -90,20 +102,14 @@ export function FiltersModal({
     onOpenChange(false)
   }
 
-  const hasActiveFilters = Object.entries(localFilters).some(([key, value]) => {
-    // Excluir campos por defecto
-    if (key === 'formato' || key === 'sortBy' || key === 'sortOrder') {
-      return false
-    }
-    return value !== undefined && value !== null && value !== ''
-  })
-
   const activeFiltersCount = Object.entries(localFilters).filter(([key, value]) => {
     if (key === 'formato' || key === 'sortBy' || key === 'sortOrder') {
       return false
     }
     return value !== undefined && value !== null && value !== ''
   }).length
+
+  const hasChanges = JSON.stringify(localFilters) !== JSON.stringify(filters)
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -114,7 +120,7 @@ export function FiltersModal({
             Filtros de Exportación
             {activeFiltersCount > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {activeFiltersCount} activo{activeFiltersCount !== 1 ? 's' : ''}
+                {activeFiltersCount} activo{activeFiltersCount > 1 ? 's' : ''}
               </Badge>
             )}
           </DialogTitle>
@@ -216,26 +222,27 @@ export function FiltersModal({
                   </Select>
                 </div>
 
-                {/* Estado de Venta */}
-                <div className="space-y-2">
-                  <Label htmlFor="estadoVenta">Estado de Venta</Label>
-                  <Select
-                    value={localFilters.estadoVenta || 'all'}
-                    onValueChange={(value) => updateLocalFilter('estadoVenta', value === 'all' ? undefined : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos los estados" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      {ESTADO_VENTA_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!hidePrimaryFilters && (
+                  <div className="space-y-2">
+                    <Label htmlFor="estadoVenta">Estado de Venta</Label>
+                    <Select
+                      value={localFilters.estadoVenta || 'all'}
+                      onValueChange={(value) => updateLocalFilter('estadoVenta', value === 'all' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los estados" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los estados</SelectItem>
+                        {ESTADO_VENTA_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/* Método de Pago */}
                 <div className="space-y-2">
@@ -264,57 +271,59 @@ export function FiltersModal({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Fechas</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                {/* Fecha Venta Desde */}
-                <div className="space-y-2">
-                  <Label>Fecha de Venta Desde</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {localFilters.fechaVentaDesde ? 
-                          format(new Date(localFilters.fechaVentaDesde), "dd/MM/yyyy", { locale: es }) : 
-                          "Seleccionar fecha"
-                        }
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={localFilters.fechaVentaDesde ? new Date(localFilters.fechaVentaDesde) : undefined}
-                        onSelect={(date) => updateLocalFilter('fechaVentaDesde', date?.toISOString().split('T')[0])}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                {!hidePrimaryFilters && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Fecha de Venta Desde</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {localFilters.fechaVentaDesde ? 
+                              format(parseLocalDate(localFilters.fechaVentaDesde) ?? new Date(), "dd/MM/yyyy", { locale: es }) : 
+                              "Seleccionar fecha"
+                            }
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={parseLocalDate(localFilters.fechaVentaDesde)}
+                            onSelect={(date) => updateLocalFilter('fechaVentaDesde', formatDateForFilter(date))}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
 
-                {/* Fecha Venta Hasta */}
-                <div className="space-y-2">
-                  <Label>Fecha de Venta Hasta</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {localFilters.fechaVentaHasta ? 
-                          format(new Date(localFilters.fechaVentaHasta), "dd/MM/yyyy", { locale: es }) : 
-                          "Seleccionar fecha"
-                        }
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={localFilters.fechaVentaHasta ? new Date(localFilters.fechaVentaHasta) : undefined}
-                        onSelect={(date) => updateLocalFilter('fechaVentaHasta', date?.toISOString().split('T')[0])}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                    <div className="space-y-2">
+                      <Label>Fecha de Venta Hasta</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {localFilters.fechaVentaHasta ? 
+                              format(parseLocalDate(localFilters.fechaVentaHasta) ?? new Date(), "dd/MM/yyyy", { locale: es }) : 
+                              "Seleccionar fecha"
+                            }
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={parseLocalDate(localFilters.fechaVentaHasta)}
+                            onSelect={(date) => updateLocalFilter('fechaVentaHasta', formatDateForFilter(date))}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </>
+                )}
 
                 {/* Fecha Viaje Desde */}
                 <div className="space-y-2">
@@ -327,7 +336,7 @@ export function FiltersModal({
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {localFilters.fechaViajeDesde ? 
-                          format(new Date(localFilters.fechaViajeDesde), "dd/MM/yyyy", { locale: es }) : 
+                          format(parseLocalDate(localFilters.fechaViajeDesde) ?? new Date(), "dd/MM/yyyy", { locale: es }) : 
                           "Seleccionar fecha"
                         }
                       </Button>
@@ -335,8 +344,8 @@ export function FiltersModal({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={localFilters.fechaViajeDesde ? new Date(localFilters.fechaViajeDesde) : undefined}
-                        onSelect={(date) => updateLocalFilter('fechaViajeDesde', date?.toISOString().split('T')[0])}
+                        selected={parseLocalDate(localFilters.fechaViajeDesde)}
+                        onSelect={(date) => updateLocalFilter('fechaViajeDesde', formatDateForFilter(date))}
                       />
                     </PopoverContent>
                   </Popover>
@@ -353,7 +362,7 @@ export function FiltersModal({
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {localFilters.fechaViajeHasta ? 
-                          format(new Date(localFilters.fechaViajeHasta), "dd/MM/yyyy", { locale: es }) : 
+                          format(parseLocalDate(localFilters.fechaViajeHasta) ?? new Date(), "dd/MM/yyyy", { locale: es }) : 
                           "Seleccionar fecha"
                         }
                       </Button>
@@ -361,8 +370,8 @@ export function FiltersModal({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={localFilters.fechaViajeHasta ? new Date(localFilters.fechaViajeHasta) : undefined}
-                        onSelect={(date) => updateLocalFilter('fechaViajeHasta', date?.toISOString().split('T')[0])}
+                        selected={parseLocalDate(localFilters.fechaViajeHasta)}
+                        onSelect={(date) => updateLocalFilter('fechaViajeHasta', formatDateForFilter(date))}
                       />
                     </PopoverContent>
                   </Popover>
@@ -450,26 +459,28 @@ export function FiltersModal({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Entidades</h3>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="empresaId">Empresa</Label>
-                  <Select
-                    value={localFilters.empresaId || 'all'}
-                    onValueChange={(value) => updateLocalFilter('empresaId', value === 'all' ? undefined : value)}
-                    disabled={isLoadingEmpresas}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={isLoadingEmpresas ? "Cargando empresas..." : "Seleccionar empresa"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las empresas</SelectItem>
-                      {empresasData?.data?.map((empresa) => (
-                        <SelectItem key={empresa.id} value={empresa.id}>
-                          {empresa.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!hidePrimaryFilters && (
+                  <div className="space-y-2">
+                    <Label htmlFor="empresaId">Empresa</Label>
+                    <Select
+                      value={localFilters.empresaId || 'all'}
+                      onValueChange={(value) => updateLocalFilter('empresaId', value === 'all' ? undefined : value)}
+                      disabled={isLoadingEmpresas}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingEmpresas ? "Cargando empresas..." : "Seleccionar empresa"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las empresas</SelectItem>
+                        {empresasData?.data?.map((empresa) => (
+                          <SelectItem key={empresa.id} value={empresa.id}>
+                            {empresa.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="usuarioId">Usuario</Label>
@@ -553,7 +564,7 @@ export function FiltersModal({
             <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button onClick={handleApply} disabled={!hasActiveFilters}>
+            <Button onClick={handleApply} disabled={!hasChanges}>
               Aplicar Filtros
             </Button>
           </div>
