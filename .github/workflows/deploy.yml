@@ -2,15 +2,6 @@ name: Deploy Stage
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Rama a desplegar'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - main
 
 jobs:
   deploy:
@@ -25,10 +16,11 @@ jobs:
           script: |
             cd /home/ubuntu/proyectos/psaonlie_suite
             git fetch origin
-            git checkout ${{ github.event.inputs.branch }}
-            git reset --hard origin/${{ github.event.inputs.branch }}
+            git checkout ${{ github.ref_name }}
+            git reset --hard origin/${{ github.ref_name }}
             
             docker compose down
             docker compose up -d --build
             
-            echo "✅ Suite desplegado desde rama: ${{ github.event.inputs.branch }}"
+            echo "Deploy completado desde rama: ${{ github.ref_name }}"
+
