@@ -72,7 +72,7 @@ export function ClienteSearch({ onClienteSelect, selectedClienteId, placeholder 
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-w-[300px] p-0" align="start">
+        <PopoverContent className="w-[min(520px,calc(100vw-2rem))] p-0" align="start">
           <Command>
             <CommandInput 
               placeholder="Buscar por nombre, apellido o email..."
@@ -89,27 +89,25 @@ export function ClienteSearch({ onClienteSelect, selectedClienteId, placeholder 
                     key={cliente.cliente.id}
                     value={`${cliente.cliente.nombre} ${cliente.cliente.apellido} ${cliente.cliente.email}`}
                     onSelect={() => handleSelect(cliente)}
-                    className="flex items-center justify-between"
+                    className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3"
                   >
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="font-medium truncate">
+                    <div className="min-w-0">
+                      <span className="block font-medium truncate">
                         {cliente.cliente.nombre} {cliente.cliente.apellido}
                       </span>
-                      <span className="text-xs text-muted-foreground truncate">
+                      <span className="block text-xs text-muted-foreground truncate">
                         {cliente.cliente.email}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      <span className="text-xs text-muted-foreground">
-                        {cliente.estadisticasVentas.totalVentas} ventas
-                      </span>
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedCliente?.cliente.id === cliente.cliente.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                      {cliente.estadisticasVentas.totalVentas} ventas
+                    </span>
+                    <Check
+                      className={cn(
+                        "h-4 w-4",
+                        selectedCliente?.cliente.id === cliente.cliente.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
                   </CommandItem>
                 ))}
               </CommandGroup>

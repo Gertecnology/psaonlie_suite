@@ -14,11 +14,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible='icon' variant='floating' {...props}>
       <SidebarHeader>
-        <button onClick={toggleSidebar} className="focus:outline-none">
+        <button onClick={toggleSidebar} className='focus:outline-none'>
           {collapsed ? (
-            <img src="/images/iconopasaje.ico" alt="Logo mini" className='w-8 h-8' />
+            <img
+              src='/images/iconopasaje.ico'
+              alt='Logo mini'
+              className='h-8 w-8'
+            />
           ) : (
-            <span className="w-40 h-10 flex items-center font-bold text-2xl select-none text-foreground">PasajeOnline</span>
+            <img
+              src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-jk7LpXOiFM0FqL2A0IR1k0vHJXmllm.png'
+              alt='pasajeonline'
+              className='bg-slate-900 p-2 rounded-md'
+            />
           )}
         </button>
       </SidebarHeader>

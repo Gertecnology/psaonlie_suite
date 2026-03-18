@@ -306,9 +306,9 @@ const AuthenticatedSettingsExternalDataDayConfigurationRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
-  '/clerk/': typeof ClerkauthRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/otp': typeof authOtpRoute
   '/sign-in': typeof authSignInRoute
@@ -322,7 +322,6 @@ export interface FileRoutesByFullPath {
   '/socket-monitor': typeof AuthenticatedSocketMonitorRoute
   '/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/': typeof AuthenticatedIndexRoute
   '/companies/$id': typeof AuthenticatedCompaniesIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
@@ -337,19 +336,19 @@ export interface FileRoutesByFullPath {
   '/clerk/sign-in': typeof ClerkauthSignInRoute
   '/clerk/sign-up': typeof ClerkauthSignUpRoute
   '/clerk/user-management': typeof ClerkAuthenticatedUserManagementRoute
-  '/apps': typeof AuthenticatedAppsIndexRoute
-  '/chats': typeof AuthenticatedChatsIndexRoute
-  '/clients': typeof AuthenticatedClientsIndexRoute
-  '/companies': typeof AuthenticatedCompaniesIndexRoute
-  '/destinations': typeof AuthenticatedDestinationsIndexRoute
-  '/help-center': typeof AuthenticatedHelpCenterIndexRoute
-  '/reports': typeof AuthenticatedReportsIndexRoute
-  '/sales': typeof AuthenticatedSalesIndexRoute
+  '/apps/': typeof AuthenticatedAppsIndexRoute
+  '/chats/': typeof AuthenticatedChatsIndexRoute
+  '/clients/': typeof AuthenticatedClientsIndexRoute
+  '/companies/': typeof AuthenticatedCompaniesIndexRoute
+  '/destinations/': typeof AuthenticatedDestinationsIndexRoute
+  '/help-center/': typeof AuthenticatedHelpCenterIndexRoute
+  '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/sales/': typeof AuthenticatedSalesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/tasks': typeof AuthenticatedTasksIndexRoute
-  '/users': typeof AuthenticatedUsersIndexRoute
+  '/tasks/': typeof AuthenticatedTasksIndexRoute
+  '/users/': typeof AuthenticatedUsersIndexRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
-  '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
+  '/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRoutesByTo {
   '/clerk': typeof ClerkAuthenticatedRouteRouteWithChildren
@@ -447,9 +446,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/clerk'
     | '/settings'
-    | '/clerk/'
     | '/forgot-password'
     | '/otp'
     | '/sign-in'
@@ -463,7 +462,6 @@ export interface FileRouteTypes {
     | '/socket-monitor'
     | '/test-notifications'
     | '/auth/reset-password'
-    | '/'
     | '/companies/$id'
     | '/destinations/$id'
     | '/sales/checkout'
@@ -478,19 +476,19 @@ export interface FileRouteTypes {
     | '/clerk/sign-in'
     | '/clerk/sign-up'
     | '/clerk/user-management'
-    | '/apps'
-    | '/chats'
-    | '/clients'
-    | '/companies'
-    | '/destinations'
-    | '/help-center'
-    | '/reports'
-    | '/sales'
+    | '/apps/'
+    | '/chats/'
+    | '/clients/'
+    | '/companies/'
+    | '/destinations/'
+    | '/help-center/'
+    | '/reports/'
+    | '/sales/'
     | '/settings/'
-    | '/tasks'
-    | '/users'
+    | '/tasks/'
+    | '/users/'
     | '/settings/external-data/day-configuration'
-    | '/settings/external-data'
+    | '/settings/external-data/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/clerk'
@@ -614,7 +612,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -725,8 +723,8 @@ declare module '@tanstack/react-router' {
     }
     '/clerk/(auth)': {
       id: '/clerk/(auth)'
-      path: '/'
-      fullPath: '/clerk/'
+      path: ''
+      fullPath: '/clerk'
       preLoaderRoute: typeof ClerkauthRouteRouteImport
       parentRoute: typeof ClerkRouteRoute
     }
@@ -740,14 +738,14 @@ declare module '@tanstack/react-router' {
     '/_authenticated/users/': {
       id: '/_authenticated/users/'
       path: '/users'
-      fullPath: '/users'
+      fullPath: '/users/'
       preLoaderRoute: typeof AuthenticatedUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tasks/': {
       id: '/_authenticated/tasks/'
       path: '/tasks'
-      fullPath: '/tasks'
+      fullPath: '/tasks/'
       preLoaderRoute: typeof AuthenticatedTasksIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -761,56 +759,56 @@ declare module '@tanstack/react-router' {
     '/_authenticated/sales/': {
       id: '/_authenticated/sales/'
       path: '/sales'
-      fullPath: '/sales'
+      fullPath: '/sales/'
       preLoaderRoute: typeof AuthenticatedSalesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/': {
       id: '/_authenticated/reports/'
       path: '/reports'
-      fullPath: '/reports'
+      fullPath: '/reports/'
       preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/help-center/': {
       id: '/_authenticated/help-center/'
       path: '/help-center'
-      fullPath: '/help-center'
+      fullPath: '/help-center/'
       preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/destinations/': {
       id: '/_authenticated/destinations/'
       path: '/destinations'
-      fullPath: '/destinations'
+      fullPath: '/destinations/'
       preLoaderRoute: typeof AuthenticatedDestinationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/companies/': {
       id: '/_authenticated/companies/'
       path: '/companies'
-      fullPath: '/companies'
+      fullPath: '/companies/'
       preLoaderRoute: typeof AuthenticatedCompaniesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
       path: '/clients'
-      fullPath: '/clients'
+      fullPath: '/clients/'
       preLoaderRoute: typeof AuthenticatedClientsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
       path: '/chats'
-      fullPath: '/chats'
+      fullPath: '/chats/'
       preLoaderRoute: typeof AuthenticatedChatsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/apps/': {
       id: '/_authenticated/apps/'
       path: '/apps'
-      fullPath: '/apps'
+      fullPath: '/apps/'
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -915,7 +913,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated/settings/external-data/': {
       id: '/_authenticated/settings/external-data/'
       path: '/external-data'
-      fullPath: '/settings/external-data'
+      fullPath: '/settings/external-data/'
       preLoaderRoute: typeof AuthenticatedSettingsExternalDataIndexRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }

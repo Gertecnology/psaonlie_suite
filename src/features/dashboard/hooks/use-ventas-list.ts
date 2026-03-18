@@ -2,15 +2,23 @@ import { useQuery } from '@tanstack/react-query'
 import { getVentasList } from '../services/sales.service'
 import { VentasSearchParams, VentasListResponse } from '../models/sales.model'
 
+interface UseVentasListOptions {
+  enabled?: boolean
+}
+
 /**
  * Hook to fetch sales list with caching and error handling
  * @param params - Search parameters for filtering sales
  * @returns Query result with sales data
  */
-export function useVentasList(params: VentasSearchParams = {}) {
+export function useVentasList(
+  params: VentasSearchParams = {},
+  options: UseVentasListOptions = {}
+) {
   return useQuery<VentasListResponse>({
     queryKey: ['ventas-list', params],
     queryFn: () => getVentasList(params),
+    enabled: options.enabled ?? true,
     staleTime: 2 * 60 * 1000, // 2 minutos (datos dinámicos)
     gcTime: 5 * 60 * 1000, // 5 minutos
     retry: 2, // Reintentar 2 veces en caso de error

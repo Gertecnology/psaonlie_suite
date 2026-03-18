@@ -1,0 +1,33 @@
+name: Deploy dev-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Rama a desplegar'
+        required: true
+        default: 'dev-prod'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/ubuntu/proyectos/pasaje_online/suite
+            git fetch origin
+            git checkout ${{ github.event.inputs.branch }}
+            git pull origin ${{ github.event.inputs.branch }}
+            docker build -t pasaje_suite:latest \
+              --build-arg VITE_API_URL=https://api-pasaje.gertecnology.com .
+            docker stop pasaje-online-suite || true
+            docker rm pasaje-online-suite || true
+            docker run -d --name pasaje-online-suite \
+              --network proxy-network \
+              -p 3002:3002 \
+              --restart unless-stopped pasaje_suite:latest

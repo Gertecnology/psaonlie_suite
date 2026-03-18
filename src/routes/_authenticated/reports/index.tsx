@@ -10,7 +10,7 @@ function RouteComponent() {
   return (
     <PageLayout
       title="Reportes"
-      description="Visualiza y genera reportes del sistema."
+      description="Genera y exporta reportes detallados de ventas con filtros personalizados."
       showSearch={true}
     >
       <ReportsPage />
