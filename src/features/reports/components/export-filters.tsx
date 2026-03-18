@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Filter, RotateCcw, ChevronDown, ChevronUp, Eye } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,7 +38,7 @@ export function ExportFiltersComponent({
   onFiltersChange, 
   onExport, 
   isExporting 
-}: ExportFiltersProps) {
+}: Readonly<ExportFiltersProps>) {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
@@ -91,6 +91,16 @@ export function ExportFiltersComponent({
   const hasActiveFilters = Object.values(filters).some(value => 
     value !== undefined && value !== null && value !== ''
   )
+
+  const parseLocalDate = (value?: string) => {
+    if (!value) return undefined
+    return parseISO(value)
+  }
+
+  const formatDateForFilter = (date?: Date) => {
+    if (!date) return undefined
+    return format(date, 'yyyy-MM-dd')
+  }
 
   const handlePreviewToggle = () => {
     if (!showPreview) {
@@ -271,14 +281,14 @@ export function ExportFiltersComponent({
                       className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.fechaVentaDesde ? format(new Date(filters.fechaVentaDesde), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                      {filters.fechaVentaDesde ? format(parseLocalDate(filters.fechaVentaDesde) ?? new Date(), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={filters.fechaVentaDesde ? new Date(filters.fechaVentaDesde) : undefined}
-                      onSelect={(date) => updateFilter('fechaVentaDesde', date?.toISOString().split('T')[0])}
+                      selected={parseLocalDate(filters.fechaVentaDesde)}
+                      onSelect={(date) => updateFilter('fechaVentaDesde', formatDateForFilter(date))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -293,14 +303,14 @@ export function ExportFiltersComponent({
                       className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.fechaVentaHasta ? format(new Date(filters.fechaVentaHasta), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                      {filters.fechaVentaHasta ? format(parseLocalDate(filters.fechaVentaHasta) ?? new Date(), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={filters.fechaVentaHasta ? new Date(filters.fechaVentaHasta) : undefined}
-                      onSelect={(date) => updateFilter('fechaVentaHasta', date?.toISOString().split('T')[0])}
+                      selected={parseLocalDate(filters.fechaVentaHasta)}
+                      onSelect={(date) => updateFilter('fechaVentaHasta', formatDateForFilter(date))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -315,14 +325,14 @@ export function ExportFiltersComponent({
                       className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.fechaViajeDesde ? format(new Date(filters.fechaViajeDesde), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                      {filters.fechaViajeDesde ? format(parseLocalDate(filters.fechaViajeDesde) ?? new Date(), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={filters.fechaViajeDesde ? new Date(filters.fechaViajeDesde) : undefined}
-                      onSelect={(date) => updateFilter('fechaViajeDesde', date?.toISOString().split('T')[0])}
+                      selected={parseLocalDate(filters.fechaViajeDesde)}
+                      onSelect={(date) => updateFilter('fechaViajeDesde', formatDateForFilter(date))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -337,14 +347,14 @@ export function ExportFiltersComponent({
                       className="h-10 w-full min-w-0 justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.fechaViajeHasta ? format(new Date(filters.fechaViajeHasta), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                      {filters.fechaViajeHasta ? format(parseLocalDate(filters.fechaViajeHasta) ?? new Date(), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={filters.fechaViajeHasta ? new Date(filters.fechaViajeHasta) : undefined}
-                      onSelect={(date) => updateFilter('fechaViajeHasta', date?.toISOString().split('T')[0])}
+                      selected={parseLocalDate(filters.fechaViajeHasta)}
+                      onSelect={(date) => updateFilter('fechaViajeHasta', formatDateForFilter(date))}
                     />
                   </PopoverContent>
                 </Popover>
