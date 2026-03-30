@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -63,9 +63,29 @@ export function UsersTable({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [sorting, setSorting] = useState<SortingState>([])
 
+  const orderedColumns = useMemo(() => {
+    if (!columns?.length) return columns
+
+    const actionsIndex = columns.findIndex((col) => col.id === 'actions')
+    if (actionsIndex === -1) return columns
+
+    const newColumns = [...columns]
+    const [actionsColumn] = newColumns.splice(actionsIndex, 1)
+
+    const hasSelectFirst = newColumns[0]?.id === 'select'
+
+    if (hasSelectFirst) {
+      newColumns.splice(1, 0, actionsColumn)
+    } else {
+      newColumns.unshift(actionsColumn)
+    }
+
+    return newColumns
+  }, [columns])
+
   const table = useReactTable({
     data,
-    columns,
+    columns: orderedColumns,
     state: {
       sorting,
       columnVisibility,

@@ -1,10 +1,10 @@
+import { Link } from '@tanstack/react-router'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { type Company } from '../models/company.model'
 import { DataTableColumnHeader } from './data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
-import { Link } from '@tanstack/react-router'
 
 export const companyColumns: ColumnDef<Company>[] = [
   {
@@ -42,9 +42,9 @@ export const companyColumns: ColumnDef<Company>[] = [
       return (
         <div className='flex space-x-2'>
           <Link
-            to="/companies/$id"
+            to='/companies/$id'
             params={{ id }}
-            className='max-w-32 truncate font-medium cursor-pointer sm:max-w-72 md:max-w-[31rem] hover:text-blue-800'
+            className='max-w-32 cursor-pointer truncate font-medium hover:text-blue-800 sm:max-w-72 md:max-w-[31rem]'
           >
             {row.getValue('nombre')}
           </Link>
@@ -85,7 +85,9 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='Agencia Principal' />
     ),
     cell: ({ row }) => {
-      return <div>{row.getValue('agenciaPrincipal') ?? 'Sin agencia principal'}</div>
+      return (
+        <div>{row.getValue('agenciaPrincipal') ?? 'Sin agencia principal'}</div>
+      )
     },
   },
   {
@@ -103,7 +105,11 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='Porcentaje de ventas' />
     ),
     cell: ({ row }) => {
-      return <div>{row.getValue('porcentajeVentas') ?? 'Sin porcentaje de ventas'}</div>
+      return (
+        <div>
+          {row.getValue('porcentajeVentas') ?? 'Sin porcentaje de ventas'}
+        </div>
+      )
     },
   },
   {
@@ -112,31 +118,37 @@ export const companyColumns: ColumnDef<Company>[] = [
       <DataTableColumnHeader column={column} title='Cargo por Servicio' />
     ),
     cell: ({ row }) => {
-      const serviceCharge = row.getValue('serviceCharge') as Company['serviceCharge']
-      
+      const serviceCharge = row.getValue(
+        'serviceCharge'
+      ) as Company['serviceCharge']
+
       if (!serviceCharge) {
         return (
-          <div className="text-muted-foreground text-sm">
+          <div className='text-muted-foreground text-sm'>
             Sin cargo asignado
           </div>
         )
       }
 
       return (
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <Badge 
+        <div className='space-y-1'>
+          <div className='flex items-center space-x-2'>
+            <Badge
               variant={serviceCharge.activo ? 'default' : 'secondary'}
-              className="text-xs"
+              className='text-xs'
             >
-              {serviceCharge.tipoAplicacion === 'PORCENTUAL' ? 'Porcentual' : 'Fijo'}
+              {serviceCharge.tipoAplicacion === 'PORCENTUAL'
+                ? 'Porcentual'
+                : 'Fijo'}
             </Badge>
-            {serviceCharge.tipoAplicacion === 'PORCENTUAL' && serviceCharge.porcentaje ? (
-              <span className="font-mono text-sm font-medium text-blue-600">
+            {serviceCharge.tipoAplicacion === 'PORCENTUAL' &&
+            serviceCharge.porcentaje ? (
+              <span className='font-mono text-sm font-medium text-blue-600'>
                 {parseFloat(serviceCharge.porcentaje).toFixed(2)}%
               </span>
-            ) : serviceCharge.tipoAplicacion === 'FIJO' && serviceCharge.montoFijo ? (
-              <span className="font-mono text-sm font-medium text-green-600">
+            ) : serviceCharge.tipoAplicacion === 'FIJO' &&
+              serviceCharge.montoFijo ? (
+              <span className='font-mono text-sm font-medium text-green-600'>
                 ${serviceCharge.montoFijo.toLocaleString('es-PY')}
               </span>
             ) : null}
@@ -147,8 +159,11 @@ export const companyColumns: ColumnDef<Company>[] = [
     filterFn: (row, id, value) => {
       const serviceCharge = row.getValue(id) as Company['serviceCharge']
       if (!serviceCharge) return value.includes('sin-cargo')
-      
-      if (value.includes('porcentual') && serviceCharge.tipoAplicacion === 'PORCENTUAL') {
+
+      if (
+        value.includes('porcentual') &&
+        serviceCharge.tipoAplicacion === 'PORCENTUAL'
+      ) {
         return true
       }
       if (value.includes('fijo') && serviceCharge.tipoAplicacion === 'FIJO') {
@@ -160,12 +175,13 @@ export const companyColumns: ColumnDef<Company>[] = [
       if (value.includes('inactivo') && !serviceCharge.activo) {
         return true
       }
-      
+
       return false
     },
   },
   {
     id: 'actions',
+    header: 'Acciones',
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ]

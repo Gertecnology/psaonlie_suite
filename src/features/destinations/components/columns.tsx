@@ -85,6 +85,7 @@ export const destinationColumns: ColumnDef<Destination>[] = [
   },
   {
     id: 'actions',
+    header: 'Acciones',
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ]

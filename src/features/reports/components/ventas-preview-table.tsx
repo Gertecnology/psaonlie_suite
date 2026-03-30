@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type React from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -8,6 +9,7 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
+  Printer,
   RefreshCw,
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -18,9 +20,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useVentasList } from '../../dashboard/hooks/use-ventas-list'
-import type { VentasSearchParams } from '../../dashboard/models/sales.model'
+import type { 
+  Venta, 
+  VentasSearchParams 
+} from '../../dashboard/models/sales.model'
 import type { ExportFilters } from '../models/reports.model'
 import type { PreviewData } from '../services/preview.service'
 import {
@@ -33,6 +44,7 @@ import {
 interface VentasPreviewTableProps {
   filters: ExportFilters
   isVisible: boolean
+  onFilterClick?: (field: string, value: string) => void
 }
 
 const ReadyToGenerateState = ({
@@ -40,7 +52,7 @@ const ReadyToGenerateState = ({
 }: Readonly<{ description: string }>) => {
   return (
     <div className='rounded-2xl border border-dashed py-16 text-center'>
-      <div className='mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted'>
+      <div className='bg-muted mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl'>
         <FileText className='text-muted-foreground h-7 w-7' />
       </div>
 
@@ -51,7 +63,7 @@ const ReadyToGenerateState = ({
         {description}
       </p>
 
-      <div className='text-muted-foreground mt-8 flex items-center justify-center gap-6 text-sm font-medium uppercase tracking-wide'>
+      <div className='text-muted-foreground mt-8 flex items-center justify-center gap-6 text-sm font-medium tracking-wide uppercase'>
         <div className='flex items-center gap-2'>
           <span className='h-2.5 w-2.5 rounded-full bg-emerald-500' />
           <span>EXCEL (XLSX)</span>
@@ -65,7 +77,7 @@ const ReadyToGenerateState = ({
   )
 }
 
-// Función para formatear moneda
+// Función para formatear moneda (paraguay)
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('es-PY', {
     style: 'currency',
@@ -76,6 +88,7 @@ const formatCurrency = (amount: number): string => {
 
 // Función para formatear fecha sin hora
 const formatDateOnly = (dateString: string): string => {
+  if (!dateString) return '—'
   try {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: es })
   } catch {
@@ -83,16 +96,74 @@ const formatDateOnly = (dateString: string): string => {
   }
 }
 
-// Componente para mostrar tabla tipo Excel
-const ExcelPreviewTable = ({ data }: { data: unknown[] }) => {
-  const columns = getTableColumns()
-  const flattenedData = flattenDataForTable(data as PreviewData[])
+// Colores Semánticos por estado
+const getStatusColor = (value: string) => {
+  const v = value.toUpperCase()
+  // Verdes (Finalizado, Pagado, Confirmado)
+  if (['PAGADO', 'CONFIRMADA', 'CONFIRMADO', 'FINALIZADO', 'PAGO_APROBADO'].includes(v)) {
+    return 'bg-emerald-100 text-emerald-800'
+  }
+  // Rojas (Cancelado, Error, Fallido, Anulado, Expirado)
+  if (['CANCELADO', 'CANCELADA', 'FALLIDO', 'ANULADO', 'EXPIRADO', 'ERROR'].includes(v)) {
+    return 'bg-red-100 text-red-800'
+  }
+  // Naranjas (Pendiente, Reserva, En Proceso)
+  if (['PENDIENTE', 'RESERVADO', 'RESERVADA', 'EN PROCESO', 'PENDIENTE_PAGO'].includes(v)) {
+    return 'bg-amber-100 text-amber-800'
+  }
+  return 'bg-gray-100 text-gray-600'
+}
 
-  // Calcular el ancho total de la tabla
+const StatusBadge = ({ value }: { value: string }) => {
+  const cls = getStatusColor(value)
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] leading-none font-bold tracking-tight ${cls}`}
+    >
+      {value || '—'}
+    </span>
+  )
+}
+
+// Componente para mostrar tabla tipo Excel
+const ExcelPreviewTable = ({ 
+  data,
+  onFilterClick 
+}: { 
+  data: Venta[],
+  onFilterClick?: (field: string, value: string, label?: string) => void
+}) => {
+  const baseColumns = getTableColumns()
+  // Aumentar columnas con columna de acciones localmente
+  const columns = [
+    ...baseColumns,
+    { key: 'actions', header: 'Acciones', width: 85, align: 'center' as const }
+  ]
+  
+  const flattenedData = flattenDataForTable(data as unknown as PreviewData[])
+
   const totalWidth = columns.reduce((sum, col) => sum + col.width, 0)
 
+  // Totales de columnas marcadas como summable
+  const totals = columns.reduce<Record<string, number>>((acc, col) => {
+    if (col.isSummable) {
+      acc[col.key] = flattenedData.reduce(
+        (sum, row) => sum + (Number(row[col.key as keyof typeof row]) || 0),
+        0
+      )
+    }
+    return acc
+  }, {})
+
+  const alignClass: Record<string, string> = {
+    left: 'text-left',
+    right: 'text-right',
+    center: 'text-center',
+  }
+
   return (
-    <div className='overflow-hidden rounded-lg border bg-white'>
+    <TooltipProvider>
+      <div className='overflow-hidden rounded-lg border bg-white'>
       <div className='h-[500px] overflow-auto'>
         <div style={{ minWidth: `${totalWidth}px` }}>
           {/* Encabezados */}
@@ -101,7 +172,7 @@ const ExcelPreviewTable = ({ data }: { data: unknown[] }) => {
               {columns.map((column) => (
                 <div
                   key={column.key}
-                  className='flex-shrink-0 border-r border-gray-200 px-3 py-2 text-xs font-medium text-gray-700'
+                  className={`shrink-0 border-r border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 ${alignClass[column.align]}`}
                   style={{ width: column.width, minWidth: column.width }}
                 >
                   {column.header}
@@ -114,39 +185,121 @@ const ExcelPreviewTable = ({ data }: { data: unknown[] }) => {
           <div className='bg-white'>
             {flattenedData.map((row, index) => (
               <div
-                key={row.id}
-                className={`flex border-b border-gray-100 hover:bg-gray-50 ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                key={index}
+                className={`flex border-b border-gray-100 hover:bg-blue-50/40 ${
+                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                 }`}
               >
-                {columns.map((column) => (
-                  <div
-                    key={column.key}
-                    className='flex-shrink-0 border-r border-gray-100 px-3 py-2 text-xs text-gray-900'
-                    style={{ width: column.width, minWidth: column.width }}
-                    title={String(row[column.key as keyof typeof row] || '')}
-                  >
-                    {column.key === 'importeTotal' ||
+                {columns.map((column) => {
+                  const rawValue = row[column.key as keyof typeof row]
+                  const originalRow = data[index]
+
+                  let cellContent: React.ReactNode
+                  if (
+                    column.key === 'importeTotal' ||
                     column.key === 'comisionTotal'
-                      ? formatCurrency(
-                          Number(row[column.key as keyof typeof row] || 0)
-                        )
-                      : column.key === 'fechaVenta' ||
-                          column.key === 'fechaViaje' ||
-                          column.key === 'createdAt' ||
-                          column.key === 'updatedAt'
-                        ? formatDateOnly(
-                            String(row[column.key as keyof typeof row] || '')
-                          )
-                        : String(row[column.key as keyof typeof row] || '')}
-                  </div>
-                ))}
+                  ) {
+                    cellContent = formatCurrency(Number(rawValue || 0))
+                  } else if (column.key === 'fechaVenta' || column.key === 'createdAt') {
+                    // Fecha Venta/Creado: Estilo secundario (pequeño/gris)
+                    cellContent = (
+                      <span className='text-[10px] text-gray-500 font-medium'>
+                        {formatDateOnly(String(rawValue || ''))}
+                      </span>
+                    )
+                  } else if (column.key === 'fechaViaje' || column.key === 'horaSalida') {
+                    // Viaje/Hora: Estilo jerárquico (Negrita/Fuerte)
+                    cellContent = (
+                      <span className='font-bold text-gray-900'>
+                        {column.key === 'horaSalida' ? String(rawValue || '') : formatDateOnly(String(rawValue || ''))}
+                      </span>
+                    )
+                  } else if (column.key === 'estadoPago' || column.key === 'estadoVenta') {
+                    cellContent = <StatusBadge value={String(rawValue || '')} />
+                  } else if (column.key === 'actions') {
+                    cellContent = (
+                      <div className='flex items-center justify-center gap-2'>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant='ghost' size='icon' className='h-6 w-6 text-blue-600 hover:bg-blue-50'>
+                              <Eye className='h-3.5 w-3.5' />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Vista Previa</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant='ghost' size='icon' className='h-6 w-6 text-gray-600 hover:bg-gray-100'>
+                              <Printer className='h-3.5 w-3.5' />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Imprimir</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )
+                  } else if (['empresaNombre', 'origenNombre', 'destinoNombre'].includes(column.key)) {
+                    // Interactividad: Clic para filtrar
+                    const fieldMap: Record<string, keyof Venta> = {
+                      empresaNombre: 'empresaId',
+                      origenNombre: 'origenId',
+                      destinoNombre: 'destinoId',
+                    }
+                    const filterField = fieldMap[column.key]
+                    const filterValue = originalRow[filterField]
+
+                    cellContent = (
+                      <span
+                        className='cursor-pointer text-blue-600/80 hover:text-blue-700 hover:underline hover:font-medium transition-all'
+                        onClick={() => onFilterClick?.(filterField, String(filterValue), String(rawValue || ''))}
+                      >
+                        {String(rawValue || '')}
+                      </span>
+                    )
+                  } else {
+                    cellContent = String(rawValue || '')
+                  }
+
+                  return (
+                    <div
+                      key={column.key}
+                      className={`shrink-0 border-r border-gray-100 px-3 py-1 text-xs text-gray-900 ${
+                        column.align === 'center'
+                          ? 'flex items-center justify-center'
+                          : alignClass[column.align]
+                      }`}
+                      style={{ width: column.width, minWidth: column.width }}
+                      title={String(rawValue || '')}
+                    >
+                      {cellContent}
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>
+
+          {/* Footer sticky con totales */}
+          <div className='sticky bottom-0 z-10 border-t-2 border-gray-300 bg-gray-100'>
+            <div className='flex'>
+              {columns.map((column, idx) => (
+                <div
+                  key={column.key}
+                  className={`shrink-0 border-r border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-800 ${alignClass[column.align]}`}
+                  style={{ width: column.width, minWidth: column.width }}
+                >
+                  {idx === 0
+                    ? 'TOTALES'
+                    : column.isSummable && totals[column.key] !== undefined
+                      ? formatCurrency(totals[column.key])
+                      : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   )
 }
 
@@ -219,6 +372,7 @@ const convertFiltersToSearchParams = (
 export function VentasPreviewTable({
   filters,
   isVisible,
+  onFilterClick,
 }: Readonly<VentasPreviewTableProps>) {
   const [isExpanded, setIsExpanded] = useState(true) // Mostrar automáticamente cuando hay datos
 
@@ -438,34 +592,16 @@ export function VentasPreviewTable({
                   </TabsList>
 
                   <TabsContent value='excel' className='mt-4'>
-                    <ExcelPreviewTable data={ventasData} />
+                    <ExcelPreviewTable 
+                      data={ventasData} 
+                      onFilterClick={onFilterClick}
+                    />
                   </TabsContent>
 
                   <TabsContent value='csv' className='mt-4'>
                     <CSVPreview data={ventasData} />
                   </TabsContent>
                 </Tabs>
-
-                {/* Nota informativa */}
-                {totalCount > ventasData.length && (
-                  <div className='text-muted-foreground rounded-lg bg-blue-50 p-3 text-center text-sm'>
-                    <p>
-                      Mostrando los primeros {ventasData.length} registros de{' '}
-                      {totalCount.toLocaleString()} totales.
-                    </p>
-                    <p className='mt-1'>
-                      El archivo exportado contendrá todos los{' '}
-                      {totalCount.toLocaleString()} registros que coincidan con
-                      los filtros.
-                    </p>
-                    {totalCount > 100 && (
-                      <p className='mt-1 text-xs'>
-                        💡 Para ver más registros, ajusta los filtros o descarga
-                        el archivo completo.
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
             )}
           </CardContent>

@@ -50,6 +50,8 @@
     "react-day-picker": "9.7.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.58.1",
+    "react-select": "^5.10.2",
+    "react-select-async-paginate": "^0.7.11",
     "react-to-print": "^3.1.1",
     "react-top-loading-bar": "^3.0.2",
     "recharts": "^3.0.0",

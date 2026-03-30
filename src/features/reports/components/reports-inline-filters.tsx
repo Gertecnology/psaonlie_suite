@@ -50,16 +50,38 @@ export function ReportsInlineFilters({
 
   return (
     <Card>
-      <CardHeader className='pb-1'>
+      <CardHeader className='pb-0.5'>
         <CardTitle className='flex items-center justify-between text-lg'>
           <div className='flex items-center gap-2'>
             <Filter className='h-5 w-5' />
             Filtros de Búsqueda
           </div>
-          <Button variant='ghost' size='sm' onClick={onClear} className='border bg-background px-5 py-4'>
-            <RotateCcw className='h-4 w-4' />
-            Limpiar Todo
-          </Button>
+
+          <div className='flex gap-2'>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='text-muted-foreground px-0'
+              onClick={onOpenAdvanced}
+            >
+              <Filter className='mr-2 h-4 w-4' />
+              Más Filtros
+              {advancedFiltersCount > 0 && (
+                <Badge variant='secondary' className='ml-2'>
+                  {advancedFiltersCount}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={onClear}
+              className='bg-background border px-5 py-4'
+            >
+              <RotateCcw className='h-4 w-4' />
+              Limpiar Todo
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className='space-y-4'>
@@ -160,21 +182,6 @@ export function ReportsInlineFilters({
         </div>
 
         <div className='flex flex-wrap items-center gap-2 border-t pt-3'>
-          <Button
-            variant='ghost'
-            size='sm'
-            className='text-muted-foreground px-0'
-            onClick={onOpenAdvanced}
-          >
-            <Filter className='mr-2 h-4 w-4' />
-            Más Filtros
-            {advancedFiltersCount > 0 && (
-              <Badge variant='secondary' className='ml-2'>
-                {advancedFiltersCount}
-              </Badge>
-            )}
-          </Button>
-
           {advancedFilterChips.map((chip) => (
             <Badge key={chip} variant='outline'>
               {chip}

@@ -53,9 +53,31 @@ export function DataTable({
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
+  const orderedColumns = React.useMemo(() => {
+    if (!columns?.length) return columns
+
+    const actionsIndex = columns.findIndex((col) => col.id === 'actions')
+    if (actionsIndex === -1) return columns
+
+    // Creamos una copia para no mutar el array original
+    const newColumns = [...columns]
+    const [actionsColumn] = newColumns.splice(actionsIndex, 1)
+
+    // mantenemos el Checkbox de primero y ponemos las acciones inmediatamente después.
+    const hasSelectFirst = newColumns[0]?.id === 'select'
+
+    if (hasSelectFirst) {
+      newColumns.splice(1, 0, actionsColumn)
+    } else {
+      newColumns.unshift(actionsColumn)
+    }
+
+    return newColumns
+  }, [columns])
+
   const table = useReactTable({
     data,
-    columns,
+    columns: orderedColumns,
     pageCount,
     state: {
       sorting,

@@ -53,9 +53,29 @@ export function NotificationsDataTable({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
 
+  const orderedColumns = React.useMemo(() => {
+    if (!columns?.length) return columns
+
+    const actionsIndex = columns.findIndex((col) => col.id === 'actions')
+    if (actionsIndex === -1) return columns
+
+    const newColumns = [...columns]
+    const [actionsColumn] = newColumns.splice(actionsIndex, 1)
+
+    const hasSelectFirst = newColumns[0]?.id === 'select'
+
+    if (hasSelectFirst) {
+      newColumns.splice(1, 0, actionsColumn)
+    } else {
+      newColumns.unshift(actionsColumn)
+    }
+
+    return newColumns
+  }, [columns])
+
   const table = useReactTable({
     data,
-    columns,
+    columns: orderedColumns,
     pageCount,
     state: {
       sorting,

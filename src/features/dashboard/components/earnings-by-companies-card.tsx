@@ -18,7 +18,7 @@ interface EarningsByCompaniesCardProps {
 export function EarningsByCompaniesCard({ companies, isLoading }: EarningsByCompaniesCardProps) {
   if (isLoading) {
     return (
-      <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-6">
+      <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg p-6 h-full flex flex-col">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-muted/50 rounded-lg">
             <Building2 className="w-6 h-6 text-muted-foreground" />
@@ -52,14 +52,14 @@ export function EarningsByCompaniesCard({ companies, isLoading }: EarningsByComp
 
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-6">
+    <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg p-6 h-full flex flex-col">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-2 bg-muted/50 rounded-lg">
           <Building2 className="w-6 h-6 text-muted-foreground" />
         </div>
         <h3 className="text-sm font-medium text-muted-foreground">Ganancias por Empresa</h3>
       </div>
-      <div className="space-y-2 max-h-[80px] sm:max-h-[100px] lg:max-h-[120px] overflow-y-auto pr-2">
+      <div className="space-y-2 max-h-[80px] sm:max-h-[100px] lg:max-h-[120px] overflow-y-auto pr-2 grow">
         {sortedCompanies.map((company) => {
          // const earnings = company.comisiones + company.serviceCharges
           const earningsPagado = company.montoPagado
@@ -73,7 +73,7 @@ export function EarningsByCompaniesCard({ companies, isLoading }: EarningsByComp
                   {company.cantidad} ventas
                 </p>
               </div>
-              <div className="text-right space-y-0.5 flex-shrink-0">
+              <div className="text-right space-y-0.5 shrink-0">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold text-foreground">
                     Gs. {earningsPagado.toLocaleString()}
