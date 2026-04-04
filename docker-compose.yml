@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile.prod
     container_name: pasaje-online-suite
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "3000:3002"
     security_opt:
