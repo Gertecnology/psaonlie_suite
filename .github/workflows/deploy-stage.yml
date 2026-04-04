@@ -1,0 +1,75 @@
+name: Deploy Stage
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Rama a desplegar'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - main
+
+env:
+  SERVER_IP: 167.114.208.128
+  PROJECT_PATH: /home/ubuntu/proyectos/psaonlie_suite
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_API_URL: https://api-pasaje.gertecnology.com
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_RYZEN }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/id_rsa root@${{ env.SERVER_IP }} << 'ENDSSH'
+            cd ${{ env.PROJECT_PATH }}
+            git fetch origin
+            git checkout ${{ github.event.inputs.branch }}
+            git reset --hard origin/${{ github.event.inputs.branch }}
+          ENDSSH
+          
+          rsync -avz --delete             -e "ssh -i ~/.ssh/id_rsa"             dist/ root@${{ env.SERVER_IP }}:${{ env.PROJECT_PATH }}/dist/
+          
+          ssh -i ~/.ssh/id_rsa root@${{ env.SERVER_IP }} << 'ENDSSH'
+            cd ${{ env.PROJECT_PATH }}
+            docker compose down 2>/dev/null || true
+            docker compose build
+            docker compose up -d
+            docker image prune -f
+          ENDSSH
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          curl -s -o /dev/null -w "%{http_code}" https://suite-pasaje.gertecnology.com || echo "Waiting..."
