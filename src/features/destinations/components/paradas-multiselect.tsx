@@ -39,8 +39,8 @@ export function ParadasMultiselect({ value, onChange, label, error }: ParadasMul
       {label && <label className="block text-sm font-medium mb-1">{label}</label>}
       <div className="flex flex-wrap gap-2 mb-2">
         {selectedOptions.map((opt) => (
-          <span key={opt.id} className="inline-flex items-center bg-muted px-2 py-1 rounded text-sm">
-            {opt.descripcion}
+          <span key={opt.id} className="inline-flex max-w-full items-center gap-1 rounded bg-muted px-2 py-1 text-sm">
+            <span className="truncate">{opt.descripcion}</span>
             <button type="button" className="ml-1 text-muted-foreground hover:text-destructive" onClick={() => onChange(value.filter((id) => id !== opt.id))}>
               <X size={16} />
             </button>
@@ -60,17 +60,17 @@ export function ParadasMultiselect({ value, onChange, label, error }: ParadasMul
         onWheel={e => e.nativeEvent.stopImmediatePropagation()}
       >
         {loading ? (
-          <div className="p-2 text-muted-foreground text-sm">Cargando...</div>
+          <div className="p-2 text-sm leading-snug text-muted-foreground whitespace-normal wrap-break-word">Cargando...</div>
         ) : input.length < 2 ? (
-          <div className="p-2 text-muted-foreground text-sm">Escribe al menos 2 caracteres para buscar</div>
+          <div className="p-2 text-sm leading-snug text-muted-foreground whitespace-normal wrap-break-word">Escribe al menos 2 caracteres para buscar</div>
         ) : availableOptions.length === 0 ? (
-          <div className="p-2 text-muted-foreground text-sm">No hay opciones</div>
+          <div className="p-2 text-sm leading-snug text-muted-foreground whitespace-normal wrap-break-word">No hay opciones</div>
         ) : (
           availableOptions.map((opt) => (
             <button
               key={opt.id}
               type="button"
-              className="block w-full text-left px-2 py-1 hover:bg-accent"
+              className="block w-full px-2 py-1 text-left whitespace-normal wrap-break-word hover:bg-accent"
               onClick={() => onChange([...value, opt.id])}
               disabled={value.includes(opt.id)}
             >

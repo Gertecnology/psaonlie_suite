@@ -34,7 +34,7 @@ export default function Dashboard() {
       }
     >
       {/* Statistics Cards Section */}
-      <div className="w-full">
+      <div className="mx-auto">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-2">
@@ -56,8 +56,8 @@ export default function Dashboard() {
         {statistics && clients && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full">
             {/* Total Ventas Card */}
-            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <div className="relative p-6">
+            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg  h-full flex flex-col">
+              <div className="relative p-6 flex flex-col grow justify-between">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-muted/50 rounded-lg">
                     <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,8 +76,8 @@ export default function Dashboard() {
             </div>
             
             {/* Total Clientes Card */}
-            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <div className="relative p-6">
+            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg h-full flex flex-col">
+              <div className="relative p-6 flex flex-col grow justify-between">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-muted/50 rounded-lg">
                     <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,8 +96,8 @@ export default function Dashboard() {
             </div>
             
             {/* Total Comisiones Card */}
-            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <div className="relative p-6">
+            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg h-full flex flex-col">
+              <div className="relative p-6 flex flex-col grow justify-between">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-muted/50 rounded-lg">
                     <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,8 +118,8 @@ export default function Dashboard() {
             </div>
             
             {/* Total Service Charges Card */}
-            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <div className="relative p-6">
+            <div className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg h-full flex flex-col">
+              <div className="relative p-6 flex flex-col grow justify-between">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-muted/50 rounded-lg">
                     <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@ export default function Dashboard() {
             </div>
             
             {/* Earnings by Companies Card - Full width on smaller screens */}
-            <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1 h-full">
               <EarningsByCompaniesCard 
                 companies={statistics.porEmpresa} 
                 isLoading={statisticsLoading} 
