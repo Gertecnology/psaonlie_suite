@@ -1,0 +1,9 @@
+# Dependencies allowed to run install lifecycle scripts.
+# pnpm blocks these by default as a supply-chain safeguard; without the
+# approval `pnpm dev` aborts before starting (runDepsStatusCheck).
+# All four ship native binaries required by the build toolchain.
+allowBuilds:
+  '@clerk/shared': true
+  '@swc/core': true
+  '@tailwindcss/oxide': true
+  esbuild: true
