@@ -1,3 +1,5 @@
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
+
 const API_URL = import.meta.env.VITE_API_URL
 
 import type { ExportFilters } from '../models/reports.model'
@@ -15,9 +17,7 @@ export const exportVentas = async (filters: ExportFilters): Promise<Blob> => {
 
   const response = await fetch(`${API_URL}/api/admin/ventas/exportar?${params.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   return response.blob()
