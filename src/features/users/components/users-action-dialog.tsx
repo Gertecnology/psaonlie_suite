@@ -18,15 +18,6 @@ import { PasswordInput } from '@/components/password-input'
 import { SelectDropdown } from '@/components/select-dropdown'
 import { Switch } from '@/components/ui/switch'
 import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -303,24 +294,24 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
 
   return (
     <>
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className='flex flex-col overflow-y-auto'>
-        <SheetHeader className='text-left'>
-          <SheetTitle>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
+        <DialogHeader className='text-left'>
+          <DialogTitle>
             {isEdit ? 'Actualizar' : 'Crear'} Usuario
-          </SheetTitle>
-          <SheetDescription>
+          </DialogTitle>
+          <DialogDescription>
             {isEdit
               ? 'Actualiza el usuario con la información necesaria.'
               : 'Añade un nuevo usuario con la información necesaria.'}
             Haz click en guardar cuando hayas terminado.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
           <form
             id='user-form'
             onSubmit={form.handleSubmit(onSubmit)}
-            className='flex-1 space-y-5 px-4'
+            className='space-y-5'
           >
             {/* Foto de perfil y email en la misma fila */}
             <div className='flex items-center gap-6 mb-2'>
@@ -501,12 +492,14 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
             )}
           </form>
         </Form>
-        <SheetFooter className='gap-2'>
-          <SheetClose asChild>
-            <Button variant='outline' disabled={createUser.isPending || updateUser.isPending}>
-              Cerrar
-            </Button>
-          </SheetClose>
+        <DialogFooter className='gap-2 sm:gap-0'>
+          <Button
+            variant='outline'
+            onClick={() => handleOpenChange(false)}
+            disabled={createUser.isPending || updateUser.isPending}
+          >
+            Cerrar
+          </Button>
           <Button 
             form='user-form' 
             type='submit'
@@ -514,9 +507,9 @@ export function UsersActionDialog({ currentRow, open, onOpenChange }: Props) {
           >
             {createUser.isPending || updateUser.isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     
     {/* Modal para resetear contraseña */}
     <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>

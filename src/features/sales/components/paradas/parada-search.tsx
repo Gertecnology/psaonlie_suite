@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId } from 'react'
 import { Check, ChevronsUpDown, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export function ParadaSearch({
 }: ParadaSearchProps) {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const commandListId = useId()
   
   // Only search when user has typed at least 3 characters
   const shouldSearch = searchTerm.length >= 2
@@ -62,6 +63,7 @@ export function ParadaSearch({
               variant="outline"
               role="combobox"
               aria-expanded={open}
+              aria-controls={commandListId}
               className="w-full justify-between h-9"
             >
               <div className="flex items-center gap-2">
@@ -72,28 +74,28 @@ export function ParadaSearch({
             </Button>
           </PopoverTrigger>
         
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-[min(520px,calc(100vw-2rem))] p-0" align="start">
           <Command>
             <CommandInput 
               placeholder="Escribe al menos 2 caracteres..." 
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandList>
+            <CommandList id={commandListId}>
               {!shouldSearch && (
-                <CommandEmpty>
+                <CommandEmpty className="px-3 py-2 text-sm leading-snug whitespace-normal wrap-break-word">
                   Escribe al menos 2 caracteres para buscar
                 </CommandEmpty>
               )}
               
               {shouldSearch && isLoading && (
-                <CommandEmpty>
+                <CommandEmpty className="px-3 py-2 text-sm leading-snug whitespace-normal wrap-break-word">
                   Buscando destinos...
                 </CommandEmpty>
               )}
               
               {shouldSearch && !isLoading && paradas.length === 0 && (
-                <CommandEmpty>
+                <CommandEmpty className="px-3 py-2 text-sm leading-snug whitespace-normal wrap-break-word">
                   No se encontraron destinos
                 </CommandEmpty>
               )}

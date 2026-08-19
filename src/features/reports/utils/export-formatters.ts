@@ -7,11 +7,11 @@ export const convertToCSV = (data: PreviewData[]): string => {
 
   // Obtener todas las claves únicas de todos los objetos
   const allKeys = new Set<string>()
-  data.forEach(item => {
-    Object.keys(item).forEach(key => allKeys.add(key))
+  data.forEach((item) => {
+    Object.keys(item).forEach((key) => allKeys.add(key))
     // También incluir campos anidados del cliente
     if (item.cliente && typeof item.cliente === 'object') {
-      Object.keys(item.cliente).forEach(key => allKeys.add(`cliente.${key}`))
+      Object.keys(item.cliente).forEach((key) => allKeys.add(`cliente.${key}`))
     }
   })
 
@@ -24,11 +24,11 @@ export const convertToCSV = (data: PreviewData[]): string => {
   csvRows.push(headers.join(','))
 
   // Agregar datos
-  data.forEach(item => {
+  data.forEach((item) => {
     const row: string[] = []
-    headers.forEach(header => {
+    headers.forEach((header) => {
       let value: unknown = ''
-      
+
       if (header.startsWith('cliente.')) {
         const clientKey = header.replace('cliente.', '')
         value = item.cliente?.[clientKey as keyof typeof item.cliente] || ''
@@ -38,9 +38,13 @@ export const convertToCSV = (data: PreviewData[]): string => {
 
       // Convertir a string y escapar comillas
       const stringValue = String(value)
-      
+
       // Escapar comillas y envolver en comillas si contiene comas o comillas
-      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+      if (
+        stringValue.includes(',') ||
+        stringValue.includes('"') ||
+        stringValue.includes('\n')
+      ) {
         const escapedValue = `"${stringValue.replace(/"/g, '""')}"`
         row.push(escapedValue)
       } else {
@@ -64,7 +68,7 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
   }
 
   // Aplanar los datos para incluir campos del cliente
-  const flattenedData = data.map(item => {
+  const flattenedData = data.map((item) => {
     // Validar que item existe
     if (!item) {
       return {
@@ -76,31 +80,30 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
     }
 
     return {
-      id: item.id || '',
+      // Se omite 'id' intencionalmente (no relevante para el usuario final)
       numeroTransaccion: item.numeroTransaccion || '',
-      empresaId: item.empresaId || '',
+      estadoPago: item.estadoPago || '',
+      estadoVenta: item.estadoVenta || '',
       empresaNombre: item.empresaNombre || '',
+      empresaId: item.empresaId || '',
       usuarioId: item.usuarioId || null,
       empresaBoleto: item.empresaBoleto || '',
       calidad: item.calidad || '',
       fechaVenta: item.fechaVenta || '',
       fechaViaje: item.fechaViaje || '',
       horaSalida: item.horaSalida || '',
+      origenNombre: (item.origenNombre || '').replace(/ - Paraguay$/i, ''),
+      destinoNombre: (item.destinoNombre || '').replace(/ - Paraguay$/i, ''),
       origenId: item.origenId || '',
-      origenNombre: item.origenNombre || '',
       destinoId: item.destinoId || '',
-      destinoNombre: item.destinoNombre || '',
       servicioId: item.servicioId || '',
       asientosOriginales: item.asientosOriginales?.join(', ') || 'N/A',
       importeTotal: item.importeTotal ?? 0,
       comisionTotal: item.comisionTotal ?? 0,
-      serviceChargeIdSnapshot: item.serviceChargeIdSnapshot || null,
       serviceChargeNombreSnapshot: item.serviceChargeNombreSnapshot || null,
       serviceChargeTipoSnapshot: item.serviceChargeTipoSnapshot || null,
       serviceChargeMontoTotal: item.serviceChargeMontoTotal ?? 0,
       metodoPago: item.metodoPago || '',
-      estadoPago: item.estadoPago || '',
-      estadoVenta: item.estadoVenta || '',
       estadoAsientos: item.estadoAsientos || '',
       fechaExpiracionPago: item.fechaExpiracionPago || null,
       referenciaPago: item.referenciaPago || null,
@@ -108,15 +111,13 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
       observaciones: item.observaciones || '',
       createdAt: item.createdAt || '',
       updatedAt: item.updatedAt || '',
-      // Campos del cliente con validación null/undefined usando optional chaining
-      clienteId: item.cliente?.id || 'N/A',
-      clienteTipoDocumento: item.cliente?.tipoDocumento || 'N/A',
-      clienteNumeroDocumento: item.cliente?.numeroDocumento || 'N/A',
       clienteNombre: item.cliente?.nombre || 'N/A',
       clienteApellido: item.cliente?.apellido || 'N/A',
       clienteTelefono: item.cliente?.telefono || 'N/A',
       clienteEmail: item.cliente?.email || 'N/A',
       clienteNacionalidad: item.cliente?.nacionalidad || 'N/A',
+      clienteTipoDocumento: item.cliente?.tipoDocumento || 'N/A',
+      clienteNumeroDocumento: item.cliente?.numeroDocumento || 'N/A',
       totalBoletos: item.totalBoletos ?? 0,
       numerosBoleto: item.numerosBoleto || '',
     }
@@ -124,7 +125,7 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
 
   // Crear hoja de cálculo
   const ws = XLSX.utils.json_to_sheet(flattenedData)
-  
+
   // Configurar anchos de columna
   const colWidths = [
     { wch: 15 }, // id
@@ -171,7 +172,7 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
     { wch: 10 }, // totalBoletos
     { wch: 30 }, // numerosBoleto
   ]
-  
+
   ws['!cols'] = colWidths
 
   // Crear libro de trabajo
@@ -182,65 +183,123 @@ export const convertToExcel = (data: PreviewData[]): ArrayBuffer => {
   return XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
 }
 
+export type ColumnAlign = 'left' | 'right' | 'center'
+
+export interface TableColumn {
+  key: string
+  header: string
+  width: number
+  align: ColumnAlign
+  // Columnas que suman en el footer de totales
+  isSummable?: boolean
+}
+
 // Función para obtener columnas de la tabla
-export const getTableColumns = () => {
+export const getTableColumns = (): TableColumn[] => {
   return [
-    { key: 'numeroTransaccion', header: 'Transacción', width: 160 },
-    { key: 'empresaNombre', header: 'Empresa', width: 140 },
-    { key: 'clienteNombre', header: 'Cliente', width: 180 },
-    { key: 'clienteEmail', header: 'Email', width: 180 },
-    { key: 'clienteTelefono', header: 'Teléfono', width: 110 },
-    { key: 'origenNombre', header: 'Origen', width: 180 },
-    { key: 'destinoNombre', header: 'Destino', width: 180 },
-    { key: 'fechaVenta', header: 'Fecha Venta', width: 130 },
-    { key: 'fechaViaje', header: 'Fecha Viaje', width: 110 },
-    { key: 'horaSalida', header: 'Hora', width: 80 },
-    { key: 'asientosOriginales', header: 'Asientos', width: 90 },
-    { key: 'importeTotal', header: 'Importe', width: 110 },
-    { key: 'comisionTotal', header: 'Comisión', width: 90 },
-    { key: 'metodoPago', header: 'Método', width: 100 },
-    { key: 'estadoPago', header: 'Estado Pago', width: 110 },
-    { key: 'estadoVenta', header: 'Estado Venta', width: 110 },
-    { key: 'estadoAsientos', header: 'Estado Asientos', width: 120 },
-    { key: 'bancardTransactionId', header: 'ID Bancard', width: 130 },
-    { key: 'referenciaPago', header: 'Referencia', width: 130 },
-    { key: 'totalBoletos', header: 'Boletos', width: 80 },
-    { key: 'numerosBoleto', header: 'Números Boleto', width: 180 },
-    { key: 'observaciones', header: 'Observaciones', width: 200 },
-    { key: 'createdAt', header: 'Creado', width: 130 },
-    { key: 'updatedAt', header: 'Actualizado', width: 130 },
+    // Columnas de identificación y estado (mayor prioridad visual)
+    {
+      key: 'numeroTransaccion',
+      header: 'Transacción',
+      width: 160,
+      align: 'left',
+    },
+    { key: 'estadoPago', header: 'Estado Pago', width: 110, align: 'center' },
+    { key: 'estadoVenta', header: 'Estado Venta', width: 110, align: 'center' },
+    // Entidades
+    { key: 'clienteNombre', header: 'Cliente', width: 180, align: 'left' },
+    { key: 'empresaNombre', header: 'Empresa', width: 140, align: 'left' },
+    // Ruta
+    { key: 'origenNombre', header: 'Origen', width: 150, align: 'left' },
+    { key: 'destinoNombre', header: 'Destino', width: 150, align: 'left' },
+    // Fechas y hora
+    { key: 'fechaVenta', header: 'Fecha Venta', width: 110, align: 'left' },
+    { key: 'fechaViaje', header: 'Fecha Viaje', width: 110, align: 'left' },
+    { key: 'horaSalida', header: 'Hora', width: 75, align: 'center' },
+    // Valores numéricos alineados a la derecha
+    {
+      key: 'asientosOriginales',
+      header: 'Asientos',
+      width: 90,
+      align: 'right',
+    },
+    {
+      key: 'importeTotal',
+      header: 'Importe',
+      width: 120,
+      align: 'right',
+      isSummable: true,
+    },
+    {
+      key: 'comisionTotal',
+      header: 'Comisión',
+      width: 110,
+      align: 'right',
+      isSummable: true,
+    },
+    { key: 'totalBoletos', header: 'Boletos', width: 80, align: 'right' },
+    // Datos de pago
+    { key: 'metodoPago', header: 'Método Pago', width: 110, align: 'left' },
+    {
+      key: 'estadoAsientos',
+      header: 'Est. Asientos',
+      width: 120,
+      align: 'center',
+    },
+    { key: 'referenciaPago', header: 'Referencia', width: 130, align: 'left' },
+    {
+      key: 'bancardTransactionId',
+      header: 'ID Bancard',
+      width: 130,
+      align: 'left',
+    },
+    // Datos adicionales
+    { key: 'clienteEmail', header: 'Email', width: 180, align: 'left' },
+    { key: 'clienteTelefono', header: 'Teléfono', width: 110, align: 'right' },
+    { key: 'numerosBoleto', header: 'Núm. Boleto', width: 160, align: 'left' },
+    {
+      key: 'observaciones',
+      header: 'Observaciones',
+      width: 200,
+      align: 'left',
+    },
+    { key: 'createdAt', header: 'Creado', width: 110, align: 'left' },
   ]
 }
 
+const stripParaguay = (value: string) =>
+  value.replace(/ - Paraguay$/i, '').trim()
+
 // Función para aplanar datos para la tabla
 export const flattenDataForTable = (data: PreviewData[]) => {
-  return data.map(item => ({
-    id: item?.id || '',
+  return data.map((item) => ({
+    // 'id' omitido: no aporta valor al administrador en la vista de tabla
     numeroTransaccion: item?.numeroTransaccion || '',
+    estadoPago: item?.estadoPago || '',
+    estadoVenta: item?.estadoVenta || '',
+    clienteNombre:
+      item?.cliente?.nombre || item?.cliente?.apellido
+        ? `${item.cliente?.nombre || ''} ${item.cliente?.apellido || ''}`.trim() ||
+          'N/A'
+        : 'N/A',
     empresaNombre: item?.empresaNombre || '',
-    clienteNombre: item?.cliente?.nombre || item?.cliente?.apellido 
-      ? `${item.cliente?.nombre || ''} ${item.cliente?.apellido || ''}`.trim() || 'N/A'
-      : 'N/A',
-    clienteEmail: item?.cliente?.email || 'N/A',
-    clienteTelefono: item?.cliente?.telefono || 'N/A',
-    origenNombre: item?.origenNombre || '',
-    destinoNombre: item?.destinoNombre || '',
+    origenNombre: stripParaguay(item?.origenNombre || ''),
+    destinoNombre: stripParaguay(item?.destinoNombre || ''),
     fechaVenta: item?.fechaVenta || '',
     fechaViaje: item?.fechaViaje || '',
     horaSalida: item?.horaSalida || '',
     asientosOriginales: item?.asientosOriginales?.join(', ') || 'N/A',
     importeTotal: item?.importeTotal || 0,
     comisionTotal: item?.comisionTotal || 0,
-    metodoPago: item?.metodoPago || '',
-    estadoPago: item?.estadoPago || '',
-    estadoVenta: item?.estadoVenta || '',
-    estadoAsientos: item?.estadoAsientos || '',
-    bancardTransactionId: item?.bancardTransactionId || '',
-    referenciaPago: item?.referenciaPago || '',
     totalBoletos: item?.totalBoletos || 0,
+    metodoPago: item?.metodoPago || '',
+    estadoAsientos: item?.estadoAsientos || '',
+    referenciaPago: item?.referenciaPago || '',
+    bancardTransactionId: item?.bancardTransactionId || '',
+    clienteEmail: item?.cliente?.email || 'N/A',
+    clienteTelefono: item?.cliente?.telefono || 'N/A',
     numerosBoleto: item?.numerosBoleto || '',
     observaciones: item?.observaciones || '',
     createdAt: item?.createdAt || '',
-    updatedAt: item?.updatedAt || '',
   }))
 }

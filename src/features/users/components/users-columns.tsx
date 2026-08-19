@@ -3,7 +3,11 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import LongText from '@/components/long-text'
-import { userStatusColors, verificationStatusColors, userRoles } from '../data/data'
+import {
+  userRoles,
+  userStatusColors,
+  verificationStatusColors,
+} from '../data/data'
 import { User } from '../models/user'
 import { DataTableColumnHeader } from './data-table-column-header'
 import { DataTableRowActions } from './data-table-row-actions'
@@ -111,7 +115,7 @@ export const columns: ColumnDef<User>[] = [
     ),
     cell: ({ row }) => {
       const roles = row.getValue('roles') as User['roles']
-      
+
       if (!roles || roles.length === 0) {
         return <span className='text-muted-foreground'>Sin roles</span>
       }
@@ -119,11 +123,14 @@ export const columns: ColumnDef<User>[] = [
       return (
         <div className='flex flex-wrap gap-1'>
           {roles.map((role) => {
-            const roleConfig = userRoles.find(r => r.value === role.name)
+            const roleConfig = userRoles.find((r) => r.value === role.name)
             return (
               <div key={role.id} className='flex items-center gap-x-1'>
                 {roleConfig?.icon && (
-                  <roleConfig.icon size={14} className='text-muted-foreground' />
+                  <roleConfig.icon
+                    size={14}
+                    className='text-muted-foreground'
+                  />
                 )}
                 <Badge variant='secondary' className='text-xs'>
                   {roleConfig?.label || role.name}
@@ -136,7 +143,7 @@ export const columns: ColumnDef<User>[] = [
     },
     filterFn: (row, id, value) => {
       const roles = row.getValue(id) as User['roles']
-      return roles.some(role => value.includes(role.name))
+      return roles.some((role) => value.includes(role.name))
     },
     enableSorting: false,
     enableHiding: false,
@@ -166,11 +173,11 @@ export const columns: ColumnDef<User>[] = [
     ),
     cell: ({ row }) => {
       const lastLoginAt = row.getValue('lastLoginAt') as string | null
-      
+
       if (!lastLoginAt) {
         return <span className='text-muted-foreground'>Nunca</span>
       }
-      
+
       const date = new Date(lastLoginAt)
       return (
         <div className='text-sm'>
@@ -188,6 +195,7 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     id: 'actions',
+    header: 'Acciones',
     cell: DataTableRowActions,
   },
 ]

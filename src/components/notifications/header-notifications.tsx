@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { useEffect, useState } from 'react'
+import { type UIEvent, useEffect, useState } from 'react'
 import { type NotificationResponse } from '@/services/notifications'
 import {
   AlertCircle,
@@ -23,7 +23,24 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 
 interface HeaderNotificationsProps {
-  className?: string
+  readonly className?: string
+}
+
+const appendUniqueNotifications = (
+  previousItems: NotificationResponse[],
+  incomingItems: NotificationResponse[]
+) => {
+  const uniqueById = new Map<string, NotificationResponse>()
+
+  for (const notification of previousItems) {
+    uniqueById.set(notification.id, notification)
+  }
+
+  for (const notification of incomingItems) {
+    uniqueById.set(notification.id, notification)
+  }
+
+  return Array.from(uniqueById.values())
 }
 
 const getPriorityIcon = (priority: string) => {
@@ -44,30 +61,30 @@ const getPriorityIcon = (priority: string) => {
 const getPriorityColor = (priority: string) => {
   switch (priority) {
     case 'URGENT':
-      return 'border-l-red-500 bg-red-50'
+      return 'border-l-red-500 bg-red-50 dark:bg-red-500/10'
     case 'HIGH':
-      return 'border-l-orange-500 bg-orange-50'
+      return 'border-l-orange-500 bg-orange-50 dark:bg-orange-500/10'
     case 'MEDIUM':
-      return 'border-l-yellow-500 bg-yellow-50'
+      return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-500/10'
     case 'LOW':
-      return 'border-l-blue-500 bg-blue-50'
+      return 'border-l-blue-500 bg-blue-50 dark:bg-blue-500/10'
     default:
-      return 'border-l-gray-500 bg-gray-50'
+      return 'border-l-gray-500 bg-gray-50 dark:bg-gray-500/10'
   }
 }
 
 const getPriorityBadgeColor = (priority: string) => {
   switch (priority) {
     case 'URGENT':
-      return 'bg-red-100 text-red-800'
+      return 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400'
     case 'HIGH':
-      return 'bg-orange-100 text-orange-800'
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400'
     case 'MEDIUM':
-      return 'bg-yellow-100 text-yellow-800'
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400'
     case 'LOW':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-400'
   }
 }
 
@@ -75,10 +92,18 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
   const [markingAsRead, setMarkingAsRead] = useState<Set<string>>(new Set())
   const [expandedNotifications, setExpandedNotifications] = useState<
     Set<string>
   >(new Set())
+
+  const PAGE_SIZE = 10
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+
+  const hasMore = notifications.length < totalItems
 
   const { unreadCount, markAsRead, markAllAsRead, refreshUnreadCount } =
     useNotificationsApi()
@@ -96,34 +121,79 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
 
   // Cargar notificaciones no leídas cuando se abre el popover
   useEffect(() => {
-    if (isOpen && notifications.length === 0) {
-      loadUnreadNotifications()
+    if (isOpen) {
+      setCurrentPage(1)
+      setTotalItems(unreadCount)
+      setNotifications([])
+      loadUnreadNotifications(1)
     }
-  }, [isOpen, notifications.length])
+  }, [isOpen, unreadCount])
 
   // Recargar notificaciones cuando cambie el conteo de no leídas
   useEffect(() => {
     if (isOpen && unreadCount === 0 && notifications.length > 0) {
       // Si no hay notificaciones no leídas, limpiar la lista
       setNotifications([])
+      setCurrentPage(1)
+      setTotalItems(0)
     }
   }, [isOpen, unreadCount, notifications.length])
 
-  const loadUnreadNotifications = async () => {
-    setIsLoading(true)
+  const loadUnreadNotifications = async (page = 1, append = false) => {
+    if (append) {
+      setIsFetchingMore(true)
+    } else {
+      setIsLoading(true)
+    }
+
     try {
       const { notificationsService } = await import('@/services/notifications')
       const response = await notificationsService.getAllNotifications({
-        limit: 10,
+        limit: PAGE_SIZE,
         sortOrder: 'DESC',
         unreadOnly: true,
+        page,
       })
-      setNotifications(response.items)
+      setNotifications((prev) => {
+        if (!append) return response.items
+
+        // Evitar duplicados si el backend cambia entre solicitudes.
+        return appendUniqueNotifications(prev, response.items)
+      })
+      // Con unreadOnly=true el backend puede devolver metadatos inconsistentes.
+      setCurrentPage(page)
+      setTotalItems(Number(response.unreadCount) || Number(response.total) || 0)
     } catch (error) {
       console.error('Error al cargar notificaciones:', error)
     } finally {
-      setIsLoading(false)
+      if (append) {
+        setIsFetchingMore(false)
+      } else {
+        setIsLoading(false)
+      }
     }
+  }
+
+  const handleNotificationsScroll = (e: UIEvent<HTMLDivElement>) => {
+    if (isLoading || isFetchingMore || !hasMore) {
+      return
+    }
+
+    const target = e.target as HTMLDivElement
+    const remainingScroll =
+      target.scrollHeight - target.scrollTop - target.clientHeight
+
+    if (remainingScroll <= 120) {
+      loadUnreadNotifications(currentPage + 1, true)
+    }
+  }
+
+  const handleLoadMore = () => {
+    if (isLoading || isFetchingMore || !hasMore) {
+      return
+    }
+
+    loadUnreadNotifications(currentPage + 1, true)
   }
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -190,6 +260,8 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
     })
   }
 
+  console.log('Notificaciones cargadas:', notifications)
+
   return (
     <Popover modal open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -198,7 +270,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
           {unreadCount > 0 && (
             <Badge
               variant='destructive'
-              className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0 text-xs'
+              className='absolute -top-1 -right-1 flex h-5 w-6 items-center justify-center p-0 px-2 text-xs'
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
@@ -250,7 +322,10 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                 <p className='text-sm'>No hay notificaciones</p>
               </div>
             ) : (
-              <ScrollArea className='h-full overscroll-contain'>
+              <ScrollArea
+                className='h-full overscroll-contain'
+                onScrollCapture={handleNotificationsScroll}
+              >
                 <div className='p-2'>
                   {notifications.map((notification, index) => {
                     const isMarkingAsRead = markingAsRead.has(notification.id)
@@ -262,7 +337,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                         <div
                           className={`rounded-lg border-l-4 p-3 transition-all duration-500 ease-in-out ${
                             isMarkingAsRead
-                              ? 'scale-95 border-l-green-500 bg-green-50 opacity-50'
+                              ? 'scale-95 border-l-green-500 bg-green-50 dark:bg-green-500/10 opacity-50'
                               : getPriorityColor(notification.priority)
                           }`}
                         >
@@ -288,9 +363,9 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                                   handleMarkAsRead(notification.id)
                                 }
                                 disabled={isMarkingAsRead}
-                                className={`h-6 w-6 p-0 transition-colors hover:bg-gray-200 ${
+                                className={`h-6 w-6 p-0 transition-colors hover:bg-gray-200 dark:hover:bg-gray-800 ${
                                   isMarkingAsRead
-                                    ? 'bg-green-100 text-green-600'
+                                    ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400'
                                     : ''
                                 }`}
                                 title={
@@ -307,7 +382,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                                 variant='ghost'
                                 size='sm'
                                 onClick={handleClose}
-                                className='h-6 w-6 p-0 hover:bg-gray-200'
+                                className='h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800'
                                 title='Cerrar'
                               >
                                 <X className='h-3 w-3' />
@@ -316,7 +391,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                           </div>
 
                           <p
-                            className={`mb-2 text-sm break-words text-gray-700 ${!isExpanded ? 'line-clamp-2' : ''}`}
+                            className={`mb-2 text-sm break-words text-gray-700 dark:text-gray-300 ${!isExpanded ? 'line-clamp-2' : ''}`}
                           >
                             {notification.message}
                           </p>
@@ -325,7 +400,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                             variant='ghost'
                             size='sm'
                             onClick={() => toggleExpanded(notification.id)}
-                            className='h-6 px-2 text-xs text-gray-600 hover:text-gray-900'
+                            className='h-6 px-2 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
                           >
                             {isExpanded ? 'Ver menos' : 'Ver todo'}
                           </Button>
@@ -337,6 +412,31 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                       </div>
                     )
                   })}
+
+                  {isFetchingMore && (
+                    <div className='text-muted-foreground py-3 text-center text-xs'>
+                      Cargando mas notificaciones...
+                    </div>
+                  )}
+
+                  {!isFetchingMore && hasMore && (
+                    <div className='py-2 text-center'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={handleLoadMore}
+                        className='h-7 text-xs'
+                      >
+                        Cargar mas
+                      </Button>
+                    </div>
+                  )}
+
+                  {!hasMore && notifications.length > 0 && (
+                    <div className='text-muted-foreground py-3 text-center text-xs'>
+                      Fin de la lista ({totalItems} sin leer)
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             )}

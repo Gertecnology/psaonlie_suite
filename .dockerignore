@@ -2,7 +2,7 @@
 node_modules
 
 # Ignora la carpeta de salida si usas Vite, React o Angular
-dist
+# dist  # Permitido para Dockerfile.prod
 build
 
 # Ignora archivos temporales y de sistema

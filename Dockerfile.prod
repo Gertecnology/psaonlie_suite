@@ -1,0 +1,16 @@
+# Production stage - uses pre-built files
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install serve globally
+RUN npm install -g serve
+
+# Copy pre-built dist folder
+COPY dist ./dist
+
+# Expose port 3002
+EXPOSE 3002
+
+# Start the app using serve
+CMD ["serve", "-s", "dist", "-l", "3002"]
