@@ -1,4 +1,5 @@
 import { ClientesListResponse, ClientesSearchParams } from '../models/clients.model'
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -26,9 +27,7 @@ export async function getClientesList(params: ClientesSearchParams = {}): Promis
 
   const response = await fetch(`${API_URL}/api/clientes/admin/lista?${queryParams.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   if (!response.ok) {

@@ -1,3 +1,5 @@
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
+
 const API_URL = import.meta.env.VITE_API_URL
 
 export interface ActualizarEstadoPagoRequest {
@@ -21,9 +23,7 @@ export async function actualizarEstadoPago(
 ): Promise<ActualizarEstadoPagoResponse> {
   const response = await fetch(`${API_URL}/api/ventas/${ventaId}/actualizar-estado-pago`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
     body: JSON.stringify(data),
   })
 

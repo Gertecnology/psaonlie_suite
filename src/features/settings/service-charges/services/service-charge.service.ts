@@ -41,7 +41,7 @@ export async function getServiceCharges(
 
 // Service to create a service charge
 export async function createServiceCharge(data: CreateServiceChargeFormValues): Promise<ServiceCharge> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   
   const response = await fetch(`${API_URL}/service-charges`, {
     method: 'POST',
@@ -65,7 +65,7 @@ export async function updateServiceCharge(
   id: string,
   data: ServiceChargeFormValues
 ): Promise<ServiceCharge> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/service-charges/${id}`, {
     method: 'PATCH',
     headers: {
@@ -83,7 +83,7 @@ export async function updateServiceCharge(
 
 // Service to delete a service charge
 export async function deleteServiceCharge(id: string): Promise<void> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/service-charges/${id}`, {
     method: 'DELETE',
     headers: {
@@ -98,7 +98,7 @@ export async function deleteServiceCharge(id: string): Promise<void> {
 
 // Service to get service charge by id
 export async function getServiceChargeById(id: string): Promise<ServiceCharge> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/service-charges/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -116,7 +116,7 @@ export async function assignServiceChargeToCompany(
   empresaId: string,
   serviceChargeId: string
 ): Promise<void> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/service-charges/empresa/${empresaId}/assign/${serviceChargeId}`, {
     method: 'PUT',
     headers: {

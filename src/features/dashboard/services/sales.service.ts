@@ -1,4 +1,5 @@
 import { VentasListResponse, VentasSearchParams } from '../models/sales.model'
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -39,9 +40,7 @@ export async function getVentasList(params: VentasSearchParams = {}): Promise<Ve
 
   const response = await fetch(`${API_URL}/api/admin/ventas/lista?${queryParams.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   if (!response.ok) {

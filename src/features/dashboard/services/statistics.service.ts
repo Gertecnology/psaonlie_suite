@@ -1,4 +1,5 @@
 import { SalesStatistics, StatisticsSearchParams } from '../models/statistics.model'
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -19,9 +20,7 @@ export async function getSalesStatistics(params: StatisticsSearchParams): Promis
 
   const response = await fetch(`${API_URL}/api/admin/ventas/estadisticas?${queryParams.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   if (!response.ok) {

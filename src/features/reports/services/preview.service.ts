@@ -1,3 +1,5 @@
+import { getJsonAuthHeaders } from '@/utils/auth-headers'
+
 const API_URL = import.meta.env.VITE_API_URL
 
 import type { ExportFilters } from '../models/reports.model'
@@ -79,9 +81,7 @@ export const getPreviewData = async (
 
   const response = await fetch(`${API_URL}/api/admin/ventas/preview?${params.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   if (!response.ok) {
@@ -105,9 +105,7 @@ export const getTotalCount = async (filters: ExportFilters): Promise<number> => 
 
   const response = await fetch(`${API_URL}/api/admin/ventas/count?${params.toString()}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getJsonAuthHeaders(),
   })
 
   if (!response.ok) {
