@@ -4,7 +4,7 @@ import { z } from 'zod'
 const API_URL = import.meta.env.VITE_API_URL
 
 export async function getDestinations(params?: Record<string, string>): Promise<{ items: Destination[]; total: number; page: number; limit: number; totalPages: number }> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
   const response = await fetch(`${API_URL}/destinos${query}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -15,7 +15,7 @@ export async function getDestinations(params?: Record<string, string>): Promise<
 }
 
 export async function getDestinationById(id: string): Promise<Destination> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/destinos/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -25,7 +25,7 @@ export async function getDestinationById(id: string): Promise<Destination> {
 }
 
 export async function createDestination(data: DestinationFormValues): Promise<Destination> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/destinos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -36,7 +36,7 @@ export async function createDestination(data: DestinationFormValues): Promise<De
 }
 
 export async function updateDestination(id: string, data: DestinationFormValues): Promise<Destination> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/destinos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -47,7 +47,7 @@ export async function updateDestination(id: string, data: DestinationFormValues)
 }
 
 export async function deleteDestination(id: string): Promise<void> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/destinos/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
@@ -57,7 +57,7 @@ export async function deleteDestination(id: string): Promise<void> {
 
 // Servicio para obtener paradas homologadas para el selector múltiple
 export async function getAllParadasHomologadas(descripcion?: string) {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const params = new URLSearchParams()
   if (descripcion) params.append('descripcion', descripcion)
   const url = `${API_URL}/empresas/paradas-homologadas/lista${params.toString() ? `?${params.toString()}` : ''}`
@@ -75,7 +75,7 @@ export async function getAllParadasHomologadas(descripcion?: string) {
 
 // Servicio para remover parada homologada
 export async function removeParadaHomologada(destinationId: string, paradaId: string): Promise<void> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/destinos/${destinationId}/paradas/${paradaId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
@@ -122,7 +122,7 @@ export async function createClient(data: z.infer<typeof clientSchema>): Promise<
   }
   sincronizado: boolean
 }> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/api/clientes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
