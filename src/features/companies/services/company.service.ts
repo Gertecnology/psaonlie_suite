@@ -31,7 +31,7 @@ export async function updateCompany(
   id: string,
   data: CompanyFormValues
 ): Promise<Company> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/empresas/${id}`, {
     method: 'PATCH',
     headers: {
@@ -49,7 +49,7 @@ export async function updateCompany(
 
 // Service to delete a company
 export async function deleteCompany(id: string): Promise<void> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/empresas/${id}`, {
     method: 'DELETE',
     headers: {
@@ -64,7 +64,7 @@ export async function deleteCompany(id: string): Promise<void> {
 
 // Service to create a company
 export async function createCompany(data: CreateCompanyFormValues): Promise<Company> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   
   const formData = new FormData()
   formData.append('nombre', data.nombre)
@@ -107,7 +107,7 @@ export async function createCompany(data: CreateCompanyFormValues): Promise<Comp
 
 // Obtener empresa por id
 export async function getCompanyById(id: string) {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_URL}/empresas/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -129,7 +129,7 @@ export async function getParadasHomologadas(
   descripcion?: string,
   sortBy: string = 'descripcion'
 ) {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -154,7 +154,7 @@ export async function updateCompanyLogo(
   id: string,
   profileImage: File
 ): Promise<{ imageUrl: string; message: string }> {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
   
   const formData = new FormData()
   formData.append('profileImage', profileImage)

@@ -2,7 +2,19 @@
 import { io, Socket } from 'socket.io-client'
 import { refreshToken } from '@/services/auth'
 
-const API_URL = "ws://168.231.100.191:4001/notifications"
+// La URL del WebSocket sigue a la de la API (mismo backend Socket.IO,
+// namespace /notifications). Se puede sobrescribir con VITE_SOCKET_URL.
+// Antes estaba hardcodeada a una IP fija (ws://168.231.100.191:4001),
+// distinta del host real de la API.
+function resolveSocketUrl(): string {
+  const explicit = import.meta.env.VITE_SOCKET_URL
+  if (explicit) return explicit
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  const wsBase = apiUrl.replace(/^http/, 'ws').replace(/\/+$/, '')
+  return `${wsBase}/notifications`
+}
+
+const API_URL = resolveSocketUrl()
 
 class SocketService {
   private socket: Socket | null = null
