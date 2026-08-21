@@ -43,5 +43,18 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // Los tests no forman parte del bundle: el fast refresh no los alcanza y
+    // exigirles que exporten sólo componentes obligaría a partir cada helper en
+    // su propio archivo sin ningún beneficio.
+    files: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'src/test/**/*.{ts,tsx}',
+      'vitest.config.ts',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   }
 )

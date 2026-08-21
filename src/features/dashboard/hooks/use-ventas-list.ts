@@ -1,49 +1,21 @@
-import { useQuery } from '@tanstack/react-query'
-import { getVentasList } from '../services/sales.service'
-import { VentasSearchParams, VentasListResponse } from '../models/sales.model'
-
-interface UseVentasListOptions {
-  enabled?: boolean
-}
+import type { FiltrosVentas } from '../models/ventas.model'
+import { useVentas } from './use-ventas'
 
 /**
- * Hook to fetch sales list with caching and error handling
- * @param params - Search parameters for filtering sales
- * @returns Query result with sales data
+ * Adaptador del hook viejo de listado de ventas.
+ *
+ * Lo consume `features/clients` (historial de compras de un cliente). Se
+ * conserva el nombre y la firma para no tocar esa feature, pero por dentro
+ * delega en `useVentas`, así hay **un solo** camino de red hacia
+ * `/api/admin/ventas/lista`: el que adjunta el token, normaliza los `decimal`
+ * que Postgres devuelve como string, y levanta el mensaje real del backend
+ * cuando algo falla.
+ *
+ * La versión anterior hacía `fetch` crudo y decidía sólo con `response.ok`.
  */
 export function useVentasList(
-  params: VentasSearchParams = {},
-  options: UseVentasListOptions = {}
+  params: FiltrosVentas = {},
+  options: { enabled?: boolean } = {}
 ) {
-  return useQuery<VentasListResponse>({
-    queryKey: ['ventas-list', params],
-    queryFn: () => getVentasList(params),
-    enabled: options.enabled ?? true,
-    staleTime: 2 * 60 * 1000, // 2 minutos (datos dinámicos)
-    gcTime: 5 * 60 * 1000, // 5 minutos
-    retry: 2, // Reintentar 2 veces en caso de error
-    refetchOnWindowFocus: false, // No refetch automático al cambiar de ventana
-  })
-}
-
-/**
- * Hook to fetch sales list with automatic refetching
- * Useful for real-time dashboards
- * @param params - Search parameters for filtering sales
- * @param refetchInterval - Interval in milliseconds for automatic refetching
- * @returns Query result with sales data
- */
-export function useVentasListRealtime(
-  params: VentasSearchParams = {},
-  refetchInterval: number = 30000 // 30 segundos por defecto
-) {
-  return useQuery<VentasListResponse>({
-    queryKey: ['ventas-list-realtime', params],
-    queryFn: () => getVentasList(params),
-    staleTime: 30 * 1000, // 30 segundos para datos más frescos
-    gcTime: 2 * 60 * 1000, // 2 minutos
-    retry: 2,
-    refetchInterval,
-    refetchIntervalInBackground: true, // Continuar refetching en background
-  })
+  return useVentas(params, options)
 }
