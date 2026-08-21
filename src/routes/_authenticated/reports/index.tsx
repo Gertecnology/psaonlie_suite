@@ -1,19 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
-import { ReportsPage } from '@/features/reports'
+import { esquemaFiltrosPanel } from '@/features/dashboard/models/busqueda.model'
+import { InformesPage } from '@/features/reports'
 
 export const Route = createFileRoute('/_authenticated/reports/')({
-  component: RouteComponent,
+  // Mismo esquema que el panel principal: el período y el filtro de empresa
+  // sobreviven al pasar de una vista a la otra, y un informe con sus filtros
+  // se puede compartir por link.
+  validateSearch: esquemaFiltrosPanel,
+  component: InformesPage,
 })
-
-function RouteComponent() {
-  return (
-    <PageLayout
-      title="Reportes"
-      description="Genera y exporta reportes detallados de ventas con filtros personalizados."
-      showSearch={true}
-    >
-      <ReportsPage />
-    </PageLayout>
-  )
-}
