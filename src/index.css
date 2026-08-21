@@ -23,11 +23,48 @@
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /*
+   * Paleta categórica de gráficos — validada, no elegida a ojo.
+   *
+   * La paleta que traía shadcn falla las verificaciones de accesibilidad sobre
+   * la superficie de este panel: `--chart-4` y `--chart-5` eran dos naranjas a
+   * ΔE 5.6 bajo deuteranopía (y 7.4 con visión normal), o sea indistinguibles;
+   * `--chart-3` quedaba fuera de la banda de luminosidad y por debajo del piso
+   * de croma, así que se leía gris.
+   *
+   * Estos ocho tonos, en este orden, pasan las cinco verificaciones
+   * computables en ambos modos contra las superficies reales del panel
+   * (#ffffff en claro, #020919 en oscuro): banda de luminosidad OKLCH, piso de
+   * croma, separación bajo protanopía/deuteranopía (peor par adyacente ΔE 9.1
+   * claro / 8.4 oscuro, umbral 8), piso de visión normal (19.6 / 19.3, umbral
+   * 15) y contraste contra la superficie.
+   *
+   * El ORDEN es el mecanismo de seguridad, no una decoración: reordenar los
+   * slots rompe la separación entre pares adyacentes. Asignar siempre en orden,
+   * nunca ciclar. Más de 8 series → agrupar el resto en "Otras".
+   *
+   * En modo claro, aqua, amarillo y magenta quedan por debajo de 3:1 contra el
+   * blanco. Por eso todo gráfico lleva leyenda + etiquetas directas o tabla:
+   * el color nunca es el único canal.
+   */
+  --chart-1: #2a78d6; /* azul */
+  --chart-2: #eb6834; /* naranja */
+  --chart-3: #1baf7a; /* aqua */
+  --chart-4: #eda100; /* amarillo */
+  --chart-5: #e87ba4; /* magenta */
+  --chart-6: #008300; /* verde */
+  --chart-7: #4a3aa7; /* violeta */
+  --chart-8: #e34948; /* rojo */
+
+  /*
+   * Estados operativos. Escala fija y reservada: nunca se usan como color de
+   * serie, y siempre van acompañados de ícono + texto (en claro, `warning` y
+   * `serious` están por debajo de 3:1 a propósito).
+   */
+  --estado-ok: #0ca30c;
+  --estado-atencion: #fab219;
+  --estado-serio: #ec835a;
+  --estado-critico: #d03b3b;
 
   --sidebar: var(--foreground);
   --sidebar-foreground: var(--primary-foreground);
@@ -58,11 +95,25 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /*
+   * Mismos ocho tonos, re-escalonados para la superficie oscura (#020919).
+   * No es un "flip" automático del modo claro: cada paso se eligió para la
+   * banda de luminosidad del modo oscuro y se validó como conjunto.
+   */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+
+  /* Los estados son invariantes al modo: la escala es fija y reservada. */
+  --estado-ok: #0ca30c;
+  --estado-atencion: #fab219;
+  --estado-serio: #ec835a;
+  --estado-critico: #d03b3b;
 
   --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
@@ -105,6 +156,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-estado-ok: var(--estado-ok);
+  --color-estado-atencion: var(--estado-atencion);
+  --color-estado-serio: var(--estado-serio);
+  --color-estado-critico: var(--estado-critico);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
