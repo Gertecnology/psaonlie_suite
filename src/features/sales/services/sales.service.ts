@@ -1,4 +1,4 @@
-import { apiFetchRaw } from '@/utils/api-client'
+import { ApiError, apiFetchRaw } from '@/utils/api-client'
 import { asientosFaltantes } from '../utils/asientos'
 // Import de sólo tipos: no genera dependencia en runtime pese al ciclo con el
 // modelo, que a su vez re-exporta los tipos de este archivo.
@@ -239,13 +239,21 @@ export async function consultarAsientos(params: {
 }
 
 /**
- * Bloquea asientos por 30 minutos y **verifica el resultado real**.
+ * Bloquea asientos y **verifica el resultado real**.
  *
- * El endpoint responde 201 en todos los casos, incluso cuando no bloqueó nada:
- * el veredicto está en el cuerpo. Peor todavía, `exitoso` es `true` cuando se
- * bloqueó *al menos uno* de los asientos pedidos, así que un bloqueo parcial
- * pasaba como éxito completo y la venta se confirmaba por asientos que nunca
- * quedaron reservados.
+ * El tiempo de bloqueo lo define cada transportista (10 minutos por defecto);
+ * no es un valor nuestro.
+ *
+ * Maneja las dos formas de fallo que conviven:
+ *
+ * - **Backend corregido**: responde 409 si alguna butaca ya está tomada, o 502
+ *   si el web service de la empresa no contestó. `apiFetch` lo convierte en
+ *   `ApiError` y el detalle de qué butacas fallaron viene en `error.details`.
+ * - **Backend anterior** (sigue desplegado): responde 201 en todos los casos,
+ *   con el veredicto escondido en el cuerpo. Peor todavía, `exitoso` era `true`
+ *   cuando se bloqueaba *al menos uno* de los asientos pedidos, así que un
+ *   bloqueo parcial pasaba como éxito y la venta se confirmaba por asientos que
+ *   nunca quedaron reservados.
  *
  * Acá se rechaza cualquier resultado que no cubra exactamente lo pedido, y se
  * libera el bloqueo parcial para no dejar asientos colgados 30 minutos.
@@ -271,21 +279,46 @@ export async function bloquearAsientos(params: {
     )
   }
 
-  const resultado = await apiFetchRaw<BloquearAsientosApiResponse>(
-    '/api/ventas/bloquear-asientos',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        servicioId,
-        origenId,
-        destinoId,
-        asientos,
-        empresaId,
-      }),
-      fallbackMessage: 'No se pudieron bloquear los asientos.',
-      timeoutMs: TIMEOUT_BLOQUEO_MS,
-    },
-  )
+  let resultado: BloquearAsientosApiResponse | undefined
+
+  try {
+    resultado = await apiFetchRaw<BloquearAsientosApiResponse>(
+      '/api/ventas/bloquear-asientos',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          servicioId,
+          origenId,
+          destinoId,
+          asientos,
+          empresaId,
+        }),
+        fallbackMessage: 'No se pudieron bloquear los asientos.',
+        timeoutMs: TIMEOUT_BLOQUEO_MS,
+      },
+    )
+  } catch (error) {
+    // El backend corregido responde 409 (butaca tomada) o 502 (el web service
+    // de la empresa no contestó) en vez de un 201 con `exitoso: false`.
+    // `apiFetch` lo convierte en ApiError antes de que lleguemos a mirar el
+    // cuerpo, así que el detalle hay que sacarlo de ahí.
+    //
+    // El backend viejo sigue desplegado y responde 201: ese camino se maneja
+    // más abajo. Los dos tienen que funcionar hasta que el fix esté en
+    // producción.
+    if (error instanceof ApiError) {
+      const detalle = (error.details ?? {}) as {
+        asientosNoDisponibles?: string[]
+      }
+
+      throw new BloqueoAsientosError(error.message, {
+        asientosNoBloqueados: detalle.asientosNoDisponibles?.length
+          ? detalle.asientosNoDisponibles
+          : asientos,
+      })
+    }
+    throw error
+  }
 
   if (!resultado) {
     throw new BloqueoAsientosError(

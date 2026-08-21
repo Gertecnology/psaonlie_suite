@@ -92,6 +92,52 @@ describe('bloquearAsientos', () => {
     expect(urls.some((url) => url.includes('liberar-bloqueo'))).toBe(false)
   })
 
+  it('LANZA con el detalle cuando el backend responde 409 (butaca tomada)', async () => {
+    // El backend corregido ya no responde 201 sobre un bloqueo fallido: manda
+    // 409 y el detalle de qué butacas no estaban disponibles va en el cuerpo
+    // del error. Hay que rescatarlo de ahí para poder decírselo al operador.
+    mockearRespuestas({
+      status: 409,
+      body: {
+        success: false,
+        statusCode: 409,
+        message: 'Alguna de las butacas seleccionadas ya no está disponible.',
+        error: {
+          code: 'ConflictException',
+          details: {
+            message: 'Alguna de las butacas seleccionadas ya no está disponible.',
+            asientosNoDisponibles: ['6'],
+            asientosSolicitados: ['5', '6'],
+          },
+        },
+      },
+    })
+
+    await expect(bloquearAsientos(PARAMS)).rejects.toMatchObject({
+      name: 'BloqueoAsientosError',
+      asientosNoBloqueados: ['6'],
+    })
+  })
+
+  it('LANZA cuando el backend responde 502 (el web service no contestó)', async () => {
+    // Sin detalle de butacas: no se sabe cuáles fallaron, así que se reportan
+    // todas las pedidas. Reintentar tiene sentido acá, a diferencia del 409.
+    mockearRespuestas({
+      status: 502,
+      body: {
+        success: false,
+        statusCode: 502,
+        message: 'No se pudo confirmar el bloqueo con la empresa de transporte.',
+        error: { code: 'BadGatewayException', details: {} },
+      },
+    })
+
+    await expect(bloquearAsientos(PARAMS)).rejects.toMatchObject({
+      name: 'BloqueoAsientosError',
+      asientosNoBloqueados: ['5', '6'],
+    })
+  })
+
   it('LANZA cuando viene exitoso: true pero sin código de referencia', async () => {
     mockearRespuestas({
       body: {
