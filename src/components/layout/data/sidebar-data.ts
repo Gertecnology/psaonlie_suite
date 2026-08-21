@@ -11,8 +11,7 @@ import {
   IconFileReport,
   IconExternalLink,
 } from '@tabler/icons-react'
-import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
-
+import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -21,21 +20,14 @@ export const sidebarData: SidebarData = {
     email: 'satnaingdev@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
+  // Un solo espacio de trabajo: el selector queda como identidad, no como
+  // conmutador. Los tres nombres de ejemplo que traía la plantilla
+  // ("Acme Inc", "Acme Corp.") se veían en producción.
   teams: [
     {
-      name: 'Shadcn Admin',
+      name: 'Pasaje Online',
       logo: Command,
-      plan: 'Vite + ShadcnUI',
-    },
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
+      plan: 'Panel administrativo',
     },
   ],
   navGroups: [
@@ -43,7 +35,7 @@ export const sidebarData: SidebarData = {
       title: 'Principal',
       items: [
         {
-          title: 'Dashboard',
+          title: 'Panel de control',
           url: '/',
           icon: IconLayoutDashboard,
         },
@@ -90,10 +82,10 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'Reportes',
+      title: 'Informes',
       items: [
         {
-          title: 'Reportes',
+          title: 'Informes',
           url: '/reports',
           icon: IconFileReport,
         },
@@ -122,7 +114,6 @@ export const sidebarData: SidebarData = {
               icon: IconExternalLink,
             },
           ],
-
         },
       ],
     },
