@@ -1,3 +1,4 @@
+import { apiFetch, ApiError } from '@/utils/api-client'
 import {
   type Company,
   type PaginatedCompaniesResponse,
@@ -5,71 +6,150 @@ import {
   type CreateCompanyFormValues,
 } from '../models/company.model'
 
-const API_URL = import.meta.env.VITE_API_URL
+/** Campos por los que el backend acepta ordenar el listado de empresas. */
+export type CompanySortBy = 'nombre' | 'createdAt' | 'cantidadParadasHomologadas'
 
-// Service to get companies
+/** Filtros server-side soportados por `GET /empresas`. */
+export interface GetCompaniesParams {
+  page?: number
+  limit?: number
+  /** Búsqueda parcial por nombre (ILIKE en el backend). */
+  nombre?: string
+  /** `undefined` = sin filtro de estado. */
+  activo?: boolean
+  sortBy?: CompanySortBy
+  sortOrder?: 'ASC' | 'DESC'
+}
+
+/**
+ * Listado paginado de empresas.
+ *
+ * La búsqueda y el filtro de estado los resuelve el backend: filtrar en el
+ * cliente sólo alcanzaba a las filas de la página actual.
+ */
 export async function getCompanies(
-  token: string,
-  page: number = 1,
-  limit: number = 10
+  params: GetCompaniesParams = {},
 ): Promise<PaginatedCompaniesResponse> {
-  const response = await fetch(`${API_URL}/empresas?page=${page}&limit=${limit}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const { page = 1, limit = 10, nombre, activo, sortBy, sortOrder } = params
+
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
   })
 
-  if (!response.ok) {
-    throw new Error('Error al obtener las empresas')
-  }
-  const result = await response.json()
-  return result.data
+  if (nombre) query.append('nombre', nombre)
+  if (activo !== undefined) query.append('activo', String(activo))
+  if (sortBy) query.append('sortBy', sortBy)
+  if (sortOrder) query.append('sortOrder', sortOrder)
+
+  return apiFetch<PaginatedCompaniesResponse>(`/empresas?${query.toString()}`, {
+    fallbackMessage: 'Error al obtener las empresas.',
+  })
 }
 
 // Service to update a company
 export async function updateCompany(
   id: string,
-  data: CompanyFormValues
+  data: CompanyFormValues,
 ): Promise<Company> {
-  const token = localStorage.getItem('accessToken')
-  const response = await fetch(`${API_URL}/empresas/${id}`, {
+  return apiFetch<Company>(`/empresas/${id}`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
+    fallbackMessage: 'Error al actualizar la empresa.',
   })
-
-  if (!response.ok) {
-    throw new Error('Error al actualizar la empresa')
-  }
-  return response.json()
 }
 
 // Service to delete a company
 export async function deleteCompany(id: string): Promise<void> {
-  const token = localStorage.getItem('accessToken')
-  const response = await fetch(`${API_URL}/empresas/${id}`, {
+  await apiFetch<null>(`/empresas/${id}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    fallbackMessage: 'Error al eliminar la empresa.',
+  })
+}
+
+/** Máximo de empresas por lote (espeja el `@ArrayMaxSize(100)` del backend). */
+export const MAX_BULK_DELETE = 100
+
+export interface BulkDeleteFailure {
+  id: string
+  motivo: string
+}
+
+/**
+ * Resultado de un borrado en lote.
+ *
+ * Los nombres de los campos replican los de `BulkDeleteEmpresasResponseDto`
+ * del backend, para que migrar al endpoint dedicado no obligue a tocar el hook
+ * ni los componentes.
+ */
+export interface BulkDeleteResult {
+  solicitados: number
+  eliminados: string[]
+  fallidos: BulkDeleteFailure[]
+}
+
+/**
+ * Borrado en lote de empresas.
+ *
+ * PENDIENTE(backend): el endpoint dedicado todavía no está expuesto en
+ * `empresa.controller.ts` (el DTO `BulkDeleteEmpresasDto` ya existe, la ruta
+ * no). Mientras tanto se itera `DELETE /empresas/:id` y se reportan los fallos
+ * parciales.
+ *
+ * Para migrar cuando la ruta exista, reemplazar el cuerpo por:
+ *   return apiFetch<BulkDeleteResult>('<ruta>', {
+ *     method: '<verbo>',
+ *     body: JSON.stringify({ ids: uniqueIds }),
+ *     fallbackMessage: 'Error al eliminar las empresas.',
+ *   })
+ * El tipo de retorno ya coincide con `BulkDeleteEmpresasResponseDto`.
+ */
+export async function deleteCompanies(
+  ids: string[],
+): Promise<BulkDeleteResult> {
+  // El backend deduplica y limita a 100; hacemos lo mismo acá para que el
+  // comportamiento no cambie al migrar.
+  const uniqueIds = [...new Set(ids)].slice(0, MAX_BULK_DELETE)
+
+  const outcomes = await Promise.allSettled(
+    uniqueIds.map(async (id) => {
+      await deleteCompany(id)
+      return id
+    }),
+  )
+
+  const result: BulkDeleteResult = {
+    solicitados: uniqueIds.length,
+    eliminados: [],
+    fallidos: [],
+  }
+
+  outcomes.forEach((outcome, index) => {
+    if (outcome.status === 'fulfilled') {
+      result.eliminados.push(outcome.value)
+      return
+    }
+
+    const reason = outcome.reason
+    const motivo =
+      reason instanceof ApiError || reason instanceof Error
+        ? reason.message
+        : 'Error desconocido al eliminar la empresa.'
+
+    result.fallidos.push({ id: uniqueIds[index], motivo })
   })
 
-  if (!response.ok) {
-    throw new Error('Error al eliminar la empresa')
-  }
+  return result
 }
 
 // Service to create a company
-export async function createCompany(data: CreateCompanyFormValues): Promise<Company> {
-  const token = localStorage.getItem('accessToken')
-  
+export async function createCompany(
+  data: CreateCompanyFormValues,
+): Promise<Company> {
   const formData = new FormData()
   formData.append('nombre', data.nombre)
   formData.append('password', data.password)
-  
+
   if (data.agenciaPrincipal) {
     formData.append('agenciaPrincipal', data.agenciaPrincipal)
   }
@@ -85,39 +165,40 @@ export async function createCompany(data: CreateCompanyFormValues): Promise<Comp
   if (data.porcentajeVentas !== undefined) {
     formData.append('porcentajeVentas', data.porcentajeVentas.toString())
   }
+  // El switch "Activo" del drawer no llegaba nunca al backend (CR-4).
+  if (data.activo !== undefined) {
+    formData.append('activo', String(data.activo))
+  }
   if (data.profileImage) {
     formData.append('profileImage', data.profileImage)
   }
-  
-  const response = await fetch(`${API_URL}/empresas`, {
+
+  return apiFetch<Company>('/empresas', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     body: formData,
+    fallbackMessage: 'Error al crear la empresa.',
   })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Error al crear la empresa')
-  }
-
-  return response.json()
 }
 
 // Obtener empresa por id
-export async function getCompanyById(id: string) {
-  const token = localStorage.getItem('accessToken')
-  const response = await fetch(`${API_URL}/empresas/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export async function getCompanyById(id: string): Promise<Company> {
+  return apiFetch<Company>(`/empresas/${id}`, {
+    fallbackMessage: 'Error al obtener la empresa.',
   })
-  if (!response.ok) {
-    throw new Error('Error al obtener la empresa')
-  }
-  const result = await response.json()
-  return result.data
+}
+
+export interface ParadaHomologada {
+  id: string
+  idExterno?: number
+  descripcion?: string
+}
+
+export interface PaginatedParadasResponse {
+  items: ParadaHomologada[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 // Obtener paradas homologadas paginadas
@@ -127,9 +208,8 @@ export async function getParadasHomologadas(
   limit: number = 10,
   sortOrder: string = 'DESC',
   descripcion?: string,
-  sortBy: string = 'descripcion'
-) {
-  const token = localStorage.getItem('accessToken')
+  sortBy: string = 'descripcion',
+): Promise<PaginatedParadasResponse> {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -137,41 +217,27 @@ export async function getParadasHomologadas(
     sortBy,
   })
   if (descripcion) params.append('descripcion', descripcion)
-  const response = await fetch(`${API_URL}/empresas/${empresaId}/paradas-homologadas?${params.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  if (!response.ok) {
-    throw new Error('Error al obtener paradas homologadas')
-  }
-  const result = await response.json();
-  return result.data;
+
+  return apiFetch<PaginatedParadasResponse>(
+    `/empresas/${empresaId}/paradas-homologadas?${params.toString()}`,
+    { fallbackMessage: 'Error al obtener paradas homologadas.' },
+  )
 }
 
 // Service to update company logo
 export async function updateCompanyLogo(
   id: string,
-  profileImage: File
+  profileImage: File,
 ): Promise<{ imageUrl: string; message: string }> {
-  const token = localStorage.getItem('accessToken')
-  
   const formData = new FormData()
   formData.append('profileImage', profileImage)
-  
-  const response = await fetch(`${API_URL}/empresas/${id}/logo`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
+
+  return apiFetch<{ imageUrl: string; message: string }>(
+    `/empresas/${id}/logo`,
+    {
+      method: 'POST',
+      body: formData,
+      fallbackMessage: 'Error al actualizar el logo de la empresa.',
     },
-    body: formData,
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Error al actualizar el logo de la empresa')
-  }
-
-  return response.json()
+  )
 }
-

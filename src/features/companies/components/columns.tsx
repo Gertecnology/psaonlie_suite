@@ -66,9 +66,7 @@ export const companyColumns: ColumnDef<Company>[] = [
         </Badge>
       )
     },
-    filterFn: (row, id, value) => {
-      return value.includes(String(row.getValue(id)))
-    },
+    // Sin filterFn: el filtro de estado lo resuelve el backend (`?activo=`).
   },
   {
     accessorKey: 'usuario',
@@ -156,28 +154,9 @@ export const companyColumns: ColumnDef<Company>[] = [
         </div>
       )
     },
-    filterFn: (row, id, value) => {
-      const serviceCharge = row.getValue(id) as Company['serviceCharge']
-      if (!serviceCharge) return value.includes('sin-cargo')
-
-      if (
-        value.includes('porcentual') &&
-        serviceCharge.tipoAplicacion === 'PORCENTUAL'
-      ) {
-        return true
-      }
-      if (value.includes('fijo') && serviceCharge.tipoAplicacion === 'FIJO') {
-        return true
-      }
-      if (value.includes('activo') && serviceCharge.activo) {
-        return true
-      }
-      if (value.includes('inactivo') && !serviceCharge.activo) {
-        return true
-      }
-
-      return false
-    },
+    // Sin filterFn: filtrar en el cliente sólo alcanzaba a las filas de la
+    // página actual. El backend todavía no expone un filtro por cargo de
+    // servicio en `GET /empresas`.
   },
   {
     id: 'actions',

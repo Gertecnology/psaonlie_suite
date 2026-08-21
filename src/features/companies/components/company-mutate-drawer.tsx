@@ -51,6 +51,11 @@ export function CompanyMutateDrawer() {
 
   const isUpdate = !!company && !!company.id
 
+  const isSubmitting =
+    createCompany.isPending ||
+    updateCompany.isPending ||
+    updateCompanyLogo.isPending
+
   // Estado para previsualización del logo
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -79,6 +84,10 @@ export function CompanyMutateDrawer() {
       profileImage: undefined,
     },
   })
+
+  // `formState` es un Proxy: hay que leer `dirtyFields` durante el render para
+  // que react-hook-form active su seguimiento.
+  const { dirtyFields } = form.formState
 
   useEffect(() => {
     if (open) {
@@ -137,16 +146,20 @@ export function CompanyMutateDrawer() {
         porcentajeVentas: updateData.porcentajeVentas?.toString() || null,
       }
 
-      // Verificar si hay cambios en los datos (excluyendo el logo)
-      const hasDataChanges = Object.keys(updateDataWithStringPercent).some(key => {
-        const currentValue = company[key as keyof typeof company]
-        const newValue = updateDataWithStringPercent[key as keyof typeof updateDataWithStringPercent]
-        return currentValue !== newValue
-      })
+      // Detección de cambios vía react-hook-form: comparar contra la empresa
+      // con `!==` daba falsos positivos (la API devuelve "5.00" y el formulario
+      // produce "5", así que porcentajeVentas siempre parecía modificado).
+      // El logo se evalúa aparte porque `setValue` no lo marca como dirty.
+      const hasDataChanges = Object.keys(dirtyFields).some(
+        (key) => key !== 'profileImage' && key !== 'password',
+      )
 
       // Verificar si se cambió el logo
       const hasLogoChanged = !!profileImage
 
+      // El drawer se cierra únicamente cuando la operación fue exitosa. Antes
+      // se cerraba también en `onError`, lo que ocultaba los fallos ahora que
+      // el backend los reporta de verdad.
       if (hasLogoChanged && hasDataChanges) {
         // Caso 1: Se cambió tanto el logo como los datos - hacer 2 peticiones
         updateCompany.mutate(
@@ -160,16 +173,10 @@ export function CompanyMutateDrawer() {
                   onSuccess: () => {
                     close()
                   },
-                  onError: () => {
-                    close()
-                  }
-                }
+                },
               )
             },
-            onError: () => {
-              close()
-            }
-          }
+          },
         )
       } else if (hasLogoChanged && !hasDataChanges) {
         // Caso 2: Solo se cambió el logo - hacer 1 petición
@@ -179,10 +186,7 @@ export function CompanyMutateDrawer() {
             onSuccess: () => {
               close()
             },
-            onError: () => {
-              close()
-            }
-          }
+          },
         )
       } else if (!hasLogoChanged && hasDataChanges) {
         // Caso 3: Solo se cambiaron los datos - hacer 1 petición
@@ -192,10 +196,7 @@ export function CompanyMutateDrawer() {
             onSuccess: () => {
               close()
             },
-            onError: () => {
-              close()
-            }
-          }
+          },
         )
       } else {
         // Caso 4: No hay cambios - solo cerrar
@@ -210,36 +211,21 @@ export function CompanyMutateDrawer() {
         profileImage: data.profileImage || undefined,
       }
       
+      // Los toasts de éxito y error los emite `useCreateCompany`, igual que en
+      // update y delete. Acá sólo se cierra el drawer cuando la creación salió
+      // bien; si falló, el formulario queda abierto con los datos cargados.
       createCompany.mutate(createData, {
         onSuccess: () => {
-          // toast de éxito con duración
-          import('sonner').then(({ toast }) => {
-            toast.success('Empresa creada', {
-              description: 'La empresa se ha creado correctamente.',
-              duration: 3000,
-            })
-          })
-        },
-        onError: (error: unknown) => {
-          import('sonner').then(({ toast }) => {
-            let message = 'Ha ocurrido un error al crear la empresa.'
-            if (error instanceof Error) {
-              message = error.message
-            } else if (typeof error === 'string') {
-              message = error
-            }
-            toast.error('Error al crear', {
-              description: message,
-              duration: 3000,
-            })
-          })
+          close()
         },
       })
     }
   }
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
+    // No dejamos cerrar mientras hay una petición en vuelo: el usuario no
+    // sabría si se guardó o no.
+    if (!open && !isSubmitting) {
       close()
     }
   }
@@ -440,16 +426,16 @@ export function CompanyMutateDrawer() {
         </Form>
         <SheetFooter className='gap-2'>
           <SheetClose asChild>
-            <Button variant='outline' disabled={updateCompany.isPending || updateCompanyLogo.isPending}>
+            <Button variant='outline' disabled={isSubmitting}>
               Cerrar
             </Button>
           </SheetClose>
-          <Button 
-            form='company-form' 
+          <Button
+            form='company-form'
             type='submit'
-            disabled={updateCompany.isPending || updateCompanyLogo.isPending}
+            disabled={isSubmitting}
           >
-            {updateCompany.isPending || updateCompanyLogo.isPending ? 'Guardando...' : 'Guardar cambios'}
+            {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </SheetFooter>
       </SheetContent>

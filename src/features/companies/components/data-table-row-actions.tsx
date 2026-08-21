@@ -40,7 +40,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           Editar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => openDeleteDialog(company.id)}>
+        <DropdownMenuItem
+          onClick={() => openDeleteDialog(company.id, company.nombre)}
+        >
           Eliminar
           <DropdownMenuShortcut>
             <IconTrash size={16} />

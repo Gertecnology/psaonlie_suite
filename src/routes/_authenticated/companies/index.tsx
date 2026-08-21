@@ -8,18 +8,48 @@ import { useGetCompanies } from '@/features/companies/hooks/use-get-companies'
 import { CompanyMutateDrawer } from '@/features/companies/components/company-mutate-drawer'
 import { CompanyDialogs } from '@/features/companies/components/company-dialogs'
 import { CompanyPrimaryButtons } from '@/features/companies/components/company-primary-buttons'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 function CompaniesPage() {
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   })
+  // La búsqueda y el filtro viven acá porque son parámetros de la consulta al
+  // servidor, no filtros de la tabla.
+  const [search, setSearch] = React.useState('')
+  const [activo, setActivo] = React.useState<boolean | undefined>(undefined)
 
-  const { data, isLoading } = useGetCompanies(
-    pagination.pageIndex + 1,
-    pagination.pageSize,
-  )
+  const debouncedSearch = useDebouncedValue(search, 350)
+
+  // Al cambiar la búsqueda o el filtro hay que volver a la primera página: con
+  // menos resultados, la página actual puede dejar de existir y la tabla queda
+  // vacía sin explicación. Se hace en el handler y no en un efecto para no
+  // disparar una consulta intermedia contra una página inexistente.
+  const resetToFirstPage = () => {
+    setPagination((prev) =>
+      prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 },
+    )
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    resetToFirstPage()
+  }
+
+  const handleActivoChange = (value: boolean | undefined) => {
+    setActivo(value)
+    resetToFirstPage()
+  }
+
+  const { data, isLoading, isFetching, error } = useGetCompanies({
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+    nombre: debouncedSearch.trim() || undefined,
+    activo,
+  })
 
   if (isLoading) return (
     <PageLayout
@@ -74,15 +104,29 @@ function CompaniesPage() {
         description="Gestiona las empresas de transporte."
         actions={<CompanyPrimaryButtons />}
       >
-        {data && (
-          <DataTable
-            columns={companyColumns}
-            data={data.items}
-            pageCount={data.totalPages}
-            pagination={pagination}
-            onPaginationChange={setPagination}
-          />
+        {error && (
+          <Alert variant='destructive' className='mb-4'>
+            <AlertTitle>No se pudo cargar el listado</AlertTitle>
+            <AlertDescription>
+              {error.message ||
+                'Ocurrió un error al obtener las empresas. Intentá nuevamente.'}
+            </AlertDescription>
+          </Alert>
         )}
+        {/* La tabla se renderiza aunque la consulta falle: si no, el usuario
+            pierde el buscador y no puede deshacer el filtro que la rompió. */}
+        <DataTable
+          columns={companyColumns}
+          data={data?.items ?? []}
+          pageCount={Math.max(data?.totalPages ?? 1, 1)}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          search={search}
+          onSearchChange={handleSearchChange}
+          activo={activo}
+          onActivoChange={handleActivoChange}
+          isFetching={isFetching}
+        />
       </PageLayout>
 
       <CompanyMutateDrawer />
@@ -94,4 +138,3 @@ function CompaniesPage() {
 export const Route = createFileRoute('/_authenticated/companies/')({
   component: CompaniesPage,
 })
-

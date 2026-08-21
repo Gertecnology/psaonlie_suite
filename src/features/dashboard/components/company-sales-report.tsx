@@ -18,7 +18,13 @@ export function CompanySalesReport({ onDownload }: CompanySalesReportProps) {
   const [dateRange, setDateRange] = useState<'currentMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'lastYear'>('currentMonth')
   
   // Obtener todas las empresas
-  const { data: companiesData, isLoading: companiesLoading } = useGetCompanies(1, 1000)
+  // OJO: `limit: 1000` supera el @Max(100) de BaseQueryDto en el backend.
+  // Hoy pasa porque no hay ValidationPipe global; cuando lo agreguen, esta
+  // consulta devolverá 400. Conviene migrarla a `GET /empresas/lista`.
+  const { data: companiesData, isLoading: companiesLoading } = useGetCompanies({
+    page: 1,
+    limit: 1000,
+  })
   
   // Función para obtener el último día del mes
   const getLastDayOfMonth = (year: number, month: number) => {
