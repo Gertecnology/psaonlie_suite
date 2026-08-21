@@ -99,13 +99,20 @@ export function ServiciosVueltaPage() {
             origen={roundTripData.vuelta.origen}
             destino={roundTripData.vuelta.destino}
             onServiceSelect={(servicio, empresaId, serviceCharge) => {
-              // Guardar el servicio de vuelta seleccionado
+              // Guardar el servicio de vuelta seleccionado, limpiando el
+              // bloqueo anterior: el contexto hace merge y un
+              // `codigoReferencia` viejo confirmaría la venta contra el
+              // servicio equivocado.
               setRoundTripData({
                 vuelta: {
                   ...roundTripData.vuelta,
                   servicio: servicio,
                   empresaId: empresaId,
-                  serviceCharge: serviceCharge
+                  serviceCharge: serviceCharge,
+                  asientos: undefined,
+                  codigoReferencia: undefined,
+                  bloqueoExpiraEn: undefined,
+                  ventaConfirmada: undefined,
                 }
               })
               // Ir a selección de asientos de vuelta

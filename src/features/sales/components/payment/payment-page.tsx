@@ -1,4 +1,5 @@
-import { useSearch } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -6,87 +7,114 @@ import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, MapPin, Calendar, Clock, Bus, CreditCard, CheckCircle } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, Download, AlertTriangle } from 'lucide-react'
 import { useActualizarEstadoPago } from '@/features/sales/hooks/use-actualizar-estado-pago'
+import { ResumenPago } from '../pago/resumen-pago'
+import { deserializarServiceCharge } from '../../utils/service-charge-url'
 import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
+import type { Asiento, ServiceCharge } from '../../models/sales.model'
 import { toast } from 'sonner'
 
 interface PaymentSearch {
-  servicioId: string
-  origenId: string
-  destinoId: string
-  empresaId: string
   empresa: string
   origen: string
   destino: string
   fecha: string
   hora: string
-  serviceCharge: string
-  asientosIds: string
-  precios: string
-  tipos: string
-  pisos: string
-  codigoReferencia: string
-  empresaBoleto: string
-  calidad: string
   ventaId: string
   numeroTransaccion: string
   estado: string
   mensaje: string
-  comisionTotal: string
+}
+
+/**
+ * Los parámetros se leen del `window.location` y no de `useSearch`.
+ *
+ * La ruta `/sales/payment` no declara `validateSearch`, así que el parser por
+ * defecto de TanStack Router convierte los valores: `precios=150000` volvía
+ * como número y `precios=150000,150000` como string. De ahí venían los
+ * `String(...)` y `parseFloat` defensivos repartidos por toda la pantalla.
+ */
+function leerParametros(): {
+  search: PaymentSearch
+  asientos: Asiento[]
+  serviceCharge?: ServiceCharge
+} {
+  const params = new URLSearchParams(window.location.search)
+
+  const separar = (clave: string) =>
+    (params.get(clave) || '')
+      .split(',')
+      .map((valor) => valor.trim())
+      .filter(Boolean)
+
+  const numeros = separar('asientosIds')
+  const precios = separar('precios')
+  const tipos = separar('tipos')
+  const pisos = separar('pisos')
+
+  const asientos: Asiento[] = numeros.map((numero, index) => ({
+    numero,
+    disponible: false,
+    precio: Number(precios[index] ?? 0) || 0,
+    tipo: (tipos[index] as Asiento['tipo']) ?? 'CENTRO',
+    piso: Number(pisos[index] ?? 1) || 1,
+    calidad: 'Estándar',
+  }))
+
+  return {
+    search: {
+      empresa: params.get('empresa') || '',
+      origen: params.get('origen') || '',
+      destino: params.get('destino') || '',
+      fecha: params.get('fecha') || '',
+      hora: params.get('hora') || '',
+      ventaId: params.get('ventaId') || '',
+      numeroTransaccion: params.get('numeroTransaccion') || '',
+      estado: params.get('estado') || '',
+      mensaje: params.get('mensaje') || '',
+    },
+    asientos,
+    serviceCharge: deserializarServiceCharge(params),
+  }
 }
 
 export function PaymentPage() {
-  const search = useSearch({ from: '/_authenticated/sales/payment' }) as PaymentSearch
   const navigate = useNavigate()
   const actualizarEstadoPagoMutation = useActualizarEstadoPago()
 
+  const [datos, setDatos] = useState<ReturnType<typeof leerParametros> | null>(null)
   const [metodoPago, setMetodoPago] = useState('')
   const [observaciones, setObservaciones] = useState('')
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false)
-  const [isPaid, setIsPaid] = useState(search.estado === 'PAGADO')
+  const [isPaid, setIsPaid] = useState(false)
+  const [errorPago, setErrorPago] = useState<string | null>(null)
 
-  // Validar que los parámetros necesarios existan y sean strings
-  // Procesar datos de asientos de manera robusta
-  const asientosIds = String(search.asientosIds || '')
-  const precios = String(search.precios || '')
-  const tipos = String(search.tipos || '')
-  const pisos = String(search.pisos || '')
+  /**
+   * Guarda contra doble envío: marcar PAGADO dispara la emisión del boleto.
+   *
+   * Es un `ref` porque tiene que cerrarse de forma síncrona: dos clicks
+   * seguidos se despachan antes de que React vuelva a renderizar. Se reabre
+   * sólo si el cobro falló.
+   */
+  const cobroCerrado = useRef(false)
 
-  // Procesar asientos - manejar tanto casos de un asiento como múltiples
-  const asientos: Array<{numero: string, precio: number, tipo: string, piso: number}> = []
-  if (asientosIds && asientosIds.trim()) {
-    const idsArray = asientosIds.split(',').filter(id => id.trim())
-    const preciosArray = precios.split(',')
-    const tiposArray = tipos.split(',')
-    const pisosArray = pisos.split(',')
-    
-    idsArray.forEach((id, index) => {
-      asientos.push({
-        numero: id.trim(),
-        precio: parseFloat(preciosArray[index] || precios || '0'),
-        tipo: tiposArray[index] || tipos || '',
-        piso: parseInt(pisosArray[index] || pisos || '0')
-      })
-    })
+  useEffect(() => {
+    const leidos = leerParametros()
+    setDatos(leidos)
+    setIsPaid(leidos.search.estado === 'PAGADO')
+  }, [])
+
+  const handleGoBack = () => {
+    navigate({ to: '/sales' })
   }
 
-  const totalAsientos = asientos.reduce((total, asiento) => total + asiento.precio, 0)
-  
-  // Calcular cargo por servicio basado en el porcentaje de la empresa
-  const serviceChargePercentage = parseFloat(String(search.serviceCharge || '0'))
-  const cargoPorServicio = (totalAsientos * serviceChargePercentage) / 100
-  
-  const totalFinal = totalAsientos + cargoPorServicio
+  if (!datos) return null
 
-  // Validar que tengamos los datos mínimos necesarios
-  const ventaId = typeof search.ventaId === 'string' ? search.ventaId : ''
-  const numeroTransaccion = typeof search.numeroTransaccion === 'string' ? search.numeroTransaccion : ''
-  
-  if (!ventaId || !numeroTransaccion) {
+  const { search, asientos, serviceCharge } = datos
+
+  if (!search.ventaId || !search.numeroTransaccion) {
     return (
       <div className="w-full p-4">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -95,31 +123,21 @@ export function PaymentPage() {
             <p className="text-muted-foreground mb-4">
               No se encontraron los datos necesarios para mostrar la página de pago.
             </p>
-            <Button onClick={() => navigate({ to: '/sales' })}>
-              Volver a Ventas
-            </Button>
+            <Button onClick={handleGoBack}>Volver a Ventas</Button>
           </div>
         </div>
       </div>
     )
   }
 
-  const handleGoBack = () => {
-    navigate({ to: '/sales' })
-  }
-
   const handleDownloadInvoice = async () => {
-    if (!numeroTransaccion) {
-      toast.error('No se encontró el número de transacción')
-      return
-    }
-
+    if (isDownloadingInvoice) return
     setIsDownloadingInvoice(true)
 
     try {
-      const invoiceResponse = await downloadInvoice(numeroTransaccion)
+      const invoiceResponse = await downloadInvoice(search.numeroTransaccion)
       downloadBlobAsFile(invoiceResponse.data, invoiceResponse.filename)
-      
+
       toast.success('Factura descargada exitosamente', {
         description: `Archivo: ${invoiceResponse.filename}`,
         duration: 3000,
@@ -133,40 +151,54 @@ export function PaymentPage() {
     }
   }
 
+  /**
+   * Registra el cobro.
+   *
+   * El éxito lo decide el backend: el service lanza si no confirma el cambio
+   * de estado. Antes se mostraba "Pago confirmado exitosamente" apenas la
+   * promesa resolvía, y con el backend viejo (200 + `success: false`) eso era
+   * siempre.
+   */
   const handleConfirmPayment = async () => {
+    if (cobroCerrado.current) return
+
     if (!metodoPago) {
       toast.error('Por favor selecciona un método de pago')
       return
     }
 
-    setIsProcessingPayment(true)
+    cobroCerrado.current = true
+    setErrorPago(null)
 
     try {
       const response = await actualizarEstadoPagoMutation.mutateAsync({
-        ventaId: ventaId,
+        ventaId: search.ventaId,
         data: {
           estadoPago: 'PAGADO',
-          metodoPago: metodoPago,
-          observaciones: observaciones || undefined
-        }
+          metodoPago,
+          observaciones: observaciones || undefined,
+        },
       })
 
-      toast.success('Pago confirmado exitosamente', {
-        description: `Estado actualizado: ${response.estadoAnterior} → ${response.estadoNuevo}`,
-        duration: 5000,
-      })
-
-      // Actualizar estado para mostrar botón de descarga de factura
       setIsPaid(true)
-
-    } catch (error) {
-      toast.error('Error al confirmar el pago', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
+      toast.success('Cobro registrado', {
+        description: `Estado actualizado: ${response.estadoAnterior} → ${response.estadoNuevo}`,
+        duration: 6000,
       })
-    } finally {
-      setIsProcessingPayment(false)
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : 'Error desconocido'
+      setErrorPago(mensaje)
+      toast.error('No se pudo registrar el cobro', {
+        description: mensaje,
+        duration: 10000,
+      })
+
+      // Falló: se puede reintentar.
+      cobroCerrado.current = false
     }
   }
+
+  const cobrando = actualizarEstadoPagoMutation.isPending
 
   return (
     <div className="w-full p-4">
@@ -183,15 +215,15 @@ export function PaymentPage() {
             Volver
           </Button>
           <div>
-            <h1 className="text-xl font-semibold">Procesar Pago</h1>
+            <h1 className="text-xl font-semibold">Registrar cobro</h1>
             <p className="text-sm text-muted-foreground">
-              Confirma tu reserva y procede con el pago
+              La venta ya está confirmada. Registrá cómo pagó el cliente.
             </p>
           </div>
         </div>
         <Badge variant="outline" className="flex items-center gap-1">
           <CheckCircle className="h-3 w-3 text-green-600" />
-          Reserva Confirmada
+          Venta confirmada
         </Badge>
       </div>
 
@@ -232,8 +264,8 @@ export function PaymentPage() {
                 <p className="text-xs font-medium text-muted-foreground">Asientos:</p>
                 {asientos.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {asientos.map((asiento, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs px-2 py-0">
+                    {asientos.map((asiento) => (
+                      <Badge key={asiento.numero} variant="secondary" className="text-xs px-2 py-0">
                         {asiento.numero} - {asiento.tipo}
                       </Badge>
                     ))}
@@ -245,7 +277,6 @@ export function PaymentPage() {
             </CardContent>
           </Card>
 
-          {/* Información de la Venta */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -255,9 +286,11 @@ export function PaymentPage() {
             </CardHeader>
             <CardContent className="pt-0 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Estado:</span>
-                <Badge variant="outline" className="text-xs">
-                  {search.estado}
+                <span className="text-sm text-muted-foreground">
+                  Transacción {search.numeroTransaccion}
+                </span>
+                <Badge variant={isPaid ? 'default' : 'outline'} className="text-xs">
+                  {isPaid ? 'PAGADO' : search.estado}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">{search.mensaje}</p>
@@ -267,108 +300,80 @@ export function PaymentPage() {
 
         {/* Resumen de Pago */}
         <div className="space-y-4">
+          <ResumenPago
+            tramos={[{ etiqueta: 'Viaje', asientos, serviceCharge }]}
+            titulo="Total a cobrar"
+          />
+
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Resumen de Pago
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                {asientos.length > 0 ? (
-                  asientos.map((asiento, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>Asiento {asiento.numero}</span>
-                      <span>₲ {asiento.precio.toLocaleString()}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex justify-between text-sm">
-                    <span>Asientos</span>
-                    <span>₲ 0</span>
-                  </div>
-                )}
+            <CardContent className="pt-6 space-y-3">
+              {errorPago && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{errorPago}</AlertDescription>
+                </Alert>
+              )}
+
+              <div>
+                <Label htmlFor="metodoPago" className="text-sm font-medium">
+                  Método de Pago *
+                </Label>
+                <Select value={metodoPago} onValueChange={setMetodoPago} disabled={isPaid}>
+                  <SelectTrigger className="h-8 w-full">
+                    <SelectValue placeholder="Seleccionar método" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EFECTIVO">Efectivo</SelectItem>
+                    <SelectItem value="TRANSFERENCIA">Transferencia Bancaria</SelectItem>
+                    <SelectItem value="TARJETA_CREDITO">Tarjeta de Crédito</SelectItem>
+                    <SelectItem value="TARJETA_DEBITO">Tarjeta de Débito</SelectItem>
+                    <SelectItem value="CHEQUE">Cheque</SelectItem>
+                    <SelectItem value="BANCARD">Bancard</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <Separator />
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>₲ {totalAsientos.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Cargo por Servicio ({serviceChargePercentage}%)</span>
-                  <span>₲ {cargoPorServicio.toLocaleString()}</span>
-                </div>
+              <div>
+                <Label htmlFor="observaciones" className="text-sm font-medium">
+                  Observaciones
+                </Label>
+                <Textarea
+                  id="observaciones"
+                  placeholder="Observaciones adicionales sobre el pago..."
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                  className="h-16 text-sm"
+                  disabled={isPaid}
+                />
               </div>
 
-              <Separator />
-
-              <div className="flex justify-between font-semibold">
-                <span>Total</span>
-                <span>₲ {totalFinal.toLocaleString()}</span>
-              </div>
-
-              <Separator />
-
-              {/* Formulario de Confirmación de Pago */}
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="metodoPago" className="text-sm font-medium">
-                    Método de Pago *
-                  </Label>
-                  <Select value={metodoPago} onValueChange={setMetodoPago}>
-                    <SelectTrigger className="h-8 w-full">
-                      <SelectValue placeholder="Seleccionar método" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EFECTIVO">Efectivo</SelectItem>
-                      <SelectItem value="TRANSFERENCIA">Transferencia Bancaria</SelectItem>
-                      <SelectItem value="TARJETA_CREDITO">Tarjeta de Crédito</SelectItem>
-                      <SelectItem value="TARJETA_DEBITO">Tarjeta de Débito</SelectItem>
-                      <SelectItem value="CHEQUE">Cheque</SelectItem>
-                      <SelectItem value="BANCARD">Bancard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="observaciones" className="text-sm font-medium">
-                    Observaciones
-                  </Label>
-                  <Textarea
-                    id="observaciones"
-                    placeholder="Observaciones adicionales sobre el pago..."
-                    value={observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                    className="h-16 text-sm"
-                  />
-                </div>
-
-                <Button 
+              {!isPaid ? (
+                <Button
                   onClick={handleConfirmPayment}
                   className="w-full"
                   size="sm"
-                  disabled={!metodoPago || isProcessingPayment}
+                  disabled={!metodoPago || cobrando}
                 >
-                  {isProcessingPayment ? 'Confirmando...' : 'Confirmar Pago'}
+                  {cobrando ? 'Registrando cobro...' : 'Confirmar cobro'}
                 </Button>
-
-                {/* Botón de descarga de factura - solo visible cuando está pagado */}
-                {isPaid && (
-                  <Button 
+              ) : (
+                <>
+                  <Separator />
+                  <p className="text-sm font-medium text-green-700">
+                    Cobro registrado. Ya podés descargar la factura.
+                  </p>
+                  <Button
                     onClick={handleDownloadInvoice}
                     variant="outline"
                     className="w-full"
                     size="sm"
                     disabled={isDownloadingInvoice}
                   >
+                    <Download className="h-4 w-4 mr-2" />
                     {isDownloadingInvoice ? 'Descargando...' : 'Descargar Factura'}
                   </Button>
-                )}
-              </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

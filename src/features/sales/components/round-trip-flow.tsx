@@ -1,4 +1,5 @@
 import { useRoundTrip } from '../context/round-trip-context'
+import { useLiberarBloqueosAlSalir } from '../hooks/use-liberar-bloqueos-al-salir'
 import { SalesPage } from './sales-page'
 import { ServiciosVueltaPage } from './servicios-vuelta-page'
 import { RoundTripSeatSelectionPage } from './asientos/round-trip-seat-selection-page'
@@ -8,6 +9,26 @@ import { RoundTripPaymentPage } from './payment'
 export function RoundTripFlow() {
   const { roundTripData, currentStep, setCurrentStep } = useRoundTrip()
 
+  /**
+   * Si el operador abandona la venta (cierra la pestaña o se va a otra
+   * sección), los asientos bloqueados se liberan. Un bloqueo con venta
+   * confirmada ya no es nuestro: ese no se toca.
+   */
+  useLiberarBloqueosAlSalir(() => [
+    {
+      codigoReferencia: roundTripData.ida.codigoReferencia,
+      activo:
+        !!roundTripData.ida.codigoReferencia &&
+        !roundTripData.ida.ventaConfirmada,
+    },
+    {
+      codigoReferencia: roundTripData.vuelta?.codigoReferencia,
+      activo:
+        !!roundTripData.vuelta?.codigoReferencia &&
+        !roundTripData.vuelta?.ventaConfirmada,
+    },
+  ])
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'search':
@@ -15,10 +36,10 @@ export function RoundTripFlow() {
 
       case 'ida-seats':
         return (
-          <RoundTripSeatSelectionPage 
+          <RoundTripSeatSelectionPage
             tripType="ida"
-            onComplete={(_servicio, _asientos, _codigoReferencia) => {
-              // Los datos se guardan automáticamente en el contexto desde RoundTripSeatSelectionPage
+            onComplete={() => {
+              // Los datos se guardan en el contexto desde la propia pantalla.
               if (roundTripData.vuelta?.fecha) {
                 setCurrentStep('servicios-vuelta')
               } else {
@@ -33,18 +54,15 @@ export function RoundTripFlow() {
 
       case 'vuelta-seats':
         return (
-          <RoundTripSeatSelectionPage 
+          <RoundTripSeatSelectionPage
             tripType="vuelta"
-            onComplete={(_servicio, _asientos, _codigoReferencia) => {
-              // Los datos se guardan automáticamente en el contexto desde RoundTripSeatSelectionPage
-              setCurrentStep('checkout')
-            }}
+            onComplete={() => setCurrentStep('checkout')}
           />
         )
 
       case 'checkout':
         return (
-          <RoundTripCheckoutPage 
+          <RoundTripCheckoutPage
             onComplete={() => setCurrentStep('payment')}
           />
         )

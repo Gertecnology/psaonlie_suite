@@ -1,4 +1,18 @@
-const API_URL = import.meta.env.VITE_API_URL
+import { apiFetchRaw } from '@/utils/api-client'
+import { asientosFaltantes } from '../utils/asientos'
+// Import de sólo tipos: no genera dependencia en runtime pese al ciclo con el
+// modelo, que a su vez re-exporta los tipos de este archivo.
+import type { AsientosResponse } from '../models/sales.model'
+
+/** Tiempo que le damos al SOAP de las empresas para responder una búsqueda. */
+const TIMEOUT_CONSULTA_MS = 45_000
+
+/**
+ * El bloqueo consulta la taquilla, bloquea contra la empresa y vuelve a
+ * consultar para verificar. Son tres viajes SOAP encadenados, por eso el
+ * margen es mayor que el de una consulta simple.
+ */
+const TIMEOUT_BLOQUEO_MS = 90_000
 
 // Interface for homologated stop response
 export interface ParadaHomologada {
@@ -24,15 +38,24 @@ export interface Servicio {
   TextoTarifasFull: string
 }
 
-// Interface for service charge
+/**
+ * Cargo por servicio configurado para la empresa.
+ *
+ * Los campos numéricos llegan como string desde Postgres (columnas `decimal`),
+ * por eso el tipo los acepta en las dos formas. Usar siempre los helpers de
+ * `utils/money` para operar con ellos.
+ */
 export interface ServiceCharge {
   id: string
   nombre: string
-  porcentaje: string
+  porcentaje: string | number
   activo: boolean
   esGlobal: boolean
+  /** Valores reales del backend: 'PORCENTUAL' | 'FIJO'. */
   tipoAplicacion: string
-  montoFijo: number | null
+  montoFijo?: string | number | null
+  montoMinimo?: string | number | null
+  montoMaximo?: string | number | null
 }
 
 // Interface for company services response
@@ -40,10 +63,10 @@ export interface EmpresaServicios {
   empresa: string
   data: Servicio[]
   success: boolean
-  url: string
+  /** URL del logo de la empresa que arma el backend. */
+  url?: string
   id: string
-  imageUrl?: string
-  porcentajeVenta?: string
+  porcentajeVenta?: number
   serviceCharge?: ServiceCharge
 }
 
@@ -63,25 +86,73 @@ export interface ServiciosSearchParams {
   ordenDireccion?: 'asc' | 'desc'
 }
 
+/** Respuesta cruda del endpoint de bloqueo. */
+export interface BloquearAsientosApiResponse {
+  exitoso: boolean
+  codigoReferencia: string
+  nroConexion: string
+  tiempoExpiracion: string
+  asientosBloqueados: string[]
+  asientosNoDisponibles: string[]
+  mensaje: string
+}
+
+/** Respuesta cruda del endpoint de liberación. */
+export interface LiberarBloqueoApiResponse {
+  success: boolean
+  message: string
+}
+
+/**
+ * El bloqueo de asientos falló, total o parcialmente.
+ *
+ * Existe porque el backend responde HTTP 201 aunque no haya bloqueado nada:
+ * el resultado real viene en el cuerpo (`exitoso`, `asientosBloqueados`). Sin
+ * este error el panel avanzaba al checkout con asientos que nunca se
+ * reservaron, el cliente pagaba y el boleto no se podía emitir.
+ */
+export class BloqueoAsientosError extends Error {
+  readonly asientosNoBloqueados: string[]
+  readonly codigoReferencia: string
+  readonly parcial: boolean
+
+  constructor(
+    message: string,
+    opciones: {
+      asientosNoBloqueados?: string[]
+      codigoReferencia?: string
+      parcial?: boolean
+    } = {},
+  ) {
+    super(message)
+    this.name = 'BloqueoAsientosError'
+    this.asientosNoBloqueados = opciones.asientosNoBloqueados ?? []
+    this.codigoReferencia = opciones.codigoReferencia ?? ''
+    this.parcial = opciones.parcial ?? false
+  }
+}
+
 // Service to search homologated stops by name
-export async function searchParadasHomologadas(searchTerm: string): Promise<ParadaHomologada[]> {
-  
+export async function searchParadasHomologadas(
+  searchTerm: string,
+): Promise<ParadaHomologada[]> {
   if (!searchTerm.trim()) {
     throw new Error('El término de búsqueda es requerido')
   }
 
-  const response = await fetch(`${API_URL}/api/search-paradas-homologadas?searchTerm=${encodeURIComponent(searchTerm)}`)
-
-  if (!response.ok) {
-    throw new Error('Error al buscar paradas homologadas')
-  }
-
-  const result: ParadaHomologada[] = await response.json()
-  return result
+  return apiFetchRaw<ParadaHomologada[]>(
+    `/api/search-paradas-homologadas?searchTerm=${encodeURIComponent(searchTerm)}`,
+    {
+      fallbackMessage: 'Error al buscar paradas homologadas',
+      timeoutMs: TIMEOUT_CONSULTA_MS,
+    },
+  )
 }
 
 // Service to get services by destinations with filters
-export async function getServiciosPorDestinos(params: ServiciosSearchParams): Promise<EmpresaServicios[]> {
+export async function getServiciosPorDestinos(
+  params: ServiciosSearchParams,
+): Promise<EmpresaServicios[]> {
   const {
     origenDestinoId,
     destinoDestinoId,
@@ -94,46 +165,43 @@ export async function getServiciosPorDestinos(params: ServiciosSearchParams): Pr
     asientosMinimos,
     empresaId,
     ordenarPor,
-    ordenDireccion
+    ordenDireccion,
   } = params
 
-  // Validate required parameters
   if (!origenDestinoId || !destinoDestinoId || !fecha) {
-    throw new Error('Los parámetros origenDestinoId, destinoDestinoId y fecha son requeridos')
+    throw new Error(
+      'Los parámetros origenDestinoId, destinoDestinoId y fecha son requeridos',
+    )
   }
 
-  // Build query parameters
   const queryParams = new URLSearchParams({
     origenDestinoId,
     destinoDestinoId,
-    fecha
+    fecha,
   })
 
-  // Add optional parameters if provided
   if (horaDesde) queryParams.append('horaDesde', horaDesde)
   if (horaHasta) queryParams.append('horaHasta', horaHasta)
   if (calidad) queryParams.append('calidad', calidad)
-  if (tarifaMinima !== undefined) queryParams.append('tarifaMinima', tarifaMinima.toString())
-  if (tarifaMaxima !== undefined) queryParams.append('tarifaMaxima', tarifaMaxima.toString())
-  if (asientosMinimos !== undefined) queryParams.append('asientosMinimos', asientosMinimos.toString())
+  if (tarifaMinima !== undefined)
+    queryParams.append('tarifaMinima', tarifaMinima.toString())
+  if (tarifaMaxima !== undefined)
+    queryParams.append('tarifaMaxima', tarifaMaxima.toString())
+  if (asientosMinimos !== undefined)
+    queryParams.append('asientosMinimos', asientosMinimos.toString())
   if (empresaId) queryParams.append('empresaId', empresaId)
   if (ordenarPor) queryParams.append('ordenarPor', ordenarPor)
   if (ordenDireccion) queryParams.append('ordenDireccion', ordenDireccion)
 
-  const response = await fetch(`${API_URL}/api/servicios-por-destinos?${queryParams.toString()}`)
+  const servicios = await apiFetchRaw<EmpresaServicios[]>(
+    `/api/servicios-por-destinos?${queryParams.toString()}`,
+    {
+      fallbackMessage: 'Error al obtener servicios por destinos',
+      timeoutMs: TIMEOUT_CONSULTA_MS,
+    },
+  )
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Destino no encontrado')
-    }
-    if (response.status === 500) {
-      throw new Error('Error interno del servidor')
-    }
-    throw new Error('Error al obtener servicios por destinos')
-  }
-
-  const result: EmpresaServicios[] = await response.json()
-  return result
+  return servicios ?? []
 }
 
 // Service to consult available seats for a service
@@ -145,105 +213,153 @@ export async function consultarAsientos(params: {
 }) {
   const { servicioId, origenId, destinoId, empresaId } = params
 
-  // Validate required parameters
   if (!servicioId || !origenId || !destinoId || !empresaId) {
-    throw new Error('Todos los parámetros son requeridos: servicioId, origenId, destinoId, empresaId')
+    throw new Error(
+      'Todos los parámetros son requeridos: servicioId, origenId, destinoId, empresaId',
+    )
   }
 
-  const response = await fetch(`${API_URL}/api/ventas/consultar-asientos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const respuesta = await apiFetchRaw<AsientosResponse>(
+    '/api/ventas/consultar-asientos',
+    {
+      method: 'POST',
+      body: JSON.stringify({ servicioId, origenId, destinoId, empresaId }),
+      fallbackMessage: 'Error al consultar asientos disponibles',
+      timeoutMs: TIMEOUT_CONSULTA_MS,
     },
-    body: JSON.stringify({
-      servicioId,
-      origenId,
-      destinoId,
-      empresaId,
-    }),
-  })
+  )
 
-  if (!response.ok) {
-    throw new Error('Error al consultar asientos disponibles')
+  if (!respuesta || !Array.isArray(respuesta.asientos)) {
+    throw new Error(
+      'La empresa no devolvió el mapa de asientos. Reintentá en unos segundos.',
+    )
   }
 
-  const result = await response.json()
-  return result
+  return respuesta
 }
 
-// Service to block seats for 30 minutes
+/**
+ * Bloquea asientos por 30 minutos y **verifica el resultado real**.
+ *
+ * El endpoint responde 201 en todos los casos, incluso cuando no bloqueó nada:
+ * el veredicto está en el cuerpo. Peor todavía, `exitoso` es `true` cuando se
+ * bloqueó *al menos uno* de los asientos pedidos, así que un bloqueo parcial
+ * pasaba como éxito completo y la venta se confirmaba por asientos que nunca
+ * quedaron reservados.
+ *
+ * Acá se rechaza cualquier resultado que no cubra exactamente lo pedido, y se
+ * libera el bloqueo parcial para no dejar asientos colgados 30 minutos.
+ */
 export async function bloquearAsientos(params: {
   servicioId: string
   origenId: string
   destinoId: string
   asientos: string[]
   empresaId: string
-}) {
+}): Promise<BloquearAsientosApiResponse> {
   const { servicioId, origenId, destinoId, asientos, empresaId } = params
 
-  // Validate required parameters
   if (!servicioId || !origenId || !destinoId || !empresaId) {
-    throw new Error('Los parámetros servicioId, origenId, destinoId y empresaId son requeridos')
+    throw new BloqueoAsientosError(
+      'Faltan datos del servicio para bloquear los asientos.',
+    )
   }
 
   if (!asientos || asientos.length === 0) {
-    throw new Error('Debe seleccionar al menos un asiento para bloquear')
+    throw new BloqueoAsientosError(
+      'Debe seleccionar al menos un asiento para bloquear.',
+    )
   }
 
-  const response = await fetch(`${API_URL}/api/ventas/bloquear-asientos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const resultado = await apiFetchRaw<BloquearAsientosApiResponse>(
+    '/api/ventas/bloquear-asientos',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        servicioId,
+        origenId,
+        destinoId,
+        asientos,
+        empresaId,
+      }),
+      fallbackMessage: 'No se pudieron bloquear los asientos.',
+      timeoutMs: TIMEOUT_BLOQUEO_MS,
     },
-    body: JSON.stringify({
-      servicioId,
-      origenId,
-      destinoId,
-      asientos,
-      empresaId,
-    }),
-  })
+  )
 
-  if (!response.ok) {
-    if (response.status === 400) {
-      throw new Error('Parámetros inválidos para bloquear asientos')
-    }
-    if (response.status === 404) {
-      throw new Error('Servicio o asientos no encontrados')
-    }
-    if (response.status === 409) {
-      throw new Error('Algunos asientos no están disponibles')
-    }
-    throw new Error('Error al bloquear asientos')
+  if (!resultado) {
+    throw new BloqueoAsientosError(
+      'El servidor no devolvió el resultado del bloqueo. No se reservó ningún asiento.',
+      { asientosNoBloqueados: asientos },
+    )
   }
 
-  const result = await response.json()
-  return result
+  const bloqueados = resultado.asientosBloqueados ?? []
+
+  // Fallo declarado por el backend, o bloqueo sin código: no hay reserva.
+  if (!resultado.exitoso || !resultado.codigoReferencia || bloqueados.length === 0) {
+    throw new BloqueoAsientosError(
+      resultado.mensaje ||
+        'No se pudo bloquear ningún asiento. Elegí otros asientos o reintentá.',
+      {
+        asientosNoBloqueados:
+          resultado.asientosNoDisponibles?.length
+            ? resultado.asientosNoDisponibles
+            : asientos,
+        codigoReferencia: resultado.codigoReferencia ?? '',
+      },
+    )
+  }
+
+  // Bloqueo parcial: el backend lo reporta como éxito. Para nosotros no lo es.
+  const faltantes = asientosFaltantes(asientos, bloqueados)
+  if (faltantes.length > 0) {
+    // El bloqueo parcial ya existe del lado de la empresa: liberarlo para que
+    // los asientos no queden retenidos media hora por una venta que no será.
+    await liberarBloqueo(resultado.codigoReferencia).catch(() => undefined)
+
+    throw new BloqueoAsientosError(
+      `Solo se pudieron bloquear ${bloqueados.length} de ${asientos.length} asientos. No quedaron disponibles: ${faltantes.join(', ')}. Se liberó la reserva parcial.`,
+      {
+        asientosNoBloqueados: faltantes,
+        codigoReferencia: resultado.codigoReferencia,
+        parcial: true,
+      },
+    )
+  }
+
+  return resultado
 }
 
-// Service to release seat block using reference code
-export async function liberarBloqueo(codigoReferencia: string) {
+/**
+ * Libera un bloqueo por su código de referencia.
+ *
+ * `keepalive` permite que la request sobreviva al cierre de la pestaña: es lo
+ * que usamos para liberar los asientos cuando el operador abandona la venta.
+ */
+export async function liberarBloqueo(
+  codigoReferencia: string,
+  opciones: { keepalive?: boolean } = {},
+): Promise<LiberarBloqueoApiResponse> {
   if (!codigoReferencia) {
     throw new Error('El código de referencia es requerido')
   }
 
-  const response = await fetch(`${API_URL}/api/ventas/liberar-bloqueo/${codigoReferencia}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const resultado = await apiFetchRaw<LiberarBloqueoApiResponse>(
+    `/api/ventas/liberar-bloqueo/${encodeURIComponent(codigoReferencia)}`,
+    {
+      method: 'POST',
+      keepalive: opciones.keepalive,
+      fallbackMessage: 'Error al liberar el bloqueo de asientos',
+      timeoutMs: TIMEOUT_CONSULTA_MS,
     },
-  })
+  )
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Código de referencia no encontrado')
-    }
-    if (response.status === 400) {
-      throw new Error('Código de referencia inválido')
-    }
-    throw new Error('Error al liberar bloqueo de asientos')
+  if (resultado && resultado.success === false) {
+    throw new Error(
+      resultado.message || 'No se pudo liberar el bloqueo de asientos.',
+    )
   }
 
-  const result = await response.json()
-  return result
+  return resultado ?? { success: true, message: 'Bloqueo liberado' }
 }

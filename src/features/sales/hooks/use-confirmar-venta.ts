@@ -1,23 +1,26 @@
-import { useMutation } from '@tanstack/react-query'
-import { confirmarVenta, type ConfirmarVentaRequest, type ConfirmarVentaResponse } from '../services/confirmar-venta'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  confirmarVenta,
+  type ConfirmarVentaRequest,
+  type ConfirmarVentaResponse,
+} from '../services/confirmar-venta'
 
+/**
+ * Confirma la venta.
+ *
+ * No hay callbacks: `confirmarVenta` ya lanza `VentaConfirmacionError` cuando
+ * alguna venta del lote falló. La versión anterior lanzaba desde `onSuccess` y
+ * volvía a lanzar desde `onError`, dentro del observer de React Query, lo que
+ * produce rejections sin manejar.
+ */
 export function useConfirmarVenta() {
+  const queryClient = useQueryClient()
+
   return useMutation<ConfirmarVentaResponse, Error, ConfirmarVentaRequest>({
     mutationFn: confirmarVenta,
-    onSuccess: (data) => {
-      // Verificar si hay errores en la respuesta
-      if (data.fallidas > 0) {
-        const errores = data.resultados
-          .filter(resultado => !resultado.exitoso && resultado.error)
-          .map(resultado => resultado.error!.mensaje)
-          .join(', ')
-        
-        throw new Error(errores)
-      }
-    },
-    onError: (error) => {
-      // El error ya viene con el mensaje correcto del servidor
-      throw error
+    onSettled: () => {
+      // La venta consume el bloqueo y cambia la disponibilidad del servicio.
+      queryClient.invalidateQueries({ queryKey: ['asientos'] })
     },
   })
 }

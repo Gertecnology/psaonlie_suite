@@ -1,29 +1,24 @@
-import { useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, Users, Lock, CreditCard } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { ArrowLeft, MapPin, Calendar, Clock, Users, CreditCard, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ClientForm } from './client-form'
+import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
+import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { useRoundTrip } from '../../context/round-trip-context'
-import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
 import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
-import type { ClientWithSeat, ServiceCharge } from '../../models/sales.model'
+import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
+import {
+  mensajeParaOperador,
+  VentaConfirmacionError,
+  type VentaConfirmar,
+} from '../../services/confirmar-venta'
+import { sumarPreciosAsientos } from '../../utils/money'
+import type { PasajeroRegistrado } from '../../models/sales.model'
 import type { CreateClientFormValues } from '@/features/clients/models/clients.model'
 import { toast } from 'sonner'
-
-// Helper function to calculate service charge
-const calculateServiceCharge = (subtotal: number, serviceCharge?: ServiceCharge): number => {
-  if (!serviceCharge || !serviceCharge.activo) return 0
-  
-  if (serviceCharge.tipoAplicacion === 'PORCENTUAL' || serviceCharge.tipoAplicacion === 'PORCENTAJE') {
-    return Math.round(subtotal * (parseFloat(serviceCharge.porcentaje) / 100))
-  } else if (serviceCharge.tipoAplicacion === 'MONTO_FIJO' && serviceCharge.montoFijo) {
-    return serviceCharge.montoFijo
-  }
-  
-  return 0
-}
 
 interface RoundTripCheckoutPageProps {
   onComplete?: () => void
@@ -31,61 +26,107 @@ interface RoundTripCheckoutPageProps {
 
 export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripCheckoutPageProps) {
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
-  const [clientsData, setClientsData] = useState<ClientWithSeat[]>([])
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
+  const [errorVenta, setErrorVenta] = useState<string | null>(null)
 
-  const createClientMutation = useCreateClient()
   const confirmarVentaMutation = useConfirmarVenta()
+  const liberarBloqueoMutation = useLiberarBloqueo()
 
-  // Crear formularios por pasajero, no por asiento
-  // Si hay múltiples asientos, cada pasajero viaja en ambos viajes
+  /**
+   * Guarda contra doble envío. Este es el paso que crea la venta contra la
+   * empresa: mandarlo dos veces emite dos boletos y cobra dos veces.
+   *
+   * Es un `ref` y no un estado porque tiene que cerrarse de forma síncrona:
+   * dos clicks seguidos se despachan antes de que React vuelva a renderizar,
+   * así que un `disabled` calculado no llega a tiempo. Y sólo se reabre si la
+   * confirmación falló: una venta confirmada no se confirma de nuevo.
+   */
+  const confirmacionCerrada = useRef(false)
+  const ventaYaConfirmada = !!roundTripData.ida.ventaConfirmada
+
+  // Un formulario por pasajero: si hay ida y vuelta, el mismo pasajero viaja
+  // en los dos tramos.
   const maxAsientos = Math.max(
     roundTripData.ida.asientos?.length || 0,
     roundTripData.vuelta?.asientos?.length || 0
   )
-  
+
   const passengerForms = Array.from({ length: maxAsientos }, (_, index) => ({
     passengerNumber: index + 1,
     asientoIda: roundTripData.ida.asientos?.[index],
     asientoVuelta: roundTripData.vuelta?.asientos?.[index],
     empresaIdIda: roundTripData.ida.empresaId,
-    empresaIdVuelta: roundTripData.vuelta?.empresaId,
     empresaNombreIda: roundTripData.ida.servicio?.Emp,
-    empresaNombreVuelta: roundTripData.vuelta?.servicio?.Emp,
-    tripLabelIda: `${roundTripData.ida.origen?.nombre} → ${roundTripData.ida.destino?.nombre}`,
-    tripLabelVuelta: roundTripData.vuelta ? `${roundTripData.vuelta.origen?.nombre} → ${roundTripData.vuelta.destino?.nombre}` : null
   }))
 
-  // Combinar todos los asientos para cálculos de precio
-  const allSeats = [
-    ...(roundTripData.ida.asientos || []).map(seat => ({ 
-      ...seat, 
-      tripType: 'ida' as const,
-      tripLabel: `${roundTripData.ida.origen?.nombre} → ${roundTripData.ida.destino?.nombre}`
-    })),
-    ...(roundTripData.vuelta?.asientos || []).map(seat => ({ 
-      ...seat, 
-      tripType: 'vuelta' as const,
-      tripLabel: `${roundTripData.vuelta?.origen?.nombre} → ${roundTripData.vuelta?.destino?.nombre}`
-    }))
-  ]
+  const tramos = useMemo<TramoResumen[]>(() => {
+    const lista: TramoResumen[] = []
 
-  const handleClientCreated = (client: CreateClientFormValues, passengerNumber: number) => {
-    setClientsData(prev => {
-      const existingIndex = prev.findIndex(c => c.passengerNumber === passengerNumber)
-      if (existingIndex >= 0) {
-        // Actualizar cliente existente para este pasajero
-        const updated = [...prev]
-        updated[existingIndex] = { ...client, passengerNumber }
-        return updated
-      } else {
-        // Agregar nuevo cliente para este pasajero
-        return [...prev, { ...client, passengerNumber }]
+    if (roundTripData.ida.asientos?.length) {
+      lista.push({
+        etiqueta: 'Ida',
+        asientos: roundTripData.ida.asientos,
+        serviceCharge: roundTripData.ida.serviceCharge,
+      })
+    }
+
+    if (roundTripData.vuelta?.asientos?.length) {
+      lista.push({
+        etiqueta: 'Vuelta',
+        asientos: roundTripData.vuelta.asientos,
+        serviceCharge: roundTripData.vuelta.serviceCharge,
+      })
+    }
+
+    return lista
+  }, [roundTripData])
+
+  const handleClientCreated = (
+    clienteId: string,
+    client: CreateClientFormValues,
+    passengerNumber: number,
+    seatNumber?: number,
+  ) => {
+    setErrorVenta(null)
+    setPasajeros(prev => {
+      const registrado: PasajeroRegistrado = {
+        clienteId,
+        passengerNumber,
+        seatNumber,
+        nombre: client.nombre,
+        apellido: client.apellido,
+        email: client.email,
+        numeroDocumento: client.numeroDocumento,
       }
+
+      const existente = prev.findIndex(p => p.passengerNumber === passengerNumber)
+      if (existente >= 0) {
+        const actualizado = [...prev]
+        actualizado[existente] = registrado
+        return actualizado
+      }
+
+      return [...prev, registrado]
     })
   }
 
+  /** Libera los bloqueos de los tramos cuya venta no llegó a confirmarse. */
+  const liberarBloqueosSinVenta = async (indicesFallidos: number[]) => {
+    const codigos: Array<string | undefined> = [
+      roundTripData.ida.codigoReferencia,
+      roundTripData.vuelta?.codigoReferencia,
+    ]
+
+    for (const indice of indicesFallidos) {
+      const codigo = codigos[indice]
+      if (!codigo) continue
+      await liberarBloqueoMutation.mutateAsync(codigo).catch(() => undefined)
+    }
+  }
+
   const handleProceedToPayment = async () => {
+    if (confirmacionCerrada.current || ventaYaConfirmada) return
+
     if (!roundTripData.ida.servicio || !roundTripData.ida.codigoReferencia) {
       toast.error('Faltan datos del viaje de ida')
       return
@@ -96,54 +137,48 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
       return
     }
 
-    if (clientsData.length !== passengerForms.length) {
-      toast.error('Por favor completa todos los formularios de clientes')
+    if (pasajeros.length !== passengerForms.length) {
+      toast.error('Registrá los datos de todos los pasajeros antes de continuar')
       return
     }
 
-    setIsProcessingPayment(true)
+    confirmacionCerrada.current = true
+    setErrorVenta(null)
 
     try {
-      // 1. Crear todos los clientes primero
-      const clientIds: { [passengerNumber: number]: string } = {}
-      
-      for (const clientData of clientsData) {
-        const response = await createClientMutation.mutateAsync(clientData)
-        clientIds[clientData.passengerNumber!] = response.cliente.id
-      }
+      // Los pasajeros ya están creados: el formulario devolvió el id de cada
+      // uno. Antes se los volvía a crear acá, duplicando el alta y la
+      // sincronización con la empresa.
+      const clientePorPasajero = new Map(
+        pasajeros.map(pasajero => [pasajero.passengerNumber, pasajero.clienteId]),
+      )
 
-      // 2. Preparar las ventas para el array
-      const ventas = []
+      const ventas: VentaConfirmar[] = []
 
-      // Venta de IDA
-      // Calcular subtotal (solo precio de asientos)
-      const subtotalIda = roundTripData.ida.asientos!.reduce((total, asiento) => total + asiento.precio, 0)
-
-      const ventaIda = {
-        bloqueoCodigoReferencia: roundTripData.ida.codigoReferencia!,
+      const asientosIda = roundTripData.ida.asientos ?? []
+      ventas.push({
+        bloqueoCodigoReferencia: roundTripData.ida.codigoReferencia,
         servicioId: roundTripData.ida.servicio.Id,
         empresaId: roundTripData.ida.empresaId!,
         EmpresaBoleto: roundTripData.ida.servicio.Emp,
         calidad: roundTripData.ida.servicio.Calidad,
         origenId: roundTripData.ida.origen!.id,
         destinoId: roundTripData.ida.destino!.id,
-        metodoPago: 'EFECTIVO', // Se puede cambiar después en el pago
+        metodoPago: 'EFECTIVO',
         estadoPago: 'PENDIENTE',
-        importeTotal: subtotalIda,
-        asiento: roundTripData.ida.asientos!.map((asiento, index) => ({
+        // Sólo el importe de los pasajes: el cargo por servicio y la comisión
+        // los calcula el backend a partir de este valor.
+        importeTotal: sumarPreciosAsientos(asientosIda),
+        asiento: asientosIda.map((asiento, index) => ({
           Nroasiento: asiento.numero,
           Precio: asiento.precio,
-          clienteId: clientIds[index + 1] // Cliente según posición del asiento
-        }))
-      }
-      ventas.push(ventaIda)
+          clienteId: clientePorPasajero.get(index + 1)!,
+        })),
+      })
 
-      // Venta de VUELTA (si existe)
       if (roundTripData.vuelta?.servicio && roundTripData.vuelta?.codigoReferencia) {
-        // Calcular subtotal para vuelta (solo precio de asientos)
-        const subtotalVuelta = roundTripData.vuelta.asientos!.reduce((total, asiento) => total + asiento.precio, 0)
-
-        const ventaVuelta = {
+        const asientosVuelta = roundTripData.vuelta.asientos ?? []
+        ventas.push({
           bloqueoCodigoReferencia: roundTripData.vuelta.codigoReferencia,
           servicioId: roundTripData.vuelta.servicio.Id,
           empresaId: roundTripData.vuelta.empresaId!,
@@ -151,57 +186,76 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
           calidad: roundTripData.vuelta.servicio.Calidad,
           origenId: roundTripData.vuelta.origen!.id,
           destinoId: roundTripData.vuelta.destino!.id,
-          metodoPago: 'EFECTIVO', // Se puede cambiar después en el pago
+          metodoPago: 'EFECTIVO',
           estadoPago: 'PENDIENTE',
-          importeTotal: subtotalVuelta,
-          asiento: roundTripData.vuelta.asientos!.map((asiento, index) => ({
+          importeTotal: sumarPreciosAsientos(asientosVuelta),
+          asiento: asientosVuelta.map((asiento, index) => ({
             Nroasiento: asiento.numero,
             Precio: asiento.precio,
-            clienteId: clientIds[index + 1] // Cliente según posición del asiento
-          }))
-        }
-        ventas.push(ventaVuelta)
+            clienteId: clientePorPasajero.get(index + 1)!,
+          })),
+        })
       }
 
-      // 3. Preparar la petición con ambas ventas
-      const ventaData = {
-        ventas: ventas
-      }
+      const ventaResponse = await confirmarVentaMutation.mutateAsync({ ventas })
 
-      // 4. Confirmar ambas ventas en una sola petición
-      const ventaResponse = await confirmarVentaMutation.mutateAsync(ventaData)
-      
-      toast.success('Ventas confirmadas exitosamente', {
-        description: `Se procesaron ${ventaResponse.exitosas} venta(s) correctamente`,
-        duration: 5000,
-      })
-
-      // 5. Guardar los datos de las ventas exitosas para el pago
       const ventasExitosas = ventaResponse.resultados
         .filter(resultado => resultado.exitoso && resultado.venta)
         .map(resultado => resultado.venta!)
 
-      // Guardar en el contexto para usar en la página de pago
+      // Sin venta confirmada no hay nada que cobrar: no avanzamos. Antes se
+      // mostraba "Ventas confirmadas exitosamente" y se pasaba a la pantalla
+      // de pago aunque `resultados` viniera vacío.
+      if (ventasExitosas.length !== ventas.length) {
+        throw new Error(
+          'El servidor no devolvió todas las ventas confirmadas. Verificá en el listado de ventas antes de reintentar.',
+        )
+      }
+
       setRoundTripData({
         ida: {
           ...roundTripData.ida,
-          ventaConfirmada: ventasExitosas[0] // Primera venta es la de ida
+          ventaConfirmada: ventasExitosas[0],
         },
         vuelta: roundTripData.vuelta ? {
           ...roundTripData.vuelta,
-          ventaConfirmada: ventasExitosas[1] // Segunda venta es la de vuelta
-        } : undefined
+          ventaConfirmada: ventasExitosas[1],
+        } : undefined,
       })
 
-      // 6. Ir a la página de pago
+      toast.success('Venta confirmada', {
+        description: `Transacción ${ventasExitosas[0].numeroTransaccion}. Falta registrar el cobro.`,
+        duration: 6000,
+      })
+
       setCurrentStep('payment')
-
     } catch (error) {
-      toast.error('Error al procesar las ventas', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
+      let mensaje = mensajeParaOperador(error)
+
+      // Fallo parcial: hay tramos con venta y tramos sin ella. Liberamos los
+      // bloqueos que quedaron sin venta para no retener asientos ajenos, y
+      // avisamos cuáles ventas SÍ quedaron creadas: el operador tiene que
+      // saberlo para anularlas o completarlas a mano.
+      if (error instanceof VentaConfirmacionError) {
+        await liberarBloqueosSinVenta(error.indicesFallidos)
+
+        const confirmadas = error.ventasExitosas
+        if (confirmadas.length > 0) {
+          const transacciones = confirmadas
+            .map((venta) => venta.numeroTransaccion)
+            .join(', ')
+          mensaje += ` Atención: ya quedaron creadas estas ventas: ${transacciones}. Revisalas en el listado antes de reintentar.`
+        }
+      }
+
+      setErrorVenta(mensaje)
+      toast.error('No se pudo confirmar la venta', {
+        description: mensaje,
+        duration: 10000,
       })
-    } finally {
-      setIsProcessingPayment(false)
+
+      // Falló: se puede corregir y reintentar sin perder lo cargado.
+      confirmacionCerrada.current = false
     }
   }
 
@@ -229,29 +283,26 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
     )
   }
 
-  const subtotalIda = roundTripData.ida.asientos?.reduce((total, seat) => total + seat.precio, 0) || 0
-  const subtotalVuelta = roundTripData.vuelta?.asientos?.reduce((total, seat) => total + seat.precio, 0) || 0
-  const serviceChargeIda = calculateServiceCharge(subtotalIda, roundTripData.ida.serviceCharge)
-  const serviceChargeVuelta = calculateServiceCharge(subtotalVuelta, roundTripData.vuelta?.serviceCharge)
-  
-  const subtotal = subtotalIda + subtotalVuelta
-  const totalServiceCharges = serviceChargeIda + serviceChargeVuelta
-  const total = subtotal + totalServiceCharges
+  const confirmando = confirmarVentaMutation.isPending
+  const faltanPasajeros = pasajeros.length !== passengerForms.length
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={handleGoBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold">Checkout - Viaje Completo</h1>
-          <p className="text-sm text-muted-foreground">
-            Completa la información de los pasajeros para ambos viajes
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={handleGoBack} disabled={confirmando}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold">Checkout - Viaje Completo</h1>
+            <p className="text-sm text-muted-foreground">
+              Completa la información de los pasajeros para ambos viajes
+            </p>
+          </div>
         </div>
+        <TiempoBloqueo expiraEn={roundTripData.ida.bloqueoExpiraEn} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -286,7 +337,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
@@ -327,7 +378,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
@@ -351,122 +402,14 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
             </CardContent>
           </Card>
 
-          {/* Payment Summary */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Resumen de Pago
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2">
-                {/* Asientos */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lock className="h-3 w-3 text-blue-600" />
-                    <span className="text-sm font-medium text-muted-foreground">Asientos ({allSeats.length})</span>
-                  </div>
-                  {allSeats.map((seat) => (
-                    <div key={`${seat.tripType}-${seat.numero}`} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Asiento {seat.numero} - {seat.tripLabel}
-                      </span>
-                      <span className="font-medium">
-                        {new Intl.NumberFormat('es-PY', {
-                          style: 'currency',
-                          currency: 'PYG',
-                          minimumFractionDigits: 0,
-                        }).format(seat.precio)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="text-sm font-medium">
-                    {new Intl.NumberFormat('es-PY', {
-                      style: 'currency',
-                      currency: 'PYG',
-                      minimumFractionDigits: 0,
-                    }).format(subtotal)}
-                  </span>
-                </div>
-                
-                {/* Cargos por Servicio */}
-                {totalServiceCharges > 0 && (
-                  <>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CreditCard className="h-3 w-3 text-orange-600" />
-                        <span className="text-sm font-medium text-muted-foreground">Cargos por Servicio</span>
-                      </div>
-                      
-                      {/* Cargo Ida */}
-                      {serviceChargeIda > 0 && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Ida - {roundTripData.ida.serviceCharge?.nombre}
-                            {roundTripData.ida.serviceCharge?.tipoAplicacion === 'PORCENTAJE' && 
-                              ` (${roundTripData.ida.serviceCharge.porcentaje}%)`
-                            }
-                          </span>
-                          <span className="font-medium">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(serviceChargeIda)}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Cargo Vuelta */}
-                      {serviceChargeVuelta > 0 && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Vuelta - {roundTripData.vuelta?.serviceCharge?.nombre}
-                            {roundTripData.vuelta?.serviceCharge?.tipoAplicacion === 'PORCENTAJE' && 
-                              ` (${roundTripData.vuelta.serviceCharge.porcentaje}%)`
-                            }
-                          </span>
-                          <span className="font-medium">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(serviceChargeVuelta)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <Separator />
-                  </>
-                )}
-                
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">Total</span>
-                  <span className="text-lg font-bold text-primary">
-                    {new Intl.NumberFormat('es-PY', {
-                      style: 'currency',
-                      currency: 'PYG',
-                      minimumFractionDigits: 0,
-                    }).format(total)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Desglose de lo que paga el cliente */}
+          <ResumenPago tramos={tramos} />
         </div>
 
         {/* Right Column - Client Forms */}
         <div className="space-y-4">
-          {/* Render one form per passenger */}
           {passengerForms.map((form) => {
-            const clientForPassenger = clientsData.find(c => c.passengerNumber === form.passengerNumber)
+            const registrado = pasajeros.find(p => p.passengerNumber === form.passengerNumber)
             return (
               <Card key={`passenger-${form.passengerNumber}`}>
                 <CardHeader className="pb-3">
@@ -491,9 +434,16 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
                   <ClientForm
                     empresaId={form.empresaIdIda || ''}
                     empresaNombre={form.empresaNombreIda}
-                    onClientCreated={(client) => handleClientCreated(client, form.passengerNumber)}
-                    isClientCreated={!!clientForPassenger}
-                    seatNumber={form.asientoIda ? parseInt(form.asientoIda.numero) : 0}
+                    onClientCreated={(clienteId, client) =>
+                      handleClientCreated(
+                        clienteId,
+                        client,
+                        form.passengerNumber,
+                        form.asientoIda ? Number(form.asientoIda.numero) : undefined,
+                      )
+                    }
+                    isClientCreated={!!registrado}
+                    seatNumber={form.asientoIda ? Number(form.asientoIda.numero) : 0}
                     passengerNumber={form.passengerNumber}
                   />
                 </CardContent>
@@ -501,19 +451,30 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
             )
           })}
 
+          {/* La venta falló: el operador puede corregir y reintentar sin
+              perder los pasajeros ya cargados. */}
+          {errorVenta && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{errorVenta}</AlertDescription>
+            </Alert>
+          )}
+
           {/* Action Button */}
-          <Button 
+          <Button
             onClick={handleProceedToPayment}
             className="w-full"
             size="lg"
-            disabled={clientsData.length !== passengerForms.length || isProcessingPayment}
+            disabled={faltanPasajeros || confirmando || ventaYaConfirmada}
           >
             <CreditCard className="h-4 w-4 mr-2" />
-            {isProcessingPayment 
-              ? 'Procesando ventas...' 
-              : clientsData.length === passengerForms.length 
-                ? 'Continuar al Pago' 
-                : `Completa los datos de ${passengerForms.length - clientsData.length} cliente(s) restante(s)`
+            {confirmando
+              ? 'Confirmando venta con la empresa...'
+              : ventaYaConfirmada
+                ? 'Venta ya confirmada'
+                : faltanPasajeros
+                  ? `Faltan los datos de ${passengerForms.length - pasajeros.length} pasajero(s)`
+                  : 'Confirmar venta y continuar al cobro'
             }
           </Button>
         </div>

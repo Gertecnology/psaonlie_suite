@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { ArrowLeft, Users, Info, CheckCircle, Lock, Unlock } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowLeft, Users, Info, CheckCircle, Lock, Unlock, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,10 +8,25 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SeatGrid } from './seat-grid'
 import { ServiceInfo } from './service-info'
 import { SeatLegend } from './seat-legend'
+import { TiempoBloqueo } from './tiempo-bloqueo'
 import { useGetAsientos } from '../../hooks/use-get-asientos'
 import { useBloquearAsientos } from '../../hooks/use-bloquear-asientos'
 import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
-import type { Asiento, ConsultarAsientosRequest } from '../../models/sales.model'
+import { useLiberarBloqueosAlSalir } from '../../hooks/use-liberar-bloqueos-al-salir'
+import {
+  calcularCargoServicio,
+  describirCargoServicio,
+  formatearGuaranies,
+  sumarPreciosAsientos,
+} from '../../utils/money'
+import {
+  deserializarServiceCharge,
+  serializarServiceCharge,
+} from '../../utils/service-charge-url'
+import type { Asiento, ConsultarAsientosRequest, ServiceCharge } from '../../models/sales.model'
+import { toast } from 'sonner'
+
+const MAX_ASIENTOS = 2
 
 interface SeatSelectionSearch {
   servicioId: string
@@ -23,8 +38,8 @@ interface SeatSelectionSearch {
   destino?: string
   fecha?: string
   hora?: string
-  serviceCharge?: string
   codigoReferencia?: string
+  bloqueoExpiraEn?: string
   asientosBloqueados?: string
   preciosBloqueados?: string
   tiposBloqueados?: string
@@ -35,13 +50,26 @@ interface SeatSelectionSearch {
 
 export function SeatSelectionPage() {
   const [search, setSearch] = useState<SeatSelectionSearch | null>(null)
+  const [serviceCharge, setServiceCharge] = useState<ServiceCharge | undefined>()
   const [selectedSeats, setSelectedSeats] = useState<Asiento[]>([])
   const [blockedSeats, setBlockedSeats] = useState<Asiento[]>([])
   const [blockReferenceCode, setBlockReferenceCode] = useState<string | null>(null)
-  const [isBlockingSeats, setIsBlockingSeats] = useState(false)
+  const [bloqueoExpiraEn, setBloqueoExpiraEn] = useState<string | null>(null)
+  const [errorBloqueo, setErrorBloqueo] = useState<string | null>(null)
+  const [bloqueoVencido, setBloqueoVencido] = useState(false)
+
+  /**
+   * Guarda contra doble envío del bloqueo. Es un `ref` porque tiene que
+   * cerrarse de forma síncrona: dos clicks seguidos se despachan antes de que
+   * React vuelva a renderizar. Se reabre sólo si el bloqueo falló o si se
+   * liberaron los asientos.
+   */
+  const bloqueoCerrado = useRef(false)
+  // Mientras navegamos al checkout el bloqueo sigue haciendo falta: sin esta
+  // marca, el `beforeunload` de la navegación liberaría los asientos.
+  const navegandoAlCheckout = useRef(false)
 
   useEffect(() => {
-    // Get search parameters from URL
     const urlParams = new URLSearchParams(window.location.search)
     const searchData: SeatSelectionSearch = {
       servicioId: urlParams.get('servicioId') || '',
@@ -53,8 +81,8 @@ export function SeatSelectionPage() {
       destino: urlParams.get('destino') || undefined,
       fecha: urlParams.get('fecha') || undefined,
       hora: urlParams.get('hora') || undefined,
-      serviceCharge: urlParams.get('serviceCharge') || undefined,
       codigoReferencia: urlParams.get('codigoReferencia') || undefined,
+      bloqueoExpiraEn: urlParams.get('bloqueoExpiraEn') || undefined,
       asientosBloqueados: urlParams.get('asientosBloqueados') || undefined,
       preciosBloqueados: urlParams.get('preciosBloqueados') || undefined,
       tiposBloqueados: urlParams.get('tiposBloqueados') || undefined,
@@ -63,9 +91,10 @@ export function SeatSelectionPage() {
       calidad: urlParams.get('calidad') || undefined,
     }
     setSearch(searchData)
+    setServiceCharge(deserializarServiceCharge(urlParams))
 
     // Si hay asientos bloqueados en la URL, restaurarlos
-    if (searchData.asientosBloqueados && searchData.preciosBloqueados && 
+    if (searchData.asientosBloqueados && searchData.preciosBloqueados &&
         searchData.tiposBloqueados && searchData.pisosBloqueados) {
       const asientosIds = searchData.asientosBloqueados.split(',')
       const precios = searchData.preciosBloqueados.split(',').map(Number)
@@ -85,8 +114,20 @@ export function SeatSelectionPage() {
       if (searchData.codigoReferencia) {
         setBlockReferenceCode(searchData.codigoReferencia)
       }
+      if (searchData.bloqueoExpiraEn) {
+        setBloqueoExpiraEn(searchData.bloqueoExpiraEn)
+      }
     }
   }, [])
+
+  // Si el operador cierra la pestaña o se va a otra sección, los asientos se
+  // liberan. Sin esto quedan retenidos 30 minutos sin venta detrás.
+  useLiberarBloqueosAlSalir(() => [
+    {
+      codigoReferencia: blockReferenceCode,
+      activo: !!blockReferenceCode && !navegandoAlCheckout.current,
+    },
+  ])
 
   const consultarAsientosRequest: ConsultarAsientosRequest | null = search ? {
     servicioId: search.servicioId,
@@ -100,99 +141,133 @@ export function SeatSelectionPage() {
   const liberarBloqueoMutation = useLiberarBloqueo()
 
   const handleSeatSelect = (asiento: Asiento) => {
-    // Si ya hay asientos bloqueados, no permitir cambios
-    if (blockedSeats.length > 0) {
-      return
-    }
+    if (blockedSeats.length > 0) return
 
+    setErrorBloqueo(null)
     setSelectedSeats(prev => {
-      // Si el asiento ya está seleccionado, lo removemos
       if (prev.some(seat => seat.numero === asiento.numero)) {
         return prev.filter(seat => seat.numero !== asiento.numero)
       }
-      
-      // Si ya tenemos 2 asientos seleccionados, no permitimos más
-      if (prev.length >= 2) {
+
+      if (prev.length >= MAX_ASIENTOS) {
         return prev
       }
-      
-      // Agregamos el nuevo asiento
+
       return [...prev, asiento]
     })
   }
 
+  /**
+   * El service lanza si el bloqueo falló o fue parcial, así que acá no hace
+   * falta interpretar `exitoso`: llegar a la línea de abajo significa que los
+   * asientos quedaron reservados de verdad.
+   */
   const handleConfirmSelection = async () => {
-    if (selectedSeats.length > 0 && search && !blockedSeats.length) {
-      setIsBlockingSeats(true)
-      
-      try {
-        const result = await bloquearAsientosMutation.mutateAsync({
-          servicioId: search.servicioId,
-          origenId: search.origenId,
-          destinoId: search.destinoId,
-          empresaId: search.empresaId,
-          asientos: selectedSeats.map(seat => seat.numero),
-        })
+    if (bloqueoCerrado.current) return
+    if (selectedSeats.length === 0 || !search || blockedSeats.length > 0) return
 
-        if (result.exitoso) {
-          setBlockedSeats(selectedSeats)
-          setBlockReferenceCode(result.codigoReferencia)
-          setSelectedSeats([])
-        } else {
-          // TODO: Show error message to user
-        }
-      } catch (_error) {
-        // TODO: Show error message to user
-      } finally {
-        setIsBlockingSeats(false)
-      }
+    bloqueoCerrado.current = true
+    setErrorBloqueo(null)
+
+    try {
+      const result = await bloquearAsientosMutation.mutateAsync({
+        servicioId: search.servicioId,
+        origenId: search.origenId,
+        destinoId: search.destinoId,
+        empresaId: search.empresaId,
+        asientos: selectedSeats.map(seat => seat.numero),
+      })
+
+      setBlockedSeats(selectedSeats)
+      setBlockReferenceCode(result.codigoReferencia)
+      setBloqueoExpiraEn(result.tiempoExpiracion)
+      setSelectedSeats([])
+
+      toast.success('Asientos reservados', {
+        description: `${result.asientosBloqueados.length} asiento(s) bloqueado(s) por 30 minutos.`,
+        duration: 4000,
+      })
+    } catch (error) {
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron bloquear los asientos.'
+
+      setErrorBloqueo(mensaje)
+      toast.error('No se pudieron reservar los asientos', {
+        description: mensaje,
+        duration: 8000,
+      })
+
+      // Falló: el operador puede elegir otros asientos y reintentar.
+      bloqueoCerrado.current = false
     }
   }
 
   const handleReleaseSeats = async () => {
-    if (blockReferenceCode) {
-      try {
-        await liberarBloqueoMutation.mutateAsync(blockReferenceCode)
-        setBlockedSeats([])
-        setBlockReferenceCode(null)
-      } catch (_error) {
-        // TODO: Show error message to user
-      }
+    if (!blockReferenceCode || liberarBloqueoMutation.isPending) return
+
+    try {
+      await liberarBloqueoMutation.mutateAsync(blockReferenceCode)
+      setBlockedSeats([])
+      setBlockReferenceCode(null)
+      setBloqueoExpiraEn(null)
+      setBloqueoVencido(false)
+      // Sin bloqueo activo se puede volver a reservar.
+      bloqueoCerrado.current = false
+      toast.success('Asientos liberados')
+    } catch (error) {
+      toast.error('No se pudieron liberar los asientos', {
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Reintentá o esperá a que expire el bloqueo.',
+        duration: 8000,
+      })
     }
   }
 
   const handleGoBack = async () => {
-    // Si hay asientos bloqueados, liberarlos antes de volver
     if (blockReferenceCode) {
       await handleReleaseSeats()
     }
     window.location.href = '/sales'
   }
 
+  const handleBloqueoVencido = useCallback(() => {
+    setBloqueoVencido(true)
+    toast.warning('El bloqueo de asientos venció', {
+      description: 'Volvé a seleccionar los asientos antes de continuar.',
+      duration: 10000,
+    })
+  }, [])
+
   const handleContinueToCheckout = () => {
-    if (blockedSeats.length > 0 && search) {
-      // Navigate to checkout with blocked seats info
-      const checkoutParams = new URLSearchParams({
-        servicioId: search.servicioId,
-        origenId: search.origenId,
-        destinoId: search.destinoId,
-        empresaId: search.empresaId,
-        empresa: search.empresa || '',
-        origen: search.origen || '',
-        destino: search.destino || '',
-        fecha: search.fecha || '',
-        hora: search.hora || '',
-        serviceCharge: search.serviceCharge || '',
-        asientosIds: blockedSeats.map(seat => seat.numero).join(','),
-        precios: blockedSeats.map(seat => seat.precio.toString()).join(','),
-        tipos: blockedSeats.map(seat => seat.tipo).join(','),
-        pisos: blockedSeats.map(seat => seat.piso.toString()).join(','),
-        codigoReferencia: blockReferenceCode || '',
-        empresaBoleto: search.empresaBoleto || '',
-        calidad: search.calidad || '',
-      })
-      window.location.href = `/sales/checkout?${checkoutParams.toString()}`
-    }
+    if (blockedSeats.length === 0 || !search || bloqueoVencido) return
+
+    const checkoutParams = new URLSearchParams({
+      servicioId: search.servicioId,
+      origenId: search.origenId,
+      destinoId: search.destinoId,
+      empresaId: search.empresaId,
+      empresa: search.empresa || '',
+      origen: search.origen || '',
+      destino: search.destino || '',
+      fecha: search.fecha || '',
+      hora: search.hora || '',
+      asientosIds: blockedSeats.map(seat => seat.numero).join(','),
+      precios: blockedSeats.map(seat => seat.precio.toString()).join(','),
+      tipos: blockedSeats.map(seat => seat.tipo).join(','),
+      pisos: blockedSeats.map(seat => seat.piso.toString()).join(','),
+      codigoReferencia: blockReferenceCode || '',
+      bloqueoExpiraEn: bloqueoExpiraEn || '',
+      empresaBoleto: search.empresaBoleto || '',
+      calidad: search.calidad || '',
+    })
+    serializarServiceCharge(checkoutParams, serviceCharge)
+
+    navegandoAlCheckout.current = true
+    window.location.href = `/sales/checkout?${checkoutParams.toString()}`
   }
 
   if (!search || !search.servicioId) {
@@ -212,12 +287,18 @@ export function SeatSelectionPage() {
     )
   }
 
+  const asientosVisibles = blockedSeats.length > 0 ? blockedSeats : selectedSeats
+  const importePasajes = sumarPreciosAsientos(asientosVisibles)
+  const cargoServicio = calcularCargoServicio(importePasajes, serviceCharge)
+  const total = importePasajes + cargoServicio
+  const bloqueando = bloquearAsientosMutation.isPending
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleGoBack}>
+          <Button variant="outline" size="sm" onClick={handleGoBack} disabled={liberarBloqueoMutation.isPending}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -228,12 +309,15 @@ export function SeatSelectionPage() {
             </p>
           </div>
         </div>
-        {asientosData && (
-          <Badge variant="secondary" className="text-sm">
-            <Users className="h-4 w-4 mr-1" />
-            {asientosData.totalDisponibles} disponibles
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          <TiempoBloqueo expiraEn={bloqueoExpiraEn} onExpirado={handleBloqueoVencido} />
+          {asientosData && (
+            <Badge variant="secondary" className="text-sm">
+              <Users className="h-4 w-4 mr-1" />
+              {asientosData.totalDisponibles} disponibles
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Loading State */}
@@ -274,8 +358,8 @@ export function SeatSelectionPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <SeatGrid 
-                  asientos={asientosData.asientos} 
+                <SeatGrid
+                  asientos={asientosData.asientos}
                   onSeatSelect={handleSeatSelect}
                   selectedSeats={selectedSeats}
                   blockedSeats={blockedSeats}
@@ -290,33 +374,49 @@ export function SeatSelectionPage() {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            {/* Service Info */}
-            <ServiceInfo servicioInfo={asientosData.servicioInfo} empresaNombre={search.empresa} serviceCharge={search.serviceCharge} />
+            <ServiceInfo servicioInfo={asientosData.servicioInfo} empresaNombre={search.empresa} />
+
+            {errorBloqueo && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{errorBloqueo}</AlertDescription>
+              </Alert>
+            )}
+
+            {bloqueoVencido && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  El bloqueo de asientos venció. Liberá la reserva y volvé a
+                  seleccionar los asientos.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Selected Seats Info */}
-            {(selectedSeats.length > 0 || blockedSeats.length > 0) && (
+            {asientosVisibles.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     {blockedSeats.length > 0 ? (
                       <>
                         <Lock className="h-4 w-4 text-blue-600" />
-                        Asientos Confirmados ({blockedSeats.length}/2)
+                        Asientos Reservados ({blockedSeats.length}/{MAX_ASIENTOS})
                       </>
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4 text-green-600" />
-                        Asientos Seleccionados ({selectedSeats.length}/2)
+                        Asientos Seleccionados ({selectedSeats.length}/{MAX_ASIENTOS})
                       </>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {(blockedSeats.length > 0 ? blockedSeats : selectedSeats).map((seat, _index) => (
+                    {asientosVisibles.map((seat) => (
                       <div key={seat.numero} className={`flex items-center justify-between p-3 rounded-lg border ${
-                        blockedSeats.length > 0 
-                          ? 'bg-blue-50 border-blue-200' 
+                        blockedSeats.length > 0
+                          ? 'bg-blue-50 border-blue-200'
                           : 'bg-green-50 border-green-200'
                       }`}>
                         <div className="flex flex-col">
@@ -334,11 +434,7 @@ export function SeatSelectionPage() {
                         </div>
                         <div className="text-right">
                           <span className="text-lg font-bold text-gray-900">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(seat.precio)}
+                            {formatearGuaranies(seat.precio)}
                           </span>
                         </div>
                       </div>
@@ -346,29 +442,18 @@ export function SeatSelectionPage() {
                     <Separator />
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Subtotal</span>
+                        <span className="text-sm text-muted-foreground">Pasajes</span>
                         <span className="text-sm font-medium">
-                          {new Intl.NumberFormat('es-PY', {
-                            style: 'currency',
-                            currency: 'PYG',
-                            minimumFractionDigits: 0,
-                          }).format((blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0))}
+                          {formatearGuaranies(importePasajes)}
                         </span>
                       </div>
-                      {search.serviceCharge && (
+                      {cargoServicio > 0 && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Cargo por servicio ({search.serviceCharge}%)</span>
+                          <span className="text-sm text-muted-foreground">
+                            {describirCargoServicio(serviceCharge)}
+                          </span>
                           <span className="text-sm font-medium">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(
-                              Math.round(
-                                (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) * 
-                                (parseFloat(search.serviceCharge) / 100)
-                              )
-                            )}
+                            {formatearGuaranies(cargoServicio)}
                           </span>
                         </div>
                       )}
@@ -376,19 +461,7 @@ export function SeatSelectionPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Total</span>
                         <span className="text-lg font-bold">
-                          {new Intl.NumberFormat('es-PY', {
-                            style: 'currency',
-                            currency: 'PYG',
-                            minimumFractionDigits: 0,
-                          }).format(
-                            (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) +
-                            (search.serviceCharge ? 
-                              Math.round(
-                                (blockedSeats.length > 0 ? blockedSeats : selectedSeats).reduce((total, seat) => total + seat.precio, 0) * 
-                                (parseFloat(search.serviceCharge) / 100)
-                              ) : 0
-                            )
-                          )}
+                          {formatearGuaranies(total)}
                         </span>
                       </div>
                     </div>
@@ -401,14 +474,15 @@ export function SeatSelectionPage() {
             <div className="space-y-2">
               {blockedSeats.length > 0 ? (
                 <>
-                  <Button 
+                  <Button
                     onClick={handleContinueToCheckout}
                     className="w-full"
                     size="lg"
+                    disabled={bloqueoVencido}
                   >
                     Continuar al Checkout
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleReleaseSeats}
                     variant="outline"
                     className="w-full"
@@ -419,21 +493,21 @@ export function SeatSelectionPage() {
                   </Button>
                 </>
               ) : (
-                <Button 
+                <Button
                   onClick={handleConfirmSelection}
-                  disabled={selectedSeats.length === 0 || isBlockingSeats}
+                  disabled={selectedSeats.length === 0 || bloqueando}
                   className="w-full"
                   size="lg"
                 >
-                  {isBlockingSeats ? (
+                  {bloqueando ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Confirmando asientos...
+                      Reservando asientos con la empresa...
                     </>
                   ) : selectedSeats.length > 0 ? (
                     <>
                       <Lock className="h-4 w-4 mr-2" />
-                      Confirmar asientos ({selectedSeats.length})
+                      Reservar asientos ({selectedSeats.length})
                     </>
                   ) : (
                     'Selecciona al menos un asiento'

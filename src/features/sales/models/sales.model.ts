@@ -93,25 +93,14 @@ export interface BloquearAsientosRequest {
 }
 
 // Interface for bloquear asientos response
-export interface BloquearAsientosResponse {
-  exitoso: boolean
-  codigoReferencia: string
-  nroConexion: string
-  tiempoExpiracion: string
-  asientosBloqueados: string[]
-  asientosNoDisponibles: string[]
-  mensaje: string
-}
+export type {
+  BloquearAsientosApiResponse as BloquearAsientosResponse,
+  LiberarBloqueoApiResponse as LiberarBloqueoResponse,
+} from '../services/sales.service'
 
 // Interface for liberar bloqueo request
 export interface LiberarBloqueoRequest {
   codigoReferencia: string
-}
-
-// Interface for liberar bloqueo response
-export interface LiberarBloqueoResponse {
-  exitoso: boolean
-  mensaje: string
 }
 
 // Round Trip Types
@@ -124,6 +113,8 @@ export interface TripData {
   serviceCharge?: ServiceCharge // Cargo por servicio de la empresa
   asientos?: Asiento[]
   codigoReferencia?: string
+  /** Momento en que expira el bloqueo (ISO). El backend lo fija en 30 minutos. */
+  bloqueoExpiraEn?: string
   ventaConfirmada?: VentaExitosa
 }
 
@@ -142,19 +133,20 @@ export interface RoundTripContextType {
   resetRoundTrip: () => void
 }
 
-// Extended client form values for checkout
-export type ClientWithSeat = {
+/**
+ * Pasajero ya dado de alta en el backend.
+ *
+ * `clienteId` es el id que devolvió `POST /api/clientes`. Guardarlo es lo que
+ * evita el bug anterior: el formulario creaba el cliente, tiraba la respuesta y
+ * el checkout lo volvía a crear para conseguir el id. Cada pasajero se daba de
+ * alta dos veces, con dos sincronizaciones SOAP contra la empresa.
+ */
+export interface PasajeroRegistrado {
+  clienteId: string
+  passengerNumber: number
   seatNumber?: number
-  tripType?: 'ida' | 'vuelta'
-  tripLabel?: string
-  passengerNumber?: number
-} & {
   nombre: string
   apellido: string
-  numeroDocumento?: string
-  telefono?: string
   email: string
-  fechaNacimiento?: string
-  nacionalidad?: string
-  empresaId?: string
+  numeroDocumento?: string
 }

@@ -1,3 +1,11 @@
+import { apiFetchRaw } from '@/utils/api-client'
+
+/**
+ * La confirmación dispara la emisión del boleto contra el web service de la
+ * empresa. Es la llamada más lenta de todo el flujo.
+ */
+const TIMEOUT_CONFIRMAR_MS = 120_000
+
 export interface AsientoVenta {
   Nroasiento: string
   Precio: number
@@ -14,6 +22,10 @@ export interface VentaConfirmar {
   destinoId: string
   metodoPago: string
   estadoPago: string
+  /**
+   * Importe de los pasajes, sin cargo por servicio ni comisión.
+   * El backend calcula el cargo por servicio y la comisión a partir de esto.
+   */
   importeTotal: number
   asiento: AsientoVenta[]
 }
@@ -61,23 +73,129 @@ export interface ConfirmarVentaResponse {
   fallidas: number
   tiempoProcesamiento: number
   resultados: ResultadoVenta[]
+  resumenErrores?: Record<string, number>
 }
 
-const API_URL = import.meta.env.VITE_API_URL
+/**
+ * Al menos una de las ventas del lote no se pudo confirmar.
+ *
+ * El endpoint responde HTTP 201 aunque todas las ventas hayan fallado: el
+ * detalle viene por venta en `resultados[].exitoso`. Este error lleva la
+ * respuesta completa para que la pantalla pueda distinguir el fallo total del
+ * parcial y liberar los bloqueos que quedaron sin venta.
+ */
+export class VentaConfirmacionError extends Error {
+  readonly respuesta: ConfirmarVentaResponse
+  readonly codigos: string[]
 
-export async function confirmarVenta(data: ConfirmarVentaRequest): Promise<ConfirmarVentaResponse> {
-  const response = await fetch(`${API_URL}/api/ventas/confirmar-nueva`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+  constructor(message: string, respuesta: ConfirmarVentaResponse) {
+    super(message)
+    this.name = 'VentaConfirmacionError'
+    this.respuesta = respuesta
+    this.codigos = respuesta.resultados
+      .filter((resultado) => !resultado.exitoso && resultado.error)
+      .map((resultado) => resultado.error!.codigo)
   }
 
-  return response.json()
+  /** Ventas que sí se confirmaron, cuando el fallo fue parcial. */
+  get ventasExitosas(): VentaExitosa[] {
+    return this.respuesta.resultados
+      .filter((resultado) => resultado.exitoso && resultado.venta)
+      .map((resultado) => resultado.venta!)
+  }
+
+  /** Índices (0-based) de las ventas del lote que fallaron. */
+  get indicesFallidos(): number[] {
+    return this.respuesta.resultados
+      .filter((resultado) => !resultado.exitoso)
+      .map((resultado) => resultado.indice)
+  }
+}
+
+/** Junta los mensajes de error de todas las ventas fallidas del lote. */
+function describirFallos(respuesta: ConfirmarVentaResponse): string {
+  const mensajes = respuesta.resultados
+    .filter((resultado) => !resultado.exitoso)
+    .map(
+      (resultado) =>
+        resultado.error?.mensaje || 'Error desconocido al confirmar la venta',
+    )
+
+  const unicos = [...new Set(mensajes)]
+  return unicos.length > 0
+    ? unicos.join(' · ')
+    : 'La venta no se pudo confirmar.'
+}
+
+/**
+ * Confirma una o varias ventas.
+ *
+ * Lanza `VentaConfirmacionError` cuando alguna venta del lote falló, para que
+ * el éxito nunca se dé por supuesto. La detección vivía antes en el `onSuccess`
+ * del hook, que además relanzaba el error dentro del `onError` del observer de
+ * React Query: eso generaba rejections sin manejar en cuanto el backend
+ * empezara a devolver 400/409.
+ */
+export async function confirmarVenta(
+  data: ConfirmarVentaRequest,
+): Promise<ConfirmarVentaResponse> {
+  const respuesta = await apiFetchRaw<ConfirmarVentaResponse>(
+    '/api/ventas/confirmar-nueva',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+      fallbackMessage: 'No se pudo confirmar la venta.',
+      timeoutMs: TIMEOUT_CONFIRMAR_MS,
+    },
+  )
+
+  if (!respuesta || !Array.isArray(respuesta.resultados)) {
+    throw new Error(
+      'El servidor no devolvió el resultado de la venta. Verificá en el listado de ventas antes de reintentar.',
+    )
+  }
+
+  if (respuesta.fallidas > 0 || respuesta.exitosas === 0) {
+    throw new VentaConfirmacionError(describirFallos(respuesta), respuesta)
+  }
+
+  return respuesta
+}
+
+/**
+ * Traduce un fallo de confirmación a un mensaje accionable para el operador.
+ *
+ * El backend clasifica los errores en `resultados[].error.codigo`
+ * (`VentaService.clasificarError`). La validación del precio contra la tarifa
+ * real cae en VALIDATION_ERROR: en ese caso el precio que tenemos en pantalla
+ * quedó viejo y hay que volver a buscar el servicio.
+ */
+export function mensajeParaOperador(error: unknown): string {
+  if (error instanceof VentaConfirmacionError) {
+    const detalle = error.message
+
+    if (error.codigos.includes('VALIDATION_ERROR')) {
+      return `El servidor rechazó el precio de la venta: ${detalle}. Volvé a buscar el servicio para tomar la tarifa vigente.`
+    }
+    if (error.codigos.includes('BLOQUEO_ERROR')) {
+      return `El bloqueo de asientos ya no es válido: ${detalle}. Volvé a seleccionar los asientos.`
+    }
+    if (error.codigos.includes('DISPONIBILIDAD_ERROR')) {
+      return `Los asientos dejaron de estar disponibles: ${detalle}. Elegí otros asientos.`
+    }
+    if (error.codigos.includes('TIMEOUT_ERROR')) {
+      return `La empresa no respondió a tiempo: ${detalle}. Verificá en el listado de ventas antes de reintentar.`
+    }
+    if (error.codigos.includes('API_EXTERNA_ERROR')) {
+      return `El sistema de la empresa rechazó la venta: ${detalle}.`
+    }
+
+    return detalle
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Error desconocido al confirmar la venta.'
 }
