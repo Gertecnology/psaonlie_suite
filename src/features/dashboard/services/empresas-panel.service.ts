@@ -4,7 +4,7 @@ import { apiFetch } from '@/utils/api-client'
 /**
  * Empresas, vistas desde el panel de control.
  *
- * El CRUD de empresas vive en `features/companies`; acá sólo se necesita el
+ * El CRUD de empresas vive en `features/agencias`; acá sólo se necesita el
  * listado para el selector y para la alerta de conectividad, así que se define
  * un tipo mínimo en vez de acoplar las dos features.
  *

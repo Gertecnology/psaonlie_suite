@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { type NotificationResponse } from '@/services/notifications'
-import { DataTablePagination } from '@/features/companies/components/data-table-pagination'
+import { DataTablePagination } from '@/features/agencias/components/data-table-pagination'
 import { NotificationsTableToolbar } from './notifications-table-toolbar'
 
 interface NotificationsDataTableProps {

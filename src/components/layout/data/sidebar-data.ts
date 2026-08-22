@@ -50,8 +50,8 @@ export const sidebarData: SidebarData = {
           icon: IconChecklist,
         },
         {
-          title: 'Empresas',
-          url: '/companies',
+          title: 'Empresas y agencias',
+          url: '/agencias',
           icon: IconBuilding,
         },
       ],

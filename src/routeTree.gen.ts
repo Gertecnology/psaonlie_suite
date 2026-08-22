@@ -35,10 +35,10 @@ import { Route as AuthenticatedSalesIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
 import { Route as AuthenticatedDestinationsIndexRouteImport } from './routes/_authenticated/destinations/index'
-import { Route as AuthenticatedCompaniesIndexRouteImport } from './routes/_authenticated/companies/index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients/index'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats/index'
 import { Route as AuthenticatedAppsIndexRouteImport } from './routes/_authenticated/apps/index'
+import { Route as AuthenticatedAgenciasIndexRouteImport } from './routes/_authenticated/agencias/index'
 import { Route as ClerkAuthenticatedUserManagementRouteImport } from './routes/clerk/_authenticated/user-management'
 import { Route as ClerkauthSignUpRouteImport } from './routes/clerk/(auth)/sign-up'
 import { Route as ClerkauthSignInRouteImport } from './routes/clerk/(auth)/sign-in'
@@ -52,7 +52,7 @@ import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
 import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
-import { Route as AuthenticatedCompaniesIdRouteImport } from './routes/_authenticated/companies/$id'
+import { Route as AuthenticatedAgenciasIdRouteImport } from './routes/_authenticated/agencias/$id'
 import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
 import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
 
@@ -190,12 +190,6 @@ const AuthenticatedDestinationsIndexRoute =
     path: '/destinations/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCompaniesIndexRoute =
-  AuthenticatedCompaniesIndexRouteImport.update({
-    id: '/companies/',
-    path: '/companies/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedClientsIndexRoute =
   AuthenticatedClientsIndexRouteImport.update({
     id: '/clients/',
@@ -212,6 +206,12 @@ const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexRouteImport.update({
   path: '/apps/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAgenciasIndexRoute =
+  AuthenticatedAgenciasIndexRouteImport.update({
+    id: '/agencias/',
+    path: '/agencias/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ClerkAuthenticatedUserManagementRoute =
   ClerkAuthenticatedUserManagementRouteImport.update({
     id: '/user-management',
@@ -286,12 +286,11 @@ const AuthenticatedDestinationsIdRoute =
     path: '/destinations/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCompaniesIdRoute =
-  AuthenticatedCompaniesIdRouteImport.update({
-    id: '/companies/$id',
-    path: '/companies/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const AuthenticatedAgenciasIdRoute = AuthenticatedAgenciasIdRouteImport.update({
+  id: '/agencias/$id',
+  path: '/agencias/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsExternalDataIndexRoute =
   AuthenticatedSettingsExternalDataIndexRouteImport.update({
     id: '/external-data/',
@@ -323,7 +322,7 @@ export interface FileRoutesByFullPath {
   '/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
-  '/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -337,10 +336,10 @@ export interface FileRoutesByFullPath {
   '/clerk/sign-in': typeof ClerkauthSignInRoute
   '/clerk/sign-up': typeof ClerkauthSignUpRoute
   '/clerk/user-management': typeof ClerkAuthenticatedUserManagementRoute
+  '/agencias': typeof AuthenticatedAgenciasIndexRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
-  '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/destinations': typeof AuthenticatedDestinationsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
@@ -367,7 +366,7 @@ export interface FileRoutesByTo {
   '/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
-  '/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -381,10 +380,10 @@ export interface FileRoutesByTo {
   '/clerk/sign-in': typeof ClerkauthSignInRoute
   '/clerk/sign-up': typeof ClerkauthSignUpRoute
   '/clerk/user-management': typeof ClerkAuthenticatedUserManagementRoute
+  '/agencias': typeof AuthenticatedAgenciasIndexRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
-  '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/destinations': typeof AuthenticatedDestinationsIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
@@ -416,7 +415,7 @@ export interface FileRoutesById {
   '/_authenticated/test-notifications': typeof AuthenticatedTestNotificationsRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/companies/$id': typeof AuthenticatedCompaniesIdRoute
+  '/_authenticated/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -430,10 +429,10 @@ export interface FileRoutesById {
   '/clerk/(auth)/sign-in': typeof ClerkauthSignInRoute
   '/clerk/(auth)/sign-up': typeof ClerkauthSignUpRoute
   '/clerk/_authenticated/user-management': typeof ClerkAuthenticatedUserManagementRoute
+  '/_authenticated/agencias/': typeof AuthenticatedAgenciasIndexRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
-  '/_authenticated/companies/': typeof AuthenticatedCompaniesIndexRoute
   '/_authenticated/destinations/': typeof AuthenticatedDestinationsIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
@@ -464,7 +463,7 @@ export interface FileRouteTypes {
     | '/test-notifications'
     | '/auth/reset-password'
     | '/'
-    | '/companies/$id'
+    | '/agencias/$id'
     | '/destinations/$id'
     | '/sales/checkout'
     | '/sales/payment'
@@ -478,10 +477,10 @@ export interface FileRouteTypes {
     | '/clerk/sign-in'
     | '/clerk/sign-up'
     | '/clerk/user-management'
+    | '/agencias'
     | '/apps'
     | '/chats'
     | '/clients'
-    | '/companies'
     | '/destinations'
     | '/help-center'
     | '/reports'
@@ -508,7 +507,7 @@ export interface FileRouteTypes {
     | '/test-notifications'
     | '/auth/reset-password'
     | '/'
-    | '/companies/$id'
+    | '/agencias/$id'
     | '/destinations/$id'
     | '/sales/checkout'
     | '/sales/payment'
@@ -522,10 +521,10 @@ export interface FileRouteTypes {
     | '/clerk/sign-in'
     | '/clerk/sign-up'
     | '/clerk/user-management'
+    | '/agencias'
     | '/apps'
     | '/chats'
     | '/clients'
-    | '/companies'
     | '/destinations'
     | '/help-center'
     | '/reports'
@@ -556,7 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/test-notifications'
     | '/auth/reset-password'
     | '/_authenticated/'
-    | '/_authenticated/companies/$id'
+    | '/_authenticated/agencias/$id'
     | '/_authenticated/destinations/$id'
     | '/_authenticated/sales/checkout'
     | '/_authenticated/sales/payment'
@@ -570,10 +569,10 @@ export interface FileRouteTypes {
     | '/clerk/(auth)/sign-in'
     | '/clerk/(auth)/sign-up'
     | '/clerk/_authenticated/user-management'
+    | '/_authenticated/agencias/'
     | '/_authenticated/apps/'
     | '/_authenticated/chats/'
     | '/_authenticated/clients/'
-    | '/_authenticated/companies/'
     | '/_authenticated/destinations/'
     | '/_authenticated/help-center/'
     | '/_authenticated/reports/'
@@ -786,13 +785,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDestinationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/companies/': {
-      id: '/_authenticated/companies/'
-      path: '/companies'
-      fullPath: '/companies'
-      preLoaderRoute: typeof AuthenticatedCompaniesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
       path: '/clients'
@@ -812,6 +804,13 @@ declare module '@tanstack/react-router' {
       path: '/apps'
       fullPath: '/apps'
       preLoaderRoute: typeof AuthenticatedAppsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agencias/': {
+      id: '/_authenticated/agencias/'
+      path: '/agencias'
+      fullPath: '/agencias'
+      preLoaderRoute: typeof AuthenticatedAgenciasIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/clerk/_authenticated/user-management': {
@@ -905,11 +904,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDestinationsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/companies/$id': {
-      id: '/_authenticated/companies/$id'
-      path: '/companies/$id'
-      fullPath: '/companies/$id'
-      preLoaderRoute: typeof AuthenticatedCompaniesIdRouteImport
+    '/_authenticated/agencias/$id': {
+      id: '/_authenticated/agencias/$id'
+      path: '/agencias/$id'
+      fullPath: '/agencias/$id'
+      preLoaderRoute: typeof AuthenticatedAgenciasIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/external-data/': {
@@ -966,15 +965,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSocketMonitorRoute: typeof AuthenticatedSocketMonitorRoute
   AuthenticatedTestNotificationsRoute: typeof AuthenticatedTestNotificationsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedCompaniesIdRoute: typeof AuthenticatedCompaniesIdRoute
+  AuthenticatedAgenciasIdRoute: typeof AuthenticatedAgenciasIdRoute
   AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
   AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
   AuthenticatedSalesSeatsRoute: typeof AuthenticatedSalesSeatsRoute
+  AuthenticatedAgenciasIndexRoute: typeof AuthenticatedAgenciasIndexRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
-  AuthenticatedCompaniesIndexRoute: typeof AuthenticatedCompaniesIndexRoute
   AuthenticatedDestinationsIndexRoute: typeof AuthenticatedDestinationsIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
@@ -988,15 +987,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSocketMonitorRoute: AuthenticatedSocketMonitorRoute,
   AuthenticatedTestNotificationsRoute: AuthenticatedTestNotificationsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedCompaniesIdRoute: AuthenticatedCompaniesIdRoute,
+  AuthenticatedAgenciasIdRoute: AuthenticatedAgenciasIdRoute,
   AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
   AuthenticatedSalesPaymentRoute: AuthenticatedSalesPaymentRoute,
   AuthenticatedSalesSeatsRoute: AuthenticatedSalesSeatsRoute,
+  AuthenticatedAgenciasIndexRoute: AuthenticatedAgenciasIndexRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
-  AuthenticatedCompaniesIndexRoute: AuthenticatedCompaniesIndexRoute,
   AuthenticatedDestinationsIndexRoute: AuthenticatedDestinationsIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
