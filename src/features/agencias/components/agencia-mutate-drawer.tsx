@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -24,7 +25,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { useAgenciaDialog } from '../store/use-agencia-dialog'
-import { type CrearAgenciaFormValues } from '../models/agencia.model'
+import {
+  esEmpresa,
+  type CrearAgenciaFormValues,
+} from '../models/agencia.model'
+import { useAgencia } from '../hooks/use-agencias'
 import { useCrearAgencia } from '../hooks/use-crear-agencia'
 import { useActualizarAgencia } from '../hooks/use-actualizar-agencia'
 import { useActualizarLogoAgencia } from '../hooks/use-actualizar-logo-agencia'
@@ -44,12 +49,24 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 export function AgenciaMutateDrawer() {
-  const { open, close, data: agencia } = useAgenciaDialog()
+  const { open, close, data: fila } = useAgenciaDialog()
   const crearAgencia = useCrearAgencia()
   const actualizarAgencia = useActualizarAgencia()
   const actualizarLogo = useActualizarLogoAgencia()
 
-  const isUpdate = !!agencia && !!agencia.id
+  const isUpdate = !!fila && !!fila.id
+  const esHija = !!fila && !esEmpresa(fila)
+
+  // El listado embebe las hijas con un DTO reducido que no trae
+  // `heredaComision` ni su `porcentajeVentas` propio. Sin esos dos, el
+  // formulario no puede decidir si el campo de comisión se edita o se muestra
+  // heredado, así que la fila completa se pide al abrir el drawer sobre una hija.
+  const detalleHija = useAgencia(fila?.id, open && esHija)
+  const agencia = esHija && detalleHija.data ? detalleHija.data : fila
+
+  const heredaComision = esHija && agencia?.heredaComision !== false
+  const comisionHeredada = fila?.comisionDelPadre?.porcentajeVentas ?? null
+  const cargandoHija = esHija && detalleHija.isLoading
 
   const isSubmitting =
     crearAgencia.isPending ||
@@ -100,10 +117,11 @@ export function AgenciaMutateDrawer() {
           descripcion: agencia.descripcion,
           url: agencia.url,
           activo: agencia.activo,
-          porcentajeVentas: agencia.porcentajeVentas ? parseFloat(agencia.porcentajeVentas) : undefined,
+          porcentajeVentas: agencia.porcentajeVentas
+            ? parseFloat(agencia.porcentajeVentas)
+            : undefined,
           profileImage: undefined,
         })
-        // Establecer el logo preview con la URL de la imagen de la empresa
         setLogoPreview(agencia.imageUrl ?? null)
       } else {
         form.reset({
@@ -122,13 +140,11 @@ export function AgenciaMutateDrawer() {
     }
   }, [open, isUpdate, agencia, form])
 
-  // Handler para seleccionar imagen
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       form.setValue('profileImage', file)
-      
-      // Crear preview para mostrar la imagen
+
       const reader = new FileReader()
       reader.onloadend = () => {
         setLogoPreview(reader.result as string)
@@ -139,14 +155,30 @@ export function AgenciaMutateDrawer() {
 
   const onSubmit = (data: FormValues) => {
     if (isUpdate && agencia?.id) {
-      const { password, profileImage, ...updateData } = data
-      // Convertir porcentajeVentas a string para la actualización
-      const updateDataWithStringPercent = {
-        ...updateData,
-        porcentajeVentas: updateData.porcentajeVentas?.toString() || null,
-      }
+      const { password: _password, profileImage, ...updateData } = data
 
-      // Detección de cambios vía react-hook-form: comparar contra la empresa
+      // Una hija no tiene conexión propia: mandarle `url`, `usuario` o
+      // `agenciaPrincipal` escribiría datos que el modelo dice que no existen
+      // en ese nivel. Y su comisión, si la hereda, la manda el padre.
+      const datosPermitidos = esHija
+        ? {
+            nombre: updateData.nombre,
+            descripcion: updateData.descripcion,
+            activo: updateData.activo,
+            ...(heredaComision
+              ? {}
+              : {
+                  porcentajeVentas:
+                    updateData.porcentajeVentas?.toString() || null,
+                }),
+          }
+        : {
+            ...updateData,
+            // Convertir porcentajeVentas a string para la actualización
+            porcentajeVentas: updateData.porcentajeVentas?.toString() || null,
+          }
+
+      // Detección de cambios vía react-hook-form: comparar contra la agencia
       // con `!==` daba falsos positivos (la API devuelve "5.00" y el formulario
       // produce "5", así que porcentajeVentas siempre parecía modificado).
       // El logo se evalúa aparte porque `setValue` no lo marca como dirty.
@@ -154,63 +186,45 @@ export function AgenciaMutateDrawer() {
         (key) => key !== 'profileImage' && key !== 'password',
       )
 
-      // Verificar si se cambió el logo
       const hasLogoChanged = !!profileImage
+      const agenciaId = agencia.id
 
       // El drawer se cierra únicamente cuando la operación fue exitosa. Antes
       // se cerraba también en `onError`, lo que ocultaba los fallos ahora que
       // el backend los reporta de verdad.
       if (hasLogoChanged && hasDataChanges) {
-        // Caso 1: Se cambió tanto el logo como los datos - hacer 2 peticiones
         actualizarAgencia.mutate(
-          { id: agencia.id, data: updateDataWithStringPercent },
+          { id: agenciaId, data: datosPermitidos },
           {
             onSuccess: () => {
-              // Después de actualizar los datos, actualizar el logo
               actualizarLogo.mutate(
-                { id: agencia.id, profileImage: profileImage! },
-                {
-                  onSuccess: () => {
-                    close()
-                  },
-                },
+                { id: agenciaId, profileImage: profileImage! },
+                { onSuccess: () => close() },
               )
             },
           },
         )
       } else if (hasLogoChanged && !hasDataChanges) {
-        // Caso 2: Solo se cambió el logo - hacer 1 petición
         actualizarLogo.mutate(
-          { id: agencia.id, profileImage: profileImage! },
-          {
-            onSuccess: () => {
-              close()
-            },
-          },
+          { id: agenciaId, profileImage: profileImage! },
+          { onSuccess: () => close() },
         )
       } else if (!hasLogoChanged && hasDataChanges) {
-        // Caso 3: Solo se cambiaron los datos - hacer 1 petición
         actualizarAgencia.mutate(
-          { id: agencia.id, data: updateDataWithStringPercent },
-          {
-            onSuccess: () => {
-              close()
-            },
-          },
+          { id: agenciaId, data: datosPermitidos },
+          { onSuccess: () => close() },
         )
       } else {
-        // Caso 4: No hay cambios - solo cerrar
         close()
       }
     } else {
-      // Para creación, incluir el archivo si existe
       const createData: CrearAgenciaFormValues = {
         ...data,
         password: data.password || '',
         url: data.url || undefined,
         profileImage: data.profileImage || undefined,
       }
-      
+
       // Los toasts de éxito y error los emite `useCrearAgencia`, igual que en
       // update y delete. Acá sólo se cierra el drawer cuando la creación salió
       // bien; si falló, el formulario queda abierto con los datos cargados.
@@ -230,17 +244,21 @@ export function AgenciaMutateDrawer() {
     }
   }
 
+  const titulo = esHija ? 'Agencia' : 'Empresa'
+
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className='flex flex-col overflow-y-auto'>
         <SheetHeader className='text-left'>
           <SheetTitle>
-            {isUpdate ? 'Actualizar' : 'Crear'} Empresa
+            {isUpdate ? 'Actualizar' : 'Crear'} {titulo}
           </SheetTitle>
           <SheetDescription>
-            {isUpdate
-              ? 'Actualiza la empresa con la información necesaria.'
-              : 'Añade una nueva empresa con la información necesaria.'}
+            {esHija
+              ? 'Las agencias las sincroniza el web service: su código, su stock y su conexión no se editan acá.'
+              : isUpdate
+                ? 'Actualiza la empresa con la información necesaria.'
+                : 'Añade una nueva empresa con la información necesaria.'}{' '}
             Haz click en guardar cuando hayas terminado.
           </SheetDescription>
         </SheetHeader>
@@ -260,7 +278,7 @@ export function AgenciaMutateDrawer() {
                 {logoPreview ? (
                   <img
                     src={logoPreview}
-                    alt='Logo de la empresa'
+                    alt={`Logo de la ${titulo.toLowerCase()}`}
                     className='object-cover w-full h-full rounded-full'
                   />
                 ) : (
@@ -294,60 +312,75 @@ export function AgenciaMutateDrawer() {
                 />
               </div>
             </div>
-            <FormField
-              control={form.control}
-              name='usuario'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Usuario</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un usuario'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!isUpdate && (
-              <FormField
-                control={form.control}
-                name='password'
-                render={({ field }) => (
-                  <FormItem className='space-y-1'>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value ?? ''}
-                        type='password'
-                        placeholder='Ingresa una contraseña'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
+            {esHija && agencia?.codigo && (
+              <div className='rounded-lg border p-3 text-sm'>
+                <span className='text-muted-foreground'>Código: </span>
+                <span className='font-mono font-medium'>{agencia.codigo}</span>
+              </div>
             )}
-            <FormField
-              control={form.control}
-              name='agenciaPrincipal'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>Agencia Principal</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder='Ingresa una agencia principal'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {/* La conexión vive sólo en la empresa: una agencia que apuntara a
+                otro servidor dejaría de ser una agencia. */}
+            {!esHija && (
+              <>
+                <FormField
+                  control={form.control}
+                  name='usuario'
+                  render={({ field }) => (
+                    <FormItem className='space-y-1'>
+                      <FormLabel>Usuario</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder='Ingresa un usuario'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {!isUpdate && (
+                  <FormField
+                    control={form.control}
+                    name='password'
+                    render={({ field }) => (
+                      <FormItem className='space-y-1'>
+                        <FormLabel>Contraseña</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ''}
+                            type='password'
+                            placeholder='Ingresa una contraseña'
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <FormField
+                  control={form.control}
+                  name='agenciaPrincipal'
+                  render={({ field }) => (
+                    <FormItem className='space-y-1'>
+                      <FormLabel>Agencia Principal</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder='Ingresa una agencia principal'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
             <FormField
               control={form.control}
               name='descripcion'
@@ -365,43 +398,84 @@ export function AgenciaMutateDrawer() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='url'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
-                  <FormLabel>URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder='Ingresa una URL'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='porcentajeVentas'
-              render={({ field }) => (
-                <FormItem className='space-y-1'>
+
+            {!esHija && (
+              <FormField
+                control={form.control}
+                name='url'
+                render={({ field }) => (
+                  <FormItem className='space-y-1'>
+                    <FormLabel>URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder='Ingresa una URL'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {heredaComision ? (
+              /* La comisión heredada no se edita acá: se cambia en la empresa,
+                 y editarla en los dos lugares es cómo dos cifras distintas
+                 terminan cobrándose. `heredaComision` todavía no es escribible
+                 por la API (`CreateAgenciaDto` no lo expone). */
+              <FormItem className='space-y-1'>
+                <div className='flex items-center gap-2'>
                   <FormLabel>Porcentaje de ventas</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='number'
-                      step='0.01'
-                      value={field.value ?? ''}
-                      placeholder='Ingresa un porcentaje de ventas'
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <Badge variant='secondary' className='text-xs'>
+                    Heredada
+                  </Badge>
+                </div>
+                <FormControl>
+                  <Input
+                    disabled
+                    readOnly
+                    aria-label='Porcentaje de ventas heredado'
+                    value={comisionHeredada ?? ''}
+                    placeholder={
+                      cargandoHija ? 'Cargando...' : 'Sin porcentaje de ventas'
+                    }
+                  />
+                </FormControl>
+                <FormDescription>
+                  Esta agencia cobra la comisión de su empresa. Para cambiarla,
+                  editá la empresa.
+                </FormDescription>
+              </FormItem>
+            ) : (
+              <FormField
+                control={form.control}
+                name='porcentajeVentas'
+                render={({ field }) => (
+                  <FormItem className='space-y-1'>
+                    <FormLabel>Porcentaje de ventas</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='number'
+                        step='0.01'
+                        value={field.value ?? ''}
+                        placeholder='Ingresa un porcentaje de ventas'
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined,
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name='activo'
@@ -410,7 +484,7 @@ export function AgenciaMutateDrawer() {
                   <div className='space-y-0.5'>
                     <FormLabel>Activo</FormLabel>
                     <FormDescription>
-                      Indica si la empresa está activa.
+                      Indica si la {titulo.toLowerCase()} está activa.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -433,7 +507,7 @@ export function AgenciaMutateDrawer() {
           <Button
             form='agencia-form'
             type='submit'
-            disabled={isSubmitting}
+            disabled={isSubmitting || cargandoHija}
           >
             {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
           </Button>
