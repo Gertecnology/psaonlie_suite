@@ -5,8 +5,6 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  CreditCard,
-  DollarSign,
   Download,
   FileText,
   Globe,
@@ -38,6 +36,7 @@ import {
 } from '../../dashboard/services/invoice.service'
 import { ClienteConEstadisticas } from '../models/clients.model'
 import { ClientStats } from './client-stats'
+import { IconoMetodoPago } from '@/components/icono-metodo-pago'
 
 interface ClientDetailsScreenProps {
   client: ClienteConEstadisticas
@@ -148,21 +147,6 @@ export function ClientDetailsScreen({
         {estado}
       </Badge>
     )
-  }
-
-  const getMetodoPagoIcon = (metodo: string) => {
-    switch (metodo) {
-      case 'BANCARD':
-        return <CreditCard className='h-4 w-4' />
-      case 'WHATSAPP':
-        return <DollarSign className='h-4 w-4' />
-      case 'TRANSFERENCIA':
-        return <DollarSign className='h-4 w-4' />
-      case 'EFECTIVO':
-        return <DollarSign className='h-4 w-4' />
-      default:
-        return <DollarSign className='h-4 w-4' />
-    }
   }
 
   return (
@@ -490,7 +474,7 @@ export function ClientDetailsScreen({
                           </TableCell>
                           <TableCell>
                             <div className='flex items-center gap-1'>
-                              {getMetodoPagoIcon(venta.metodoPago)}
+                              <IconoMetodoPago metodo={venta.metodoPago} />
                               <span className='text-sm'>
                                 {venta.metodoPago}
                               </span>

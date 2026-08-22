@@ -15,6 +15,7 @@ import { deserializarServiceCharge } from '../../utils/service-charge-url'
 import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
 import type { Asiento, ServiceCharge } from '../../models/sales.model'
 import { toast } from 'sonner'
+import { OPCIONES_METODO_PAGO } from '@/lib/metodo-pago'
 
 interface PaymentSearch {
   empresa: string
@@ -323,12 +324,11 @@ export function PaymentPage() {
                     <SelectValue placeholder="Seleccionar método" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="EFECTIVO">Efectivo</SelectItem>
-                    <SelectItem value="TRANSFERENCIA">Transferencia Bancaria</SelectItem>
-                    <SelectItem value="TARJETA_CREDITO">Tarjeta de Crédito</SelectItem>
-                    <SelectItem value="TARJETA_DEBITO">Tarjeta de Débito</SelectItem>
-                    <SelectItem value="CHEQUE">Cheque</SelectItem>
-                    <SelectItem value="BANCARD">Bancard</SelectItem>
+                    {OPCIONES_METODO_PAGO.map((metodo) => (
+                      <SelectItem key={metodo.value} value={metodo.value}>
+                        {metodo.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

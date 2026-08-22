@@ -71,9 +71,10 @@ export interface VentaSinBoleto {
  * Reservas con el pago pendiente y la expiración encima.
  *
  * Fuente: `GET /api/admin/ventas/pagos-pendientes`. Ojo con dos cosas del
- * contrato real: la consulta está acotada a `WHATSAPP` y `TRANSFERENCIA` (las
- * ventas por Bancard nunca aparecen acá), y `estadisticas.expirados` viene
- * siempre en 0 porque está hardcodeado.
+ * contrato real: la consulta está acotada a los métodos que confirma un
+ * administrador a mano —`TRANSFERENCIA` y `WEPA`—, así que las ventas por
+ * Bancard nunca aparecen acá, y `estadisticas.expirados` viene siempre en 0
+ * porque está hardcodeado.
  */
 export interface PagoPorVencer {
   ventaId: string

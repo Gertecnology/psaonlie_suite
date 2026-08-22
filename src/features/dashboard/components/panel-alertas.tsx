@@ -100,9 +100,10 @@ export function PanelAlertas({ periodo }: Props) {
               <SheetHeader>
                 <SheetTitle>Pagos pendientes</SheetTitle>
                 <SheetDescription>
-                  Reservas esperando confirmación de pago. Sólo incluye WhatsApp
-                  y transferencia: el backend acota la consulta a esos dos
-                  métodos, así que las reservas por Bancard no aparecen acá.
+                  Reservas esperando confirmación de pago. Sólo incluye
+                  transferencia y Wepa: el backend acota la consulta a los pagos
+                  que confirma un administrador a mano, así que las reservas por
+                  Bancard no aparecen acá.
                 </SheetDescription>
               </SheetHeader>
               <div className='px-4 pb-6'>

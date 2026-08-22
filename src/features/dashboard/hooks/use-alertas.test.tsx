@@ -140,7 +140,7 @@ describe('usePagosPorVencer', () => {
           {
             ventaId: 'vencido',
             numeroTransaccion: 'TX-101',
-            metodoPago: 'WHATSAPP',
+            metodoPago: 'WEPA',
             importeTotal: '90000.00',
             fechaExpiracion: haceUnDia.toISOString(),
             empresa: { nombre: 'San Luis' },

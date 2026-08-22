@@ -134,8 +134,9 @@ function normalizarPagoPendiente(
  *
  * Fuente: `GET /api/admin/ventas/pagos-pendientes`. Dos límites del contrato
  * que hay que tener presentes al leer el número:
- * - La consulta del backend está acotada a `WHATSAPP` y `TRANSFERENCIA`. Las
- *   reservas por Bancard con pago pendiente **no aparecen acá**.
+ * - La consulta del backend está acotada a los métodos que confirma un
+ *   administrador a mano: `TRANSFERENCIA` y `WEPA`. Las reservas por Bancard
+ *   con pago pendiente **no aparecen acá**.
  * - `estadisticas.expirados` viene siempre en 0 (está hardcodeado), así que los
  *   vencidos se cuentan comparando `fechaExpiracion` del lado del panel.
  */

@@ -35,13 +35,16 @@ export const ESTADOS_ASIENTOS = [
 ] as const
 export type EstadoAsientos = (typeof ESTADOS_ASIENTOS)[number]
 
-export const METODOS_PAGO = [
-  'BANCARD',
-  'WHATSAPP',
-  'TRANSFERENCIA',
-  'EFECTIVO',
-] as const
-export type MetodoPago = (typeof METODOS_PAGO)[number]
+// Los métodos de pago viven en `lib/` porque también los usan las pantallas de
+// cobro, que no son parte del dashboard. Se reexportan acá para que el resto
+// del modelo de ventas se siga leyendo de corrido.
+export {
+  METODOS_PAGO,
+  ETIQUETAS_METODO_PAGO,
+  METODOS_PAGO_MANUAL,
+  OPCIONES_METODO_PAGO,
+  type MetodoPago,
+} from '@/lib/metodo-pago'
 
 export const ETIQUETAS_ESTADO_PAGO: Record<EstadoPago, string> = {
   PENDIENTE: 'Pendiente',
@@ -60,13 +63,6 @@ export const ETIQUETAS_ESTADO_VENTA: Record<EstadoVenta, string> = {
   ANULADO: 'Anulado',
   PENDIENTE_PAGO: 'Pendiente de pago',
   PAGO_APROBADO: 'Pago aprobado',
-}
-
-export const ETIQUETAS_METODO_PAGO: Record<MetodoPago, string> = {
-  BANCARD: 'Bancard',
-  WHATSAPP: 'WhatsApp',
-  TRANSFERENCIA: 'Transferencia',
-  EFECTIVO: 'Efectivo',
 }
 
 export interface ClienteDeVenta {

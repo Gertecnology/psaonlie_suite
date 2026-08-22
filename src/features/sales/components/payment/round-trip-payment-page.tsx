@@ -13,6 +13,7 @@ import { useActualizarEstadoPago } from '../../hooks/use-actualizar-estado-pago'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
 import { toast } from 'sonner'
+import { OPCIONES_METODO_PAGO } from '@/lib/metodo-pago'
 
 export function RoundTripPaymentPage() {
   const { roundTripData, setCurrentStep, resetRoundTrip } = useRoundTrip()
@@ -357,10 +358,11 @@ export function RoundTripPaymentPage() {
                     <SelectValue placeholder="Seleccionar método" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="EFECTIVO">Efectivo</SelectItem>
-                    <SelectItem value="TRANSFERENCIA">Transferencia Bancaria</SelectItem>
-                    <SelectItem value="BANCARD">Bancard</SelectItem>
-                    <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+                    {OPCIONES_METODO_PAGO.map((metodo) => (
+                      <SelectItem key={metodo.value} value={metodo.value}>
+                        {metodo.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
