@@ -6,7 +6,7 @@ export interface Empresa {
 }
 
 // Interface for empresas list response
-export interface EmpresasListResponse {
+export interface AgenciasListResponse {
   success: boolean
   statusCode: number
   message: string
@@ -14,4 +14,4 @@ export interface EmpresasListResponse {
 }
 
 // Interface for empresas search parameters (for future use)
-export type EmpresasSearchParams = object
+export type AgenciasSearchParams = object

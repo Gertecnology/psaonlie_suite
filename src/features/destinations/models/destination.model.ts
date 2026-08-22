@@ -23,7 +23,7 @@ export const clientSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apellido: z.string().min(1, 'El apellido es requerido.'),
   telefono: z.string().min(1, 'El teléfono es requerido.'),
-  empresaId: z.string().min(1, 'La empresa es requerida.'),
+  agenciaId: z.string().min(1, 'La empresa es requerida.'),
   empresaNombre: z.string().min(1, 'La empresa es requerida.'),
   tipoDocumento: z.string().min(1, 'El tipo de documento es requerido.'),
   numeroDocumento: z.string().min(1, 'El número de documento es requerido.'),

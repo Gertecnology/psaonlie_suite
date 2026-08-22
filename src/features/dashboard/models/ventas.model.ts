@@ -91,7 +91,7 @@ export interface ClienteDeVenta {
 export interface VentaLista {
   id: string
   numeroTransaccion: string
-  empresaId: string
+  agenciaId: string
   empresaNombre: string
   usuarioId: string | null
   clienteId: string
@@ -182,7 +182,7 @@ export interface FiltrosVentas {
   estadoVenta?: EstadoVenta
   estadoAsientos?: EstadoAsientos
   metodoPago?: MetodoPago
-  empresaId?: string
+  agenciaId?: string
   usuarioId?: string
   clienteId?: string
   origenId?: string

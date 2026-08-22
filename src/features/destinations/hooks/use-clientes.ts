@@ -27,7 +27,7 @@ type CreateClientResponse = {
       apellido: string
       nombre: string
     }
-    empresaId: string
+    agenciaId: string
     empresaNombre: string
     tipoDocumento: string
     numeroDocumento: string

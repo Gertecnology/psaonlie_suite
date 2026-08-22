@@ -13,7 +13,7 @@ interface ServiciosListProps {
   className?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }
 
 const getCalidadColor = (calidad: string) => {
@@ -50,7 +50,7 @@ const formatPrice = (price: string) => formatearGuaranies(price)
 
 function ServicioCard({ 
   servicio, 
-  empresaId: _empresaId, 
+  agenciaId: _agenciaId, 
   empresaNombre,
   empresaLogo: _empresaLogo,
   serviceCharge: _serviceCharge,
@@ -59,13 +59,13 @@ function ServicioCard({
   onServiceSelect
 }: { 
   servicio: Servicio
-  empresaId: string
+  agenciaId: string
   empresaNombre: string
   empresaLogo?: string
   serviceCharge?: ServiceCharge
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }) {
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
 
@@ -74,7 +74,7 @@ function ServicioCard({
 
     if (onServiceSelect) {
       // Si hay callback personalizado, usarlo
-      onServiceSelect(servicio, _empresaId, _serviceCharge)
+      onServiceSelect(servicio, _agenciaId, _serviceCharge)
     } else {
       // Comportamiento por defecto para ida.
       //
@@ -88,7 +88,7 @@ function ServicioCard({
           destino: roundTripData.ida.destino,
           fecha: roundTripData.ida.fecha,
           servicio: servicio,
-          empresaId: _empresaId, // Guardar el UUID de la empresa
+          agenciaId: _agenciaId, // Guardar el UUID de la empresa
           serviceCharge: _serviceCharge, // Guardar el cargo por servicio
           asientos: undefined,
           codigoReferencia: undefined,
@@ -189,7 +189,7 @@ function EmpresaSection({
   empresa: EmpresaServicios
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }) {
   return (
     <div className="space-y-4">
@@ -208,7 +208,7 @@ function EmpresaSection({
           <ServicioCard
             key={servicio.Id}
             servicio={servicio}
-            empresaId={empresa.id}
+            agenciaId={empresa.id}
             empresaNombre={empresa.empresa}
             empresaLogo={empresa.url}
             serviceCharge={empresa.serviceCharge}

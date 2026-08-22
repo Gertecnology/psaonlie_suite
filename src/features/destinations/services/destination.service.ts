@@ -3,7 +3,7 @@ import { Destination, DestinationFormValues, clientSchema } from '../models/dest
 import { z } from 'zod'
 
 /**
- * Los endpoints de `/destinos` y `/empresas` responden con el envelope
+ * Los endpoints de `/destinos` y `/agencias` responden con el envelope
  * `{ success, statusCode, message, data }`, así que van con `apiFetch`.
  * `/api/clientes` devuelve el objeto plano y va con `apiFetchRaw`.
  *
@@ -77,7 +77,7 @@ export async function getAllParadasHomologadas(
   const query = params.toString() ? `?${params.toString()}` : ''
 
   const paradas = await apiFetch<ParadaHomologadaOption[]>(
-    `/empresas/paradas-homologadas/lista${query}`,
+    `/agencias/paradas-homologadas/lista${query}`,
     { fallbackMessage: 'Error al obtener paradas homologadas' },
   )
 
@@ -124,7 +124,7 @@ export async function createClient(data: z.infer<typeof clientSchema>): Promise<
       apellido: string
       nombre: string
     }
-    empresaId: string
+    agenciaId: string
     empresaNombre: string
     tipoDocumento: string
     numeroDocumento: string

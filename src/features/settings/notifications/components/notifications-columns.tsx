@@ -40,7 +40,7 @@ interface NotificationData {
   observaciones?: string
   authorizationNumber?: string
   motivo?: string
-  empresaId?: string
+  agenciaId?: string
   empresaUrl?: string
   timestamp?: string
 }

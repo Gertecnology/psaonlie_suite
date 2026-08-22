@@ -56,9 +56,9 @@ const ESTADISTICAS = {
       porcentaje: 87.5,
     },
   ],
-  porEmpresa: [
+  porAgencia: [
     {
-      empresaId: 'e1',
+      agenciaId: 'e1',
       empresaNombre: 'Canindeyú',
       cantidad: 20,
       monto: '600000.00',
@@ -157,7 +157,7 @@ beforeEach(() => {
     if (url.includes('/api/pagos/estadisticas/resumen')) {
       return Promise.resolve(respuestaJson(PAGOS))
     }
-    if (url.includes('/empresas')) {
+    if (url.includes('/agencias')) {
       return Promise.resolve(
         respuestaJson({
           success: true,

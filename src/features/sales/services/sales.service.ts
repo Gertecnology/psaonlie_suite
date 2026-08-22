@@ -81,7 +81,7 @@ export interface ServiciosSearchParams {
   tarifaMinima?: number
   tarifaMaxima?: number
   asientosMinimos?: number
-  empresaId?: string
+  agenciaId?: string
   ordenarPor?: 'embarque' | 'tarifa' | 'libres' | 'calidad'
   ordenDireccion?: 'asc' | 'desc'
 }
@@ -163,7 +163,7 @@ export async function getServiciosPorDestinos(
     tarifaMinima,
     tarifaMaxima,
     asientosMinimos,
-    empresaId,
+    agenciaId,
     ordenarPor,
     ordenDireccion,
   } = params
@@ -189,7 +189,7 @@ export async function getServiciosPorDestinos(
     queryParams.append('tarifaMaxima', tarifaMaxima.toString())
   if (asientosMinimos !== undefined)
     queryParams.append('asientosMinimos', asientosMinimos.toString())
-  if (empresaId) queryParams.append('empresaId', empresaId)
+  if (agenciaId) queryParams.append('agenciaId', agenciaId)
   if (ordenarPor) queryParams.append('ordenarPor', ordenarPor)
   if (ordenDireccion) queryParams.append('ordenDireccion', ordenDireccion)
 
@@ -209,13 +209,13 @@ export async function consultarAsientos(params: {
   servicioId: string
   origenId: string
   destinoId: string
-  empresaId: string
+  agenciaId: string
 }) {
-  const { servicioId, origenId, destinoId, empresaId } = params
+  const { servicioId, origenId, destinoId, agenciaId } = params
 
-  if (!servicioId || !origenId || !destinoId || !empresaId) {
+  if (!servicioId || !origenId || !destinoId || !agenciaId) {
     throw new Error(
-      'Todos los parámetros son requeridos: servicioId, origenId, destinoId, empresaId',
+      'Todos los parámetros son requeridos: servicioId, origenId, destinoId, agenciaId',
     )
   }
 
@@ -223,7 +223,7 @@ export async function consultarAsientos(params: {
     '/api/ventas/consultar-asientos',
     {
       method: 'POST',
-      body: JSON.stringify({ servicioId, origenId, destinoId, empresaId }),
+      body: JSON.stringify({ servicioId, origenId, destinoId, agenciaId }),
       fallbackMessage: 'Error al consultar asientos disponibles',
       timeoutMs: TIMEOUT_CONSULTA_MS,
     },
@@ -263,11 +263,11 @@ export async function bloquearAsientos(params: {
   origenId: string
   destinoId: string
   asientos: string[]
-  empresaId: string
+  agenciaId: string
 }): Promise<BloquearAsientosApiResponse> {
-  const { servicioId, origenId, destinoId, asientos, empresaId } = params
+  const { servicioId, origenId, destinoId, asientos, agenciaId } = params
 
-  if (!servicioId || !origenId || !destinoId || !empresaId) {
+  if (!servicioId || !origenId || !destinoId || !agenciaId) {
     throw new BloqueoAsientosError(
       'Faltan datos del servicio para bloquear los asientos.',
     )
@@ -291,7 +291,7 @@ export async function bloquearAsientos(params: {
           origenId,
           destinoId,
           asientos,
-          empresaId,
+          agenciaId,
         }),
         fallbackMessage: 'No se pudieron bloquear los asientos.',
         timeoutMs: TIMEOUT_BLOQUEO_MS,

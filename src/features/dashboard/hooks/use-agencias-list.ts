@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { getEmpresasList } from '../services/empresas.service'
-import { EmpresasSearchParams, EmpresasListResponse } from '../models/empresas.model'
+import { getAgenciasList } from '../services/agencias.service'
+import { AgenciasSearchParams, AgenciasListResponse } from '../models/agencias.model'
 
 /**
  * Hook to fetch empresas list with caching and error handling
  * @param params - Search parameters for filtering empresas
  * @returns Query result with empresas data
  */
-export function useEmpresasList(params: EmpresasSearchParams = {}) {
-  return useQuery<EmpresasListResponse>({
+export function useAgenciasList(params: AgenciasSearchParams = {}) {
+  return useQuery<AgenciasListResponse>({
     queryKey: ['empresas-list', params],
-    queryFn: () => getEmpresasList(params),
+    queryFn: () => getAgenciasList(params),
     staleTime: 5 * 60 * 1000, // 5 minutos (datos menos dinámicos)
     gcTime: 10 * 60 * 1000, // 10 minutos
     retry: 2, // Reintentar 2 veces en caso de error
@@ -26,12 +26,12 @@ export function useEmpresasList(params: EmpresasSearchParams = {}) {
  * @returns Query result with empresas data
  */
 export function useEmpresasListRealtime(
-  params: EmpresasSearchParams = {},
+  params: AgenciasSearchParams = {},
   refetchInterval: number = 300000 // 5 minutos por defecto
 ) {
-  return useQuery<EmpresasListResponse>({
+  return useQuery<AgenciasListResponse>({
     queryKey: ['empresas-list-realtime', params],
-    queryFn: () => getEmpresasList(params),
+    queryFn: () => getAgenciasList(params),
     staleTime: 2 * 60 * 1000, // 2 minutos para datos más frescos
     gcTime: 8 * 60 * 1000, // 8 minutos
     retry: 2,

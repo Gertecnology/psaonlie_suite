@@ -10,10 +10,10 @@ export interface TipoDocumento {
 }
 
 export async function getTiposDocumentoByEmpresa(
-  empresaId: string,
+  agenciaId: string,
 ): Promise<TipoDocumento[]> {
   const tipos = await apiFetchRaw<TipoDocumento[]>(
-    `/api/clientes/empresas/${encodeURIComponent(empresaId)}/tipos-documento`,
+    `/api/clientes/agencias/${encodeURIComponent(agenciaId)}/tipos-documento`,
     { fallbackMessage: 'Error al obtener los tipos de documento' },
   )
 

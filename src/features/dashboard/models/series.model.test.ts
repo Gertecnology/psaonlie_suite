@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { periodoDesdePreset, type Periodo } from '@/lib/periodo'
 import type {
-  EstadisticasPorEmpresa,
+  EstadisticasPorAgencia,
   EstadisticasPorMetodoPago,
   EstadisticasPorRuta,
   EstadisticasTemporales,
@@ -121,9 +121,9 @@ function empresa(
   nombre: string,
   montoPagado: number,
   comisionesPagadas = 0
-): EstadisticasPorEmpresa {
+): EstadisticasPorAgencia {
   return {
-    empresaId: nombre,
+    agenciaId: nombre,
     empresaNombre: nombre,
     cantidad: 1,
     monto: montoPagado,

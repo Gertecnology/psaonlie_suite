@@ -2,7 +2,7 @@ import { formatearEntero } from '@/lib/formato'
 import { aFechaISOLocal, diasDelPeriodo, type Periodo } from '@/lib/periodo'
 import { MAXIMO_SERIES, colorDeSerie } from '@/components/ui/chart'
 import type {
-  EstadisticasPorEmpresa,
+  EstadisticasPorAgencia,
   EstadisticasPorMetodoPago,
   EstadisticasPorRuta,
   EstadisticasTemporales,
@@ -116,12 +116,12 @@ export const CLAVE_OTRAS = '__otras__'
  * indistinguibles bajo daltonismo y arruinan la paleta entera.
  */
 export function armarFilasEmpresas(
-  empresas: EstadisticasPorEmpresa[],
+  empresas: EstadisticasPorAgencia[],
   maximo = MAXIMO_SERIES
 ): FilaRankingEmpresa[] {
   const ordenadas = empresas
     .map<FilaRankingEmpresa>((e) => ({
-      id: e.empresaId,
+      id: e.agenciaId,
       nombre: e.empresaNombre,
       ventas: e.cantidad,
       desglose: desgloseEmpresaCobrado(e),

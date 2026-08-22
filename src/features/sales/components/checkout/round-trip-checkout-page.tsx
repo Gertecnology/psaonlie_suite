@@ -55,7 +55,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
     passengerNumber: index + 1,
     asientoIda: roundTripData.ida.asientos?.[index],
     asientoVuelta: roundTripData.vuelta?.asientos?.[index],
-    empresaIdIda: roundTripData.ida.empresaId,
+    agenciaIdIda: roundTripData.ida.agenciaId,
     empresaNombreIda: roundTripData.ida.servicio?.Emp,
   }))
 
@@ -159,7 +159,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
       ventas.push({
         bloqueoCodigoReferencia: roundTripData.ida.codigoReferencia,
         servicioId: roundTripData.ida.servicio.Id,
-        empresaId: roundTripData.ida.empresaId!,
+        agenciaId: roundTripData.ida.agenciaId!,
         EmpresaBoleto: roundTripData.ida.servicio.Emp,
         calidad: roundTripData.ida.servicio.Calidad,
         origenId: roundTripData.ida.origen!.id,
@@ -181,7 +181,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
         ventas.push({
           bloqueoCodigoReferencia: roundTripData.vuelta.codigoReferencia,
           servicioId: roundTripData.vuelta.servicio.Id,
-          empresaId: roundTripData.vuelta.empresaId!,
+          agenciaId: roundTripData.vuelta.agenciaId!,
           EmpresaBoleto: roundTripData.vuelta.servicio.Emp,
           calidad: roundTripData.vuelta.servicio.Calidad,
           origenId: roundTripData.vuelta.origen!.id,
@@ -432,7 +432,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
                 </CardHeader>
                 <CardContent>
                   <ClientForm
-                    empresaId={form.empresaIdIda || ''}
+                    agenciaId={form.agenciaIdIda || ''}
                     empresaNombre={form.empresaNombreIda}
                     onClientCreated={(clienteId, client) =>
                       handleClientCreated(

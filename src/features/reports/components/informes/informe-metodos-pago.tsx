@@ -42,7 +42,7 @@ interface Props {
 export function InformeMetodosPago({ filtros }: Props) {
   const consulta = useEstadisticas({
     periodo: filtros.periodo,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   })
 
   if (consulta.error) {

@@ -2,7 +2,7 @@ import { aNumero } from '@/lib/formato'
 import { apiFetch } from '@/utils/api-client'
 import type {
   EstadisticasGenerales,
-  EstadisticasPorEmpresa,
+  EstadisticasPorAgencia,
   EstadisticasPorMetodoPago,
   EstadisticasPorRuta,
   EstadisticasTemporales,
@@ -78,11 +78,11 @@ function normalizarMetodoPago(
   }
 }
 
-function normalizarEmpresa(
+function normalizarAgencia(
   fila: Record<string, unknown>
-): EstadisticasPorEmpresa {
+): EstadisticasPorAgencia {
   return {
-    empresaId: String(fila.empresaId ?? ''),
+    agenciaId: String(fila.agenciaId ?? ''),
     empresaNombre: String(fila.empresaNombre ?? 'Sin nombre'),
     cantidad: aNumero(fila.cantidad),
     monto: aNumero(fila.monto),
@@ -144,7 +144,7 @@ export function normalizarEstadisticas(crudo: unknown): EstadisticasVentas {
     },
     generales: normalizarGenerales(r.generales),
     porMetodoPago: normalizarLista(r.porMetodoPago, normalizarMetodoPago),
-    porEmpresa: normalizarLista(r.porEmpresa, normalizarEmpresa),
+    porAgencia: normalizarLista(r.porAgencia, normalizarAgencia),
     porRuta: normalizarLista(r.porRuta, normalizarRuta),
     temporales: normalizarLista(r.temporales, normalizarTemporal),
     topClientes: normalizarLista(r.topClientes, normalizarTopCliente),
@@ -169,7 +169,7 @@ export async function obtenerEstadisticas(
   const query = new URLSearchParams()
   if (filtros.fechaDesde) query.append('fechaDesde', filtros.fechaDesde)
   if (filtros.fechaHasta) query.append('fechaHasta', filtros.fechaHasta)
-  if (filtros.empresaId) query.append('empresaId', filtros.empresaId)
+  if (filtros.agenciaId) query.append('agenciaId', filtros.agenciaId)
 
   const crudo = await apiFetch<unknown>(
     `/api/admin/ventas/estadisticas?${query.toString()}`,

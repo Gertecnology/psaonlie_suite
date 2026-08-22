@@ -43,7 +43,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 interface ClientFormProps {
-  empresaId: string
+  agenciaId: string
   empresaNombre?: string
   /**
    * Se llama con el id que devolvió el backend. El checkout necesita ese id
@@ -55,14 +55,14 @@ interface ClientFormProps {
   passengerNumber?: number
 }
 
-export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClientCreated, seatNumber, passengerNumber }: ClientFormProps) {
+export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClientCreated, seatNumber, passengerNumber }: ClientFormProps) {
   const createClient = useCreateClient()
 
   // Obtener tipos de documento para la empresa
-  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(empresaId)
+  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(agenciaId)
   
   // Obtener países disponibles del API
-  const { data: paisesDisponibles, isLoading: isLoadingPaises } = useGetPaisesDisponibles(empresaId)
+  const { data: paisesDisponibles, isLoading: isLoadingPaises } = useGetPaisesDisponibles(agenciaId)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -89,7 +89,7 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
 
     const clientData: CreateClientFormValues = {
       ...data,
-      empresaId: empresaId,
+      agenciaId: agenciaId,
     }
 
     createClient.mutate(clientData, {

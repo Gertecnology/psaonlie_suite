@@ -113,11 +113,11 @@ export async function getServiceChargeById(id: string): Promise<ServiceCharge> {
 
 // Service to assign service charge to company
 export async function assignServiceChargeToCompany(
-  empresaId: string,
+  agenciaId: string,
   serviceChargeId: string
 ): Promise<void> {
   const token = localStorage.getItem('accessToken')
-  const response = await fetch(`${API_URL}/service-charges/empresa/${empresaId}/assign/${serviceChargeId}`, {
+  const response = await fetch(`${API_URL}/service-charges/empresa/${agenciaId}/assign/${serviceChargeId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/auth-context'
-import { obtenerEmpresas } from '../services/empresas-panel.service'
+import { obtenerAgencias } from '../services/agencias-panel.service'
 
 /**
  * Empresas para el selector del panel.
@@ -9,12 +9,12 @@ import { obtenerEmpresas } from '../services/empresas-panel.service'
  * conectividad sólo en el service, no en la caché, porque esta consulta se
  * refresca mucho menos seguido.
  */
-export function useEmpresasPanel() {
+export function useAgenciasPanel() {
   const { accessToken } = useAuth()
 
   return useQuery({
     queryKey: ['empresas-panel', accessToken],
-    queryFn: () => obtenerEmpresas(),
+    queryFn: () => obtenerAgencias(),
     enabled: !!accessToken,
     staleTime: 10 * 60 * 1000,
   })

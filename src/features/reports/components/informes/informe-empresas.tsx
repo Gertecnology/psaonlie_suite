@@ -20,7 +20,7 @@ import {
 import { TarjetaMetrica } from '@/features/dashboard/components/tarjeta-metrica'
 import { useEstadisticas } from '@/features/dashboard/hooks/use-estadisticas'
 import type { EstadoFiltrosPanel } from '@/features/dashboard/hooks/use-filtros-panel'
-import type { EstadisticasPorEmpresa } from '@/features/dashboard/models/estadisticas.model'
+import type { EstadisticasPorAgencia } from '@/features/dashboard/models/estadisticas.model'
 import {
   desgloseEmpresaCobrado,
   sumarDesgloses,
@@ -37,10 +37,10 @@ interface FilaEmpresa {
   pendiente: number
 }
 
-function armarFilas(empresas: EstadisticasPorEmpresa[]): FilaEmpresa[] {
+function armarFilas(empresas: EstadisticasPorAgencia[]): FilaEmpresa[] {
   return empresas
     .map<FilaEmpresa>((empresa) => ({
-      id: empresa.empresaId,
+      id: empresa.agenciaId,
       nombre: empresa.empresaNombre,
       ventas: empresa.cantidad,
       cobrado: desgloseEmpresaCobrado(empresa),
@@ -74,11 +74,11 @@ interface Props {
 export function InformeEmpresas({ filtros }: Props) {
   const consulta = useEstadisticas({
     periodo: filtros.periodo,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   })
 
   const filas = useMemo(
-    () => armarFilas(consulta.data?.porEmpresa ?? []),
+    () => armarFilas(consulta.data?.porAgencia ?? []),
     [consulta.data],
   )
 

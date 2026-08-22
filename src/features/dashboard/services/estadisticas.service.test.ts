@@ -68,24 +68,24 @@ describe('normalizarEstadisticas', () => {
     for (const entrada of [null, undefined, {}, 'texto', []]) {
       const normalizado = normalizarEstadisticas(entrada)
       expect(normalizado.generales.totalVentas).toBe(0)
-      expect(normalizado.porEmpresa).toEqual([])
+      expect(normalizado.porAgencia).toEqual([])
       expect(normalizado.temporales).toEqual([])
     }
   })
 
   it('descarta las filas que no son objetos', () => {
     const normalizado = normalizarEstadisticas({
-      porEmpresa: [null, 'basura', { empresaId: 'e1', montoPagado: '100.00' }],
+      porAgencia: [null, 'basura', { agenciaId: 'e1', montoPagado: '100.00' }],
     })
-    expect(normalizado.porEmpresa).toHaveLength(1)
-    expect(normalizado.porEmpresa[0].montoPagado).toBe(100)
+    expect(normalizado.porAgencia).toHaveLength(1)
+    expect(normalizado.porAgencia[0].montoPagado).toBe(100)
   })
 
   it('normaliza las listas por empresa, ruta, método y temporales', () => {
     const normalizado = normalizarEstadisticas({
-      porEmpresa: [
+      porAgencia: [
         {
-          empresaId: 'e1',
+          agenciaId: 'e1',
           empresaNombre: 'Canindeyú',
           cantidad: '5',
           montoPagado: '500.00',
@@ -103,7 +103,7 @@ describe('normalizarEstadisticas', () => {
       ],
     })
 
-    expect(normalizado.porEmpresa[0].cantidad).toBe(5)
+    expect(normalizado.porAgencia[0].cantidad).toBe(5)
     expect(normalizado.porRuta[0].monto).toBe(900.5)
     expect(normalizado.porMetodoPago[0].cantidad).toBe(3)
     expect(normalizado.temporales[0].monto).toBe(250)
@@ -112,10 +112,10 @@ describe('normalizarEstadisticas', () => {
 
   it('pone un nombre de reserva cuando falta', () => {
     const normalizado = normalizarEstadisticas({
-      porEmpresa: [{ empresaId: 'e1' }],
+      porAgencia: [{ agenciaId: 'e1' }],
       porRuta: [{}],
     })
-    expect(normalizado.porEmpresa[0].empresaNombre).toBe('Sin nombre')
+    expect(normalizado.porAgencia[0].empresaNombre).toBe('Sin nombre')
     expect(normalizado.porRuta[0].origenNombre).toBe('N/A')
   })
 })
@@ -127,13 +127,13 @@ describe('obtenerEstadisticas', () => {
     await obtenerEstadisticas({
       fechaDesde: '2026-08-01T03:00:00.000Z',
       fechaHasta: '2026-08-22T02:59:59.999Z',
-      empresaId: 'empresa-1',
+      agenciaId: 'empresa-1',
     })
 
     const [url] = fetchMock.mock.calls[0] as [string]
     expect(url).toContain('/api/admin/ventas/estadisticas?')
     expect(url).toContain('fechaDesde=2026-08-01T03%3A00%3A00.000Z')
-    expect(url).toContain('empresaId=empresa-1')
+    expect(url).toContain('agenciaId=empresa-1')
   })
 
   it('omite los filtros vacíos', async () => {
@@ -141,7 +141,7 @@ describe('obtenerEstadisticas', () => {
     await obtenerEstadisticas({ fechaDesde: '2026-08-01' })
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(url).not.toContain('empresaId')
+    expect(url).not.toContain('agenciaId')
     expect(url).not.toContain('fechaHasta')
   })
 
@@ -149,7 +149,7 @@ describe('obtenerEstadisticas', () => {
     // `/api/admin/ventas/*` no usa el envelope. Buscar `body.data` acá daba
     // `undefined`, o sea un panel vacío sin ningún error visible.
     fetchMock.mockResolvedValue(
-      responder({ generales: { totalVentas: 7 }, porEmpresa: [] })
+      responder({ generales: { totalVentas: 7 }, porAgencia: [] })
     )
 
     const resultado = await obtenerEstadisticas({})

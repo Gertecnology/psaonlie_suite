@@ -70,7 +70,7 @@ export function InformeConciliacion({ filtros }: Props) {
 
   const ventas = useEstadisticas({
     periodo: filtros.periodo,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   })
 
   const pagos = useQuery({

@@ -65,8 +65,8 @@ export interface EstadisticasPorMetodoPago {
   porcentaje: number
 }
 
-export interface EstadisticasPorEmpresa {
-  empresaId: string
+export interface EstadisticasPorAgencia {
+  agenciaId: string
   empresaNombre: string
   cantidad: number
   monto: number
@@ -117,7 +117,7 @@ export interface EstadisticasVentas {
   periodo: PeriodoEstadisticas
   generales: EstadisticasGenerales
   porMetodoPago: EstadisticasPorMetodoPago[]
-  porEmpresa: EstadisticasPorEmpresa[]
+  porAgencia: EstadisticasPorAgencia[]
   porRuta: EstadisticasPorRuta[]
   temporales: EstadisticasTemporales[]
   topClientes: TopCliente[]
@@ -128,5 +128,5 @@ export interface EstadisticasVentas {
 export interface FiltrosEstadisticas {
   fechaDesde?: string
   fechaHasta?: string
-  empresaId?: string
+  agenciaId?: string
 }

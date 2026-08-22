@@ -58,7 +58,7 @@ describe('apiFetch (endpoints con envelope)', () => {
       200,
     )
 
-    await expect(apiFetch('/empresas/1')).rejects.toThrow(
+    await expect(apiFetch('/agencias/1')).rejects.toThrow(
       /No se pudo actualizar la empresa/,
     )
   })

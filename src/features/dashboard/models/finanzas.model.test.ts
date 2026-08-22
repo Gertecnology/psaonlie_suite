@@ -174,7 +174,7 @@ describe('desgloses derivados de las estadísticas', () => {
 describe('desgloseEmpresaCobrado', () => {
   it('usa las columnas de pagado de la empresa', () => {
     const d = desgloseEmpresaCobrado({
-      empresaId: 'e1',
+      agenciaId: 'e1',
       empresaNombre: 'Canindeyú',
       cantidad: 10,
       monto: 200_000,

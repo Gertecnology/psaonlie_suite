@@ -40,7 +40,7 @@ export default function Dashboard() {
   const filtros = useFiltrosPanel()
   const { actual, anterior, cargando, refrescando, error } = useComparativo({
     periodo: filtros.periodo,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   })
 
   // Sólo los campos serializables: `filtros` también trae los callbacks.
@@ -48,14 +48,14 @@ export default function Dashboard() {
     preset: filtros.preset,
     desde: aFechaISOLocal(filtros.periodo.desde),
     hasta: aFechaISOLocal(filtros.periodo.hasta),
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   }
 
   const { fechaDesde, fechaHasta } = aParametrosApi(filtros.periodo)
   const ultimasVentas = useVentas({
     fechaVentaDesde: fechaDesde,
     fechaVentaHasta: fechaHasta,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
     limit: 8,
     sortBy: 'fechaVenta',
     sortOrder: 'DESC',
@@ -125,7 +125,7 @@ export default function Dashboard() {
               refrescando={refrescando}
             >
               <RankingEmpresas
-                empresas={actual?.porEmpresa}
+                empresas={actual?.porAgencia}
                 cargando={cargando}
               />
             </TarjetaSeccion>

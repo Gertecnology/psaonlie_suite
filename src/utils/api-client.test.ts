@@ -71,7 +71,7 @@ describe('apiFetch — respuestas exitosas', () => {
     )
 
     const resultado = await apiFetch<{ items: unknown[]; total: number }>(
-      '/empresas'
+      '/agencias'
     )
     expect(resultado).toEqual({ items: [{ id: 'e1' }], total: 1 })
   })
@@ -86,7 +86,7 @@ describe('apiFetch — respuestas exitosas', () => {
 
   it('devuelve undefined ante un 204 sin cuerpo', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }))
-    expect(await apiFetch('/empresas/e1')).toBeUndefined()
+    expect(await apiFetch('/agencias/e1')).toBeUndefined()
   })
 
   it('adjunta el token de acceso', async () => {
@@ -144,7 +144,7 @@ describe('apiFetch — errores', () => {
       })
     )
 
-    await expect(apiFetch('/empresas')).rejects.toThrow(
+    await expect(apiFetch('/agencias')).rejects.toThrow(
       'Error interno del servidor'
     )
   })
@@ -186,7 +186,7 @@ describe('apiFetch — errores', () => {
   it('distingue un fallo de red de un error del servidor', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
 
-    const error = await apiFetch('/empresas').catch((e: unknown) => e)
+    const error = await apiFetch('/agencias').catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).statusCode).toBe(0)
     expect((error as ApiError).message).toContain('No se pudo conectar')

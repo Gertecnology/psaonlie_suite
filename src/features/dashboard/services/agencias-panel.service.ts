@@ -4,9 +4,9 @@ import { apiFetch } from '@/utils/api-client'
 /**
  * Empresas, vistas desde el panel de control.
  *
- * El CRUD de empresas vive en `features/agencias`; acá sólo se necesita el
- * listado para el selector y para la alerta de conectividad, así que se define
- * un tipo mínimo en vez de acoplar las dos features.
+ * El CRUD vive en `features/agencias`; acá sólo se necesita el listado para el
+ * selector y para la alerta de conectividad, así que se define un tipo mínimo
+ * en vez de acoplar las dos features.
  *
  * A diferencia de `/api/admin/ventas/*`, este endpoint **sí** usa el envelope y
  * además pagina con la clave `items` (no `data`). `apiFetch` desenvuelve el
@@ -42,13 +42,17 @@ function normalizarEmpresa(fila: Record<string, unknown>): EmpresaPanel {
 }
 
 /**
- * `GET /empresas` — sin prefijo `/api`, a diferencia del resto.
+ * `GET /agencias` — sin prefijo `/api`, a diferencia del resto.
+ *
+ * Devuelve sólo las filas sin padre, que son las empresas: es exactamente lo
+ * que el selector del panel necesita, porque una agencia hija no tiene
+ * conexión propia y filtrar por ella sería filtrar por un pedazo de su empresa.
  *
  * Trae hasta 100 por página. Con ~20 empresas vivas alcanza una sola llamada;
  * si el padrón crece, el selector debería pasar a búsqueda server-side por
  * `nombre` (el backend ya la soporta).
  */
-export async function obtenerEmpresas(
+export async function obtenerAgencias(
   limite = LIMITE_MAXIMO_EMPRESAS
 ): Promise<EmpresaPanel[]> {
   const query = new URLSearchParams({
@@ -59,7 +63,7 @@ export async function obtenerEmpresas(
   })
 
   const crudo = await apiFetch<{ items?: unknown[] }>(
-    `/empresas?${query.toString()}`,
+    `/agencias?${query.toString()}`,
     { fallbackMessage: 'No se pudo obtener el listado de empresas.' }
   )
 

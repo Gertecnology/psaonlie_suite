@@ -16,9 +16,9 @@ export { esquemaFiltrosPanel, type FiltrosUrl } from './models/busqueda.model'
 export { obtenerEstadisticas } from './services/estadisticas.service'
 export { obtenerVentas, exportarVentas } from './services/ventas.service'
 export {
-  obtenerEmpresas,
+  obtenerAgencias,
   type EmpresaPanel,
-} from './services/empresas-panel.service'
+} from './services/agencias-panel.service'
 export {
   obtenerVentasSinBoleto,
   obtenerPagosPorVencer,
@@ -32,7 +32,7 @@ export {
   type EstadoFiltrosPanel,
 } from './hooks/use-filtros-panel'
 export { useVentas, useExportarVentas } from './hooks/use-ventas'
-export { useEmpresasPanel } from './hooks/use-empresas-panel'
+export { useAgenciasPanel } from './hooks/use-agencias-panel'
 export {
   useVentasSinBoleto,
   usePagosPorVencer,
@@ -54,6 +54,6 @@ export { EstadoError, EstadoVacio } from './components/estados'
 export { downloadInvoice, downloadBlobAsFile } from './services/invoice.service'
 
 // Empresas (listado simple): lo consume `features/settings/service-charges`.
-export { getEmpresasList } from './services/empresas.service'
-export * from './models/empresas.model'
-export { useEmpresasList } from './hooks/use-empresas-list'
+export { getAgenciasList } from './services/agencias.service'
+export * from './models/agencias.model'
+export { useAgenciasList } from './hooks/use-agencias-list'

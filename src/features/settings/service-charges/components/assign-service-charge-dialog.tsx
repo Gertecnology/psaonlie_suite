@@ -21,7 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useEmpresasList } from '@/features/dashboard/hooks/use-empresas-list'
+import { useAgenciasList } from '@/features/dashboard/hooks/use-agencias-list'
 import { useAssignServiceChargeToCompany } from '../hooks/use-assign-service-charge-to-company'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -43,7 +43,7 @@ export function AssignServiceChargeDialog({
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: empresasData, isLoading } = useEmpresasList({
+  const { data: empresasData, isLoading } = useAgenciasList({
     search: searchTerm,
     limit: 50,
   })
@@ -58,7 +58,7 @@ export function AssignServiceChargeDialog({
 
     assignServiceCharge.mutate(
       {
-        empresaId: selectedEmpresaId,
+        agenciaId: selectedEmpresaId,
         serviceChargeId,
       },
       {

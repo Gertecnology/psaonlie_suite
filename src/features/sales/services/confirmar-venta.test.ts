@@ -24,7 +24,7 @@ const PEDIDO: ConfirmarVentaRequest = {
     {
       bloqueoCodigoReferencia: 'REF-1',
       servicioId: 'SRV-1',
-      empresaId: 'EMP-1',
+      agenciaId: 'EMP-1',
       EmpresaBoleto: 'SOL',
       calidad: 'CA',
       origenId: 'ORI-1',

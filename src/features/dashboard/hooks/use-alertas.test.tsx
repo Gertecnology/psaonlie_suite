@@ -203,7 +203,7 @@ describe('useConectividadEmpresas', () => {
     expect(result.current.data?.total).toBe(2)
   })
 
-  it('desenvuelve el envelope de /empresas', async () => {
+  it('desenvuelve el envelope de /agencias', async () => {
     // A diferencia de `/api/admin/ventas/*`, este endpoint sí usa el sobre y
     // pagina con la clave `items`, no `data`.
     fetchMock.mockResolvedValue(

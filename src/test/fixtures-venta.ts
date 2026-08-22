@@ -77,7 +77,7 @@ export function datosConServicioElegido(): RoundTripSearchData {
       destino: { id: 'DES-1', nombre: 'Ciudad del Este' },
       fecha: new Date('2026-09-01T00:00:00.000Z'),
       servicio: SERVICIO,
-      empresaId: 'EMP-1',
+      agenciaId: 'EMP-1',
       serviceCharge: SERVICE_CHARGE_PORCENTUAL,
     },
   }

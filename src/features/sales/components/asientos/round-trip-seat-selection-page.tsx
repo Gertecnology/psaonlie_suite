@@ -51,11 +51,11 @@ export function RoundTripSeatSelectionPage({ tripType = 'ida', onComplete: _onCo
   const blockedSeats = currentTripData?.asientos ?? []
   const blockReferenceCode = currentTripData?.codigoReferencia ?? null
 
-  const consultarAsientosRequest: ConsultarAsientosRequest | null = currentTripData?.servicio && currentTripData?.empresaId && currentTripData?.origen && currentTripData?.destino ? {
+  const consultarAsientosRequest: ConsultarAsientosRequest | null = currentTripData?.servicio && currentTripData?.agenciaId && currentTripData?.origen && currentTripData?.destino ? {
     servicioId: currentTripData.servicio.Id,
     origenId: currentTripData.origen.id,
     destinoId: currentTripData.destino.id,
-    empresaId: currentTripData.empresaId,
+    agenciaId: currentTripData.agenciaId,
   } : null
 
   const { data: asientosData, isLoading, error } = useGetAsientos(consultarAsientosRequest)
@@ -116,7 +116,7 @@ export function RoundTripSeatSelectionPage({ tripType = 'ida', onComplete: _onCo
         servicioId: currentTripData.servicio.Id,
         origenId: currentTripData.origen!.id,
         destinoId: currentTripData.destino!.id,
-        empresaId: currentTripData.empresaId!,
+        agenciaId: currentTripData.agenciaId!,
         asientos: selectedSeats.map(seat => seat.numero),
       })
 

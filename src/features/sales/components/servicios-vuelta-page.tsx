@@ -98,7 +98,7 @@ export function ServiciosVueltaPage() {
             isLoading={isLoading}
             origen={roundTripData.vuelta.origen}
             destino={roundTripData.vuelta.destino}
-            onServiceSelect={(servicio, empresaId, serviceCharge) => {
+            onServiceSelect={(servicio, agenciaId, serviceCharge) => {
               // Guardar el servicio de vuelta seleccionado, limpiando el
               // bloqueo anterior: el contexto hace merge y un
               // `codigoReferencia` viejo confirmaría la venta contra el
@@ -107,7 +107,7 @@ export function ServiciosVueltaPage() {
                 vuelta: {
                   ...roundTripData.vuelta,
                   servicio: servicio,
-                  empresaId: empresaId,
+                  agenciaId: agenciaId,
                   serviceCharge: serviceCharge,
                   asientos: undefined,
                   codigoReferencia: undefined,

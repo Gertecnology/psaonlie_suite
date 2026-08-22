@@ -30,7 +30,7 @@ export interface SearchFilters {
   tarifaMinima?: number
   tarifaMaxima?: number
   asientosMinimos?: number
-  empresaId?: string
+  agenciaId?: string
   ordenarPor?: 'embarque' | 'tarifa' | 'libres' | 'calidad'
   ordenDireccion?: 'asc' | 'desc'
 }
@@ -80,7 +80,7 @@ export interface ConsultarAsientosRequest {
   servicioId: string
   origenId: string
   destinoId: string
-  empresaId: string
+  agenciaId: string
 }
 
 // Interface for bloquear asientos request
@@ -89,7 +89,7 @@ export interface BloquearAsientosRequest {
   origenId: string
   destinoId: string
   asientos: string[]
-  empresaId: string
+  agenciaId: string
 }
 
 // Interface for bloquear asientos response
@@ -109,7 +109,7 @@ export interface TripData {
   destino?: ParadaHomologada | null
   fecha?: Date | null
   servicio?: Servicio
-  empresaId?: string // UUID de la empresa
+  agenciaId?: string // UUID de la empresa
   serviceCharge?: ServiceCharge // Cargo por servicio de la empresa
   asientos?: Asiento[]
   codigoReferencia?: string

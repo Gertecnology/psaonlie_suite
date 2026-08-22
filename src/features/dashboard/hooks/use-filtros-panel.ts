@@ -18,11 +18,11 @@ export interface EstadoFiltrosPanel {
   periodo: Periodo
   /** Mismo largo que `periodo`, inmediatamente anterior. Para comparar. */
   anterior: Periodo
-  empresaId?: string
+  agenciaId?: string
   informe?: string
   aplicarPreset: (preset: PresetPeriodo) => void
   aplicarRango: (desde: Date, hasta: Date) => void
-  aplicarEmpresa: (empresaId: string | undefined) => void
+  aplicarAgencia: (agenciaId: string | undefined) => void
   aplicarInforme: (informe: string) => void
 }
 
@@ -103,9 +103,9 @@ export function useFiltrosPanel(): EstadoFiltrosPanel {
     [actualizar]
   )
 
-  const aplicarEmpresa = useCallback(
-    (empresaId: string | undefined) => {
-      actualizar({ empresaId: empresaId || undefined })
+  const aplicarAgencia = useCallback(
+    (agenciaId: string | undefined) => {
+      actualizar({ agenciaId: agenciaId || undefined })
     },
     [actualizar]
   )
@@ -119,11 +119,11 @@ export function useFiltrosPanel(): EstadoFiltrosPanel {
     preset,
     periodo,
     anterior,
-    empresaId: busqueda.empresaId || undefined,
+    agenciaId: busqueda.agenciaId || undefined,
     informe: busqueda.informe,
     aplicarPreset,
     aplicarRango,
-    aplicarEmpresa,
+    aplicarAgencia,
     aplicarInforme,
   }
 }

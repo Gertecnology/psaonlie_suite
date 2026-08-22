@@ -1,7 +1,7 @@
 import { aNumero } from '@/lib/formato'
 import type {
   EstadisticasGenerales,
-  EstadisticasPorEmpresa,
+  EstadisticasPorAgencia,
 } from './estadisticas.model'
 
 /**
@@ -128,7 +128,7 @@ export function desgloseTotal(
 
 /** Desglose de lo cobrado a una empresa concreta. */
 export function desgloseEmpresaCobrado(
-  empresa: EstadisticasPorEmpresa
+  empresa: EstadisticasPorAgencia
 ): DesgloseDinero {
   return calcularDesglose({
     pasaje: empresa.montoPagado,

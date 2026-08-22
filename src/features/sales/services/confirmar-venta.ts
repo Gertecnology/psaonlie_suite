@@ -15,7 +15,7 @@ export interface AsientoVenta {
 export interface VentaConfirmar {
   bloqueoCodigoReferencia: string
   servicioId: string
-  empresaId: string
+  agenciaId: string
   EmpresaBoleto: string
   calidad: string
   origenId: string
@@ -38,7 +38,7 @@ export interface ConfirmarVentaRequest {
 export interface ErrorDetalle {
   bloqueoCodigoReferencia: string
   servicioId: string
-  empresaId: string
+  agenciaId: string
   stack: string
 }
 

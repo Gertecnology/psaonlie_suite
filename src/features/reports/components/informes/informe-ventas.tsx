@@ -71,7 +71,7 @@ export function InformeVentas({ filtros }: Props) {
     () => ({
       fechaVentaDesde: fechaDesde,
       fechaVentaHasta: fechaHasta,
-      empresaId: filtros.empresaId,
+      agenciaId: filtros.agenciaId,
       numeroTransaccion: busquedaDiferida || undefined,
       estadoPago:
         estadoPago === TODOS ? undefined : (estadoPago as EstadoPago),
@@ -83,7 +83,7 @@ export function InformeVentas({ filtros }: Props) {
     [
       fechaDesde,
       fechaHasta,
-      filtros.empresaId,
+      filtros.agenciaId,
       busquedaDiferida,
       estadoPago,
       estadoVenta,

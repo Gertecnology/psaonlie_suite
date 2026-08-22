@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { EstadoFiltrosPanel } from '../hooks/use-filtros-panel'
-import { useEmpresasPanel } from '../hooks/use-empresas-panel'
+import { useAgenciasPanel } from '../hooks/use-agencias-panel'
 import { SelectorRangoFechas } from './selector-rango-fechas'
 
 const TODAS = '__todas__'
@@ -28,7 +28,7 @@ interface Props {
  * panel.
  */
 export function FiltrosPanel({ filtros, children }: Props) {
-  const { data: empresas, isPending } = useEmpresasPanel()
+  const { data: empresas, isPending } = useAgenciasPanel()
 
   return (
     <div className='mb-6 flex flex-wrap items-center gap-3'>
@@ -40,9 +40,9 @@ export function FiltrosPanel({ filtros, children }: Props) {
       />
 
       <Select
-        value={filtros.empresaId ?? TODAS}
+        value={filtros.agenciaId ?? TODAS}
         onValueChange={(valor) =>
-          filtros.aplicarEmpresa(valor === TODAS ? undefined : valor)
+          filtros.aplicarAgencia(valor === TODAS ? undefined : valor)
         }
         disabled={isPending}
       >

@@ -23,7 +23,7 @@ interface CheckoutSearch {
   servicioId: string
   origenId: string
   destinoId: string
-  empresaId: string
+  agenciaId: string
   empresa?: string
   origen?: string
   destino?: string
@@ -67,7 +67,7 @@ export function CheckoutPage() {
       servicioId: urlParams.get('servicioId') || '',
       origenId: urlParams.get('origenId') || '',
       destinoId: urlParams.get('destinoId') || '',
-      empresaId: urlParams.get('empresaId') || '',
+      agenciaId: urlParams.get('agenciaId') || '',
       empresa: urlParams.get('empresa') || undefined,
       origen: urlParams.get('origen') || undefined,
       destino: urlParams.get('destino') || undefined,
@@ -121,7 +121,7 @@ export function CheckoutPage() {
       servicioId: search.servicioId,
       origenId: search.origenId,
       destinoId: search.destinoId,
-      empresaId: search.empresaId,
+      agenciaId: search.agenciaId,
       empresa: search.empresa || '',
       origen: search.origen || '',
       destino: search.destino || '',
@@ -193,7 +193,7 @@ export function CheckoutPage() {
         ventas: [{
           bloqueoCodigoReferencia: search.codigoReferencia,
           servicioId: search.servicioId,
-          empresaId: search.empresaId,
+          agenciaId: search.agenciaId,
           EmpresaBoleto: search.empresaBoleto || '',
           calidad: search.calidad || '',
           origenId: search.origenId,
@@ -229,7 +229,7 @@ export function CheckoutPage() {
         servicioId: search.servicioId,
         origenId: search.origenId,
         destinoId: search.destinoId,
-        empresaId: search.empresaId,
+        agenciaId: search.agenciaId,
         empresa: search.empresa || '',
         origen: search.origen || '',
         destino: search.destino || '',
@@ -384,7 +384,7 @@ export function CheckoutPage() {
             return (
               <ClientForm
                 key={asiento.numero}
-                empresaId={search.empresaId}
+                agenciaId={search.agenciaId}
                 empresaNombre={search.empresa}
                 onClientCreated={(clienteId, client) =>
                   handleClientCreated(

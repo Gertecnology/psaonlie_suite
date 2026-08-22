@@ -11,7 +11,7 @@ import {
   type VentasSinBoleto,
 } from '../models/alertas.model'
 import type { MetodoPago } from '../models/ventas.model'
-import { obtenerEmpresas } from './empresas-panel.service'
+import { obtenerAgencias } from './agencias-panel.service'
 import { obtenerVentas } from './ventas.service'
 
 /**
@@ -204,7 +204,7 @@ export async function obtenerConectividadEmpresas(
   const { horasSinSincronizar = HORAS_SIN_SINCRONIZAR, ahora = new Date() } =
     opciones
 
-  const empresas = await obtenerEmpresas()
+  const empresas = await obtenerAgencias()
 
   const evaluadas: EmpresaConectividad[] = empresas.map((empresa) => {
     const ultima = aFecha(empresa.ultimaSincronizacionSoap)

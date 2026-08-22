@@ -41,7 +41,7 @@ const PARAMS = {
   servicioId: 'SRV-1',
   origenId: 'ORI-1',
   destinoId: 'DES-1',
-  empresaId: 'EMP-1',
+  agenciaId: 'EMP-1',
   asientos: ['5', '6'],
 }
 

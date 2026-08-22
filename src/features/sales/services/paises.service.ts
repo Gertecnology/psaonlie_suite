@@ -21,9 +21,9 @@ export interface PaisEmpresa {
 
 export type PaisesResponse = Array<PaisEmpresa>
 
-export async function getPaises(empresaId?: string): Promise<PaisesResponse> {
-  const path = empresaId
-    ? `/api/paises?empresaid=${encodeURIComponent(empresaId)}`
+export async function getPaises(agenciaId?: string): Promise<PaisesResponse> {
+  const path = agenciaId
+    ? `/api/paises?empresaid=${encodeURIComponent(agenciaId)}`
     : '/api/paises'
 
   const paises = await apiFetchRaw<PaisesResponse>(path, {

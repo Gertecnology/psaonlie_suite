@@ -265,7 +265,7 @@ describe('obtenerConectividadEmpresas', () => {
   const AHORA = new Date('2026-08-21T12:00:00.000Z')
 
   function empresasResponden(items: Record<string, unknown>[]) {
-    // `/empresas` sí usa el envelope, y pagina con la clave `items`.
+    // `/agencias` sí usa el envelope, y pagina con la clave `items`.
     fetchMock.mockResolvedValue(
       responder({
         success: true,

@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ChartLegend, type ChartConfig } from '@/components/ui/chart'
-import type { EstadisticasPorEmpresa } from '../models/estadisticas.model'
+import type { EstadisticasPorAgencia } from '../models/estadisticas.model'
 import { armarFilasEmpresas } from '../models/series.model'
 import { sumarDesgloses, type DesgloseDinero } from '../models/finanzas.model'
 import { EstadoVacio, SkeletonTabla } from './estados'
@@ -21,7 +21,7 @@ const CONFIG: ChartConfig = {
 }
 
 interface Props {
-  empresas: EstadisticasPorEmpresa[] | undefined
+  empresas: EstadisticasPorAgencia[] | undefined
   cargando: boolean
 }
 

@@ -154,7 +154,7 @@ interface Props {
 export function InformeComparativo({ filtros }: Props) {
   const { actual, anterior, cargando, error } = useComparativo({
     periodo: filtros.periodo,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
   })
 
   if (error) return <EstadoError error={error} />

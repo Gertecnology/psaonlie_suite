@@ -63,7 +63,7 @@ export const createClientSchema = z.object({
   email: z.string().email('Email inválido'),
   apellido: z.string().min(1, 'El apellido es requerido'),
   nombre: z.string().min(1, 'El nombre es requerido'),
-  empresaId: z.string().optional(),
+  agenciaId: z.string().optional(),
   tipoDocumento: z.string().optional(),
   numeroDocumento: z.string().optional(),
   fechaNacimiento: z.string().optional(),
@@ -75,7 +75,7 @@ export const createClientSchema = z.object({
   observaciones: z.string().optional(),
 })
 
-// Schema para actualizar cliente según la API (solo campos básicos, sin empresaId, tipoDocumento, numeroDocumento)
+// Schema para actualizar cliente según la API (solo campos básicos, sin agenciaId, tipoDocumento, numeroDocumento)
 export const updateClientSchema = z.object({
   apellido: z.string().optional(),
   nombre: z.string().optional(),
@@ -93,7 +93,7 @@ export const createClientResponseSchema = z.object({
   clienteEmpresa: z.object({
     id: z.string(),
     cliente: z.object({}),
-    empresaId: z.string(),
+    agenciaId: z.string(),
     empresaNombre: z.string(),
     tipoDocumento: z.string(),
     numeroDocumento: z.string(),

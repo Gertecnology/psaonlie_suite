@@ -19,7 +19,7 @@ export const esquemaFiltrosPanel = z.object({
   /** Fin del rango, `YYYY-MM-DD` en hora local. */
   hasta: z.string().optional(),
   /** Empresa por la que se filtra todo el panel. Vacío = todas. */
-  empresaId: z.string().optional(),
+  agenciaId: z.string().optional(),
   /** Informe activo dentro de la sección de informes. */
   informe: z.string().optional(),
 })

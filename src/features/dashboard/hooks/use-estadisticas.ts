@@ -6,7 +6,7 @@ import { obtenerEstadisticas } from '../services/estadisticas.service'
 
 interface OpcionesEstadisticas {
   periodo: Periodo
-  empresaId?: string
+  agenciaId?: string
 }
 
 /**
@@ -17,7 +17,7 @@ interface OpcionesEstadisticas {
  * estadísticas del período anterior al cambiar el rango.
  */
 function armarConsulta(
-  { periodo, empresaId }: OpcionesEstadisticas,
+  { periodo, agenciaId }: OpcionesEstadisticas,
   token: string | null
 ) {
   const { fechaDesde, fechaHasta } = aParametrosApi(periodo)
@@ -25,10 +25,10 @@ function armarConsulta(
   return {
     queryKey: [
       'estadisticas-ventas',
-      { fechaDesde, fechaHasta, empresaId },
+      { fechaDesde, fechaHasta, agenciaId },
       token,
     ] as const,
-    queryFn: () => obtenerEstadisticas({ fechaDesde, fechaHasta, empresaId }),
+    queryFn: () => obtenerEstadisticas({ fechaDesde, fechaHasta, agenciaId }),
     enabled: !!token,
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
@@ -71,11 +71,11 @@ export interface Comparativo {
  */
 export function useComparativo(opciones: OpcionesEstadisticas): Comparativo {
   const { accessToken } = useAuth()
-  const { periodo, empresaId } = opciones
+  const { periodo, agenciaId } = opciones
 
   const anterior: OpcionesEstadisticas = {
     periodo: periodoAnterior(periodo),
-    empresaId,
+    agenciaId,
   }
 
   const resultados = useQueries({

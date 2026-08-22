@@ -1,4 +1,4 @@
-import { EmpresasListResponse, EmpresasSearchParams } from '../models/empresas.model'
+import { AgenciasListResponse, AgenciasSearchParams } from '../models/agencias.model'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -7,9 +7,9 @@ const API_URL = import.meta.env.VITE_API_URL
  * @param params - Search parameters (currently not used)
  * @returns Promise with empresas list response
  */
-export async function getEmpresasList(params: EmpresasSearchParams = {}): Promise<EmpresasListResponse> {
+export async function getAgenciasList(params: AgenciasSearchParams = {}): Promise<AgenciasListResponse> {
   try {
-    const url = new URL(`${API_URL}/empresas/lista`)
+    const url = new URL(`${API_URL}/agencias/lista`)
     
     // Add any search parameters if needed in the future
     Object.entries(params).forEach(([key, value]) => {
@@ -30,7 +30,7 @@ export async function getEmpresasList(params: EmpresasSearchParams = {}): Promis
       throw new Error(`Error ${response.status}: ${response.statusText}`)
     }
 
-    const data: EmpresasListResponse = await response.json()
+    const data: AgenciasListResponse = await response.json()
     return data
   } catch (error) {
     // eslint-disable-next-line no-console

@@ -65,9 +65,9 @@ const ESTADISTICAS = {
       porcentaje: 12.5,
     },
   ],
-  porEmpresa: [
+  porAgencia: [
     {
-      empresaId: 'e1',
+      agenciaId: 'e1',
       empresaNombre: 'Canindeyú',
       cantidad: 20,
       monto: '600000.00',
@@ -111,7 +111,7 @@ beforeEach(() => {
         respuestaJson({ data: [], total: 0, resumenFiltros: {} })
       )
     }
-    if (url.includes('/empresas')) {
+    if (url.includes('/agencias')) {
       return Promise.resolve(
         respuestaJson({
           success: true,

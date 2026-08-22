@@ -63,7 +63,7 @@ export function InformeEstados({ filtros }: Props) {
   const consulta = useVentas({
     fechaVentaDesde: fechaDesde,
     fechaVentaHasta: fechaHasta,
-    empresaId: filtros.empresaId,
+    agenciaId: filtros.agenciaId,
     page: 1,
     limit: 1,
   })

@@ -31,7 +31,7 @@ import {
 import { useClientDialog } from '../store/use-client-dialog'
 import { useCreateClient } from '../hooks/use-client-mutations'
 import { useUpdateClient } from '../hooks/use-client-mutations'
-import { useEmpresasList } from '../../dashboard/hooks/use-empresas-list'
+import { useAgenciasList } from '../../dashboard/hooks/use-agencias-list'
 import { useTiposDocumentoByEmpresa } from '../hooks/use-tipos-documento'
 import { EmpresaSearch } from './empresa-search'
 
@@ -39,7 +39,7 @@ const formSchema = z.object({
   email: z.string().email('Email inválido'),
   apellido: z.string().min(1, 'El apellido es requerido'),
   nombre: z.string().min(1, 'El nombre es requerido'),
-  empresaId: z.string().min(1, 'La empresa es requerida'),
+  agenciaId: z.string().min(1, 'La empresa es requerida'),
   tipoDocumento: z.string().min(1, 'El tipo de documento es requerido'),
   numeroDocumento: z.string().min(1, 'El número de documento es requerido'),
   fechaNacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
@@ -59,7 +59,7 @@ export function ClientMutateDrawer() {
   const updateClient = useUpdateClient()
   
   // Obtener lista de empresas
-  const { data: empresasData, isLoading: isLoadingEmpresas } = useEmpresasList()
+  const { data: empresasData, isLoading: isLoadingEmpresas } = useAgenciasList()
   const empresas = empresasData?.data || []
 
   const isUpdate = !!client && !!client.cliente.email
@@ -70,7 +70,7 @@ export function ClientMutateDrawer() {
       email: '',
       apellido: '',
       nombre: '',
-      empresaId: '',
+      agenciaId: '',
       tipoDocumento: '',
       numeroDocumento: '',
       fechaNacimiento: '',
@@ -83,11 +83,11 @@ export function ClientMutateDrawer() {
     },
   })
 
-  // Obtener empresaId del formulario para cargar tipos de documento
-  const empresaId = form.watch('empresaId')
+  // Obtener agenciaId del formulario para cargar tipos de documento
+  const agenciaId = form.watch('agenciaId')
   
   // Obtener tipos de documento para la empresa seleccionada
-  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(empresaId)
+  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(agenciaId)
 
   useEffect(() => {
     if (open) {
@@ -96,7 +96,7 @@ export function ClientMutateDrawer() {
           email: client.cliente.email,
           apellido: client.cliente.apellido,
           nombre: client.cliente.nombre,
-          empresaId: '',
+          agenciaId: '',
           tipoDocumento: '',
           numeroDocumento: '',
           fechaNacimiento: client.cliente.fechaNacimiento || '',
@@ -112,7 +112,7 @@ export function ClientMutateDrawer() {
           email: '',
           apellido: '',
           nombre: '',
-          empresaId: '',
+          agenciaId: '',
           tipoDocumento: '',
           numeroDocumento: '',
           fechaNacimiento: '',
@@ -129,10 +129,10 @@ export function ClientMutateDrawer() {
 
   // Limpiar tipo de documento cuando cambia la empresa
   useEffect(() => {
-    if (empresaId) {
+    if (agenciaId) {
       form.setValue('tipoDocumento', '')
     }
-  }, [empresaId, form])
+  }, [agenciaId, form])
 
   const onSubmit = (data: FormValues) => {
     if (isUpdate && client?.cliente.email) {
@@ -238,7 +238,7 @@ export function ClientMutateDrawer() {
               
               <FormField
                 control={form.control}
-                name='empresaId'
+                name='agenciaId'
                 render={({ field }) => (
                     <FormItem className='space-y-2'>
                       <FormLabel>Empresa <span className='text-destructive'>*</span></FormLabel>
@@ -258,7 +258,7 @@ export function ClientMutateDrawer() {
             </div>
 
             {/* Información del Cliente */}
-              <div className={`space-y-4 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`space-y-4 transition-opacity duration-200 ${!agenciaId ? 'opacity-50 pointer-events-none' : ''}`}>
               <h3 className='text-lg font-semibold'>Información del Cliente</h3>
 
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -272,7 +272,7 @@ export function ClientMutateDrawer() {
                         <Input 
                           {...field} 
                           placeholder='Ingresa el nombre' 
-                          disabled={!empresaId}
+                          disabled={!agenciaId}
                         />
                       </FormControl>
                       <FormMessage />
@@ -289,7 +289,7 @@ export function ClientMutateDrawer() {
                         <Input 
                           {...field} 
                           placeholder='Ingresa el apellido' 
-                          disabled={!empresaId}
+                          disabled={!agenciaId}
                         />
                       </FormControl>
                       <FormMessage />
@@ -309,7 +309,7 @@ export function ClientMutateDrawer() {
                         {...field} 
                         type='email' 
                         placeholder='Ingresa el email' 
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -327,7 +327,7 @@ export function ClientMutateDrawer() {
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={!empresaId || isLoadingTiposDocumento}
+                        disabled={!agenciaId || isLoadingTiposDocumento}
                       >
                         <FormControl>
                           <SelectTrigger className='w-full'>
@@ -366,7 +366,7 @@ export function ClientMutateDrawer() {
                         <Input 
                           {...field} 
                           placeholder='Ingresa el número' 
-                          disabled={!empresaId}
+                          disabled={!agenciaId}
                         />
                       </FormControl>
                       <FormMessage />
@@ -377,7 +377,7 @@ export function ClientMutateDrawer() {
             </div>
 
             {/* Información Adicional */}
-              <div className={`space-y-4 transition-opacity duration-200 ${!empresaId ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`space-y-4 transition-opacity duration-200 ${!agenciaId ? 'opacity-50 pointer-events-none' : ''}`}>
               <h3 className='text-lg font-semibold'>Información Adicional</h3>
 
               <FormField
@@ -390,7 +390,7 @@ export function ClientMutateDrawer() {
                       <Input 
                         {...field} 
                         type='date' 
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -408,7 +408,7 @@ export function ClientMutateDrawer() {
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       >
                         <FormControl>
                           <SelectTrigger className='w-full'>
@@ -434,7 +434,7 @@ export function ClientMutateDrawer() {
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       >
                         <FormControl>
                           <SelectTrigger className='w-full'>
@@ -476,7 +476,7 @@ export function ClientMutateDrawer() {
                       <Input 
                         {...field} 
                         placeholder='Ej: Paraguay' 
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -494,7 +494,7 @@ export function ClientMutateDrawer() {
                       <Input 
                         {...field} 
                         placeholder='Ej: +595981123456' 
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -511,7 +511,7 @@ export function ClientMutateDrawer() {
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
-                      disabled={!empresaId}
+                      disabled={!agenciaId}
                     >
                       <FormControl>
                         <SelectTrigger className='w-full'>
@@ -553,7 +553,7 @@ export function ClientMutateDrawer() {
                       <Input 
                         {...field} 
                         placeholder='Observaciones adicionales' 
-                        disabled={!empresaId}
+                        disabled={!agenciaId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -572,7 +572,7 @@ export function ClientMutateDrawer() {
           <Button 
             form='client-form' 
             type='submit'
-            disabled={!empresaId || createClient.isPending || updateClient.isPending}
+            disabled={!agenciaId || createClient.isPending || updateClient.isPending}
           >
             {createClient.isPending || updateClient.isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>

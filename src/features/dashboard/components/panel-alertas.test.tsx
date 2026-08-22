@@ -54,7 +54,7 @@ function responderPorRuta(respuestas: {
         respuestaJson(respuestas.pagos ?? { data: [], total: 0 }),
       )
     }
-    if (url.includes('/empresas')) {
+    if (url.includes('/agencias')) {
       return Promise.resolve(
         respuestaJson(
           respuestas.empresas ?? {
