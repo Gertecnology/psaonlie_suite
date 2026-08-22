@@ -21,14 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { type Agencia } from '../models/agencia.model'
+import { type FilaAgencia } from '../models/agencia.model'
 import { AgenciaBulkActions } from './agencia-bulk-actions'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
 
 interface DataTableProps {
-  columns: ColumnDef<Agencia>[]
-  data: Agencia[]
+  columns: ColumnDef<FilaAgencia>[]
+  /** Filas ya aplanadas: cada empresa seguida de sus agencias, si está abierta. */
+  data: FilaAgencia[]
   pageCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
@@ -104,7 +105,7 @@ export function DataTable({
       pagination,
     },
     // Sin esto la selección se indexa por posición de fila: al refetchear, la
-    // clave "0" pasaría a apuntar a otra empresa.
+    // clave "0" pasaría a apuntar a otra agencia.
     getRowId: (row) => row.id,
     enableRowSelection: true,
     manualPagination: true,
@@ -167,6 +168,8 @@ export function DataTable({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  data-nivel={row.original.nivel}
+                  className={cn(row.original.nivel === 1 && 'bg-muted/30')}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

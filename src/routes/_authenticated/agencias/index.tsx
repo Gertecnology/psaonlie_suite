@@ -3,11 +3,13 @@ import { type PaginationState } from '@tanstack/react-table'
 import { createFileRoute } from '@tanstack/react-router'
 import { PageLayout } from '@/components/layout/page-layout'
 import { DataTable } from '@/features/agencias/components/data-table'
-import { agenciaColumns } from '@/features/agencias/components/columns'
+import { crearColumnasAgencias } from '@/features/agencias/components/columns'
 import { useAgencias } from '@/features/agencias/hooks/use-agencias'
+import { useHijas } from '@/features/agencias/hooks/use-hijas'
 import { AgenciaMutateDrawer } from '@/features/agencias/components/agencia-mutate-drawer'
 import { AgenciaDialogs } from '@/features/agencias/components/agencia-dialogs'
 import { AgenciaPrimaryButtons } from '@/features/agencias/components/agencia-primary-buttons'
+import { aplanarJerarquia } from '@/features/agencias/models/agencia.model'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
@@ -21,6 +23,11 @@ function AgenciasPage() {
   // servidor, no filtros de la tabla.
   const [search, setSearch] = React.useState('')
   const [activo, setActivo] = React.useState<boolean | undefined>(undefined)
+  // Qué empresas tienen sus agencias desplegadas. Es estado de la vista, no del
+  // servidor: el listado siempre trae las dos ramas.
+  const [expandidas, setExpandidas] = React.useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
 
   const debouncedSearch = useDebouncedValue(search, 350)
 
@@ -44,12 +51,40 @@ function AgenciasPage() {
     resetToFirstPage()
   }
 
+  const handleToggleExpandir = React.useCallback((id: string) => {
+    setExpandidas((prev) => {
+      const siguiente = new Set(prev)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
+  }, [])
+
   const { data, isLoading, isFetching, error } = useAgencias({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
     nombre: debouncedSearch.trim() || undefined,
     activo,
   })
+
+  // Las hijas completas —con `heredaComision` y su comisión propia— sólo se
+  // piden para las empresas desplegadas: el listado las embebe con un DTO
+  // reducido que no alcanza para decir qué comisión cobra cada una.
+  const hijasCompletas = useHijas(expandidas)
+
+  const columnas = React.useMemo(
+    () =>
+      crearColumnasAgencias({
+        expandidas,
+        onToggleExpandir: handleToggleExpandir,
+      }),
+    [expandidas, handleToggleExpandir],
+  )
+
+  const filas = React.useMemo(
+    () => aplanarJerarquia(data?.items ?? [], expandidas, hijasCompletas),
+    [data?.items, expandidas, hijasCompletas],
+  )
 
   if (isLoading) return (
     <PageLayout
@@ -116,8 +151,8 @@ function AgenciasPage() {
         {/* La tabla se renderiza aunque la consulta falle: si no, el usuario
             pierde el buscador y no puede deshacer el filtro que la rompió. */}
         <DataTable
-          columns={agenciaColumns}
-          data={data?.items ?? []}
+          columns={columnas}
+          data={filas}
           pageCount={Math.max(data?.totalPages ?? 1, 1)}
           pagination={pagination}
           onPaginationChange={setPagination}

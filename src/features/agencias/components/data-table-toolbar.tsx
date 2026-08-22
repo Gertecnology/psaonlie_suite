@@ -10,13 +10,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DataTableViewOptions } from '../components/data-table-view-options'
-import { type Agencia } from '../models/agencia.model'
+import { type FilaAgencia } from '../models/agencia.model'
 
 /** Valor del select cuando no hay filtro de estado aplicado. */
 const ALL_STATUSES = 'all'
 
 interface DataTableToolbarProps {
-  table: Table<Agencia>
+  table: Table<FilaAgencia>
   search: string
   onSearchChange: (value: string) => void
   activo?: boolean

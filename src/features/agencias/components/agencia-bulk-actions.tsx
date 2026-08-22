@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { IconTrash, IconX } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { type Agencia } from '../models/agencia.model'
+import { type FilaAgencia } from '../models/agencia.model'
 import { useEliminarAgencias } from '../hooks/use-eliminar-agencias'
 
 /** Cuántos nombres se listan en la confirmación antes de resumir el resto. */
 const MAX_NAMES_SHOWN = 8
 
 interface AgenciaBulkActionsProps {
-  seleccionadas: Agencia[]
+  seleccionadas: FilaAgencia[]
   onClearSelection: () => void
 }
 
@@ -24,7 +24,7 @@ export function AgenciaBulkActions({
   onClearSelection,
 }: AgenciaBulkActionsProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const deleteCompanies = useEliminarAgencias()
+  const eliminarAgencias = useEliminarAgencias()
 
   const count = seleccionadas.length
   if (count === 0) return null
@@ -33,7 +33,7 @@ export function AgenciaBulkActions({
   const remaining = count - namesShown.length
 
   const handleConfirm = () => {
-    deleteCompanies.mutate(
+    eliminarAgencias.mutate(
       seleccionadas.map((agencia) => agencia.id),
       {
         onSettled: () => {
@@ -60,7 +60,7 @@ export function AgenciaBulkActions({
             size='sm'
             className='h-8'
             onClick={onClearSelection}
-            disabled={deleteCompanies.isPending}
+            disabled={eliminarAgencias.isPending}
           >
             <IconX size={16} className='mr-1' />
             Limpiar selección
@@ -70,10 +70,10 @@ export function AgenciaBulkActions({
             size='sm'
             className='h-8'
             onClick={() => setIsConfirmOpen(true)}
-            disabled={deleteCompanies.isPending}
+            disabled={eliminarAgencias.isPending}
           >
             <IconTrash size={16} className='mr-1' />
-            {deleteCompanies.isPending
+            {eliminarAgencias.isPending
               ? 'Eliminando...'
               : 'Eliminar seleccionadas'}
           </Button>
@@ -84,10 +84,10 @@ export function AgenciaBulkActions({
         destructive
         open={isConfirmOpen}
         onOpenChange={(open) => {
-          if (!deleteCompanies.isPending) setIsConfirmOpen(open)
+          if (!eliminarAgencias.isPending) setIsConfirmOpen(open)
         }}
         handleConfirm={handleConfirm}
-        isLoading={deleteCompanies.isPending}
+        isLoading={eliminarAgencias.isPending}
         className='max-w-md'
         title={
           count === 1 ? '¿Eliminar 1 empresa?' : `¿Eliminar ${count} empresas?`
@@ -111,7 +111,7 @@ export function AgenciaBulkActions({
           </>
         }
         confirmText={
-          deleteCompanies.isPending ? 'Eliminando...' : 'Eliminar'
+          eliminarAgencias.isPending ? 'Eliminando...' : 'Eliminar'
         }
         cancelBtnText='Cancelar'
       />

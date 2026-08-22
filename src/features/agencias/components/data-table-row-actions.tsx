@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAgenciaDialog } from '../store/use-agencia-dialog'
 import { useAgenciaDeleteDialog } from '../store/use-agencia-delete-dialog'
-import { type Agencia } from '../models/agencia.model'
+import { type FilaAgencia } from '../models/agencia.model'
 
 interface DataTableRowActionsProps {
-  row: Row<Agencia>
+  row: Row<FilaAgencia>
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
