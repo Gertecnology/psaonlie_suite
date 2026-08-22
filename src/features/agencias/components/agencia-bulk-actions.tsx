@@ -9,6 +9,10 @@ import { useEliminarAgencias } from '../hooks/use-eliminar-agencias'
 const MAX_NAMES_SHOWN = 8
 
 interface AgenciaBulkActionsProps {
+  /**
+   * Sólo empresas: la tabla impide seleccionar agencias hijas, porque no se
+   * borran de a una. Se van con su empresa por `ON DELETE CASCADE`.
+   */
   seleccionadas: FilaAgencia[]
   onClearSelection: () => void
 }
@@ -31,6 +35,10 @@ export function AgenciaBulkActions({
 
   const namesShown = seleccionadas.slice(0, MAX_NAMES_SHOWN)
   const remaining = count - namesShown.length
+  const totalHijas = seleccionadas.reduce(
+    (total, empresa) => total + empresa.cantidadHijas,
+    0,
+  )
 
   const handleConfirm = () => {
     eliminarAgencias.mutate(
@@ -107,6 +115,15 @@ export function AgenciaBulkActions({
                 </li>
               )}
             </ul>
+            {totalHijas > 0 && (
+              <p className='mt-2'>
+                Se {totalHijas === 1 ? 'eliminará también su' : 'eliminarán también sus'}{' '}
+                <span className='font-semibold'>
+                  {totalHijas === 1 ? '1 agencia' : `${totalHijas} agencias`}
+                </span>
+                .
+              </p>
+            )}
             <p className='mt-2'>Esta acción no se puede deshacer.</p>
           </>
         }

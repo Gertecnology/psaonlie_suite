@@ -84,14 +84,17 @@ export function crearColumnasAgencias({
           className='translate-y-[2px]'
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Seleccionar fila'
-          className='translate-y-[2px]'
-        />
-      ),
+      cell: ({ row }) =>
+        // Una agencia hija no se selecciona: no se puede borrar sola, y una
+        // casilla que no lleva a ninguna acción es una promesa falsa.
+        row.getCanSelect() ? (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label='Seleccionar fila'
+            className='translate-y-[2px]'
+          />
+        ) : null,
       enableSorting: false,
       enableHiding: false,
     },

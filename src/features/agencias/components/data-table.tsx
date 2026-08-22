@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { type FilaAgencia } from '../models/agencia.model'
+import { type FilaAgencia, esEmpresa } from '../models/agencia.model'
 import { AgenciaBulkActions } from './agencia-bulk-actions'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableToolbar } from './data-table-toolbar'
@@ -107,7 +107,9 @@ export function DataTable({
     // Sin esto la selección se indexa por posición de fila: al refetchear, la
     // clave "0" pasaría a apuntar a otra agencia.
     getRowId: (row) => row.id,
-    enableRowSelection: true,
+    // Una agencia hija no se puede borrar sola, así que tampoco se selecciona:
+    // seleccionarla sólo llevaría a un borrado masivo que el backend rechaza.
+    enableRowSelection: (row) => esEmpresa(row.original),
     manualPagination: true,
     // El backend resuelve búsqueda y filtros; no hay filtrado en el cliente.
     manualFiltering: true,

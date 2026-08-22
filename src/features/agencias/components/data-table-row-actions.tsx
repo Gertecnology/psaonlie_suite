@@ -10,9 +10,24 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useAgenciaDialog } from '../store/use-agencia-dialog'
 import { useAgenciaDeleteDialog } from '../store/use-agencia-delete-dialog'
-import { type FilaAgencia } from '../models/agencia.model'
+import { type FilaAgencia, esEmpresa } from '../models/agencia.model'
+
+/**
+ * Por qué una agencia no se borra sola.
+ *
+ * No es una restricción de permisos: existe porque el web service la reporta, y
+ * la próxima sincronización la traería de vuelta. El borrado sería una ficción,
+ * y sus ventas históricas quedarían apuntando a una fila fantasma.
+ */
+export const MOTIVO_HIJA_NO_BORRABLE =
+  'Las agencias no se eliminan por separado: el web service las vuelve a traer en la próxima sincronización. Se eliminan junto con su empresa.'
 
 interface DataTableRowActionsProps {
   row: Row<FilaAgencia>
@@ -20,6 +35,7 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const agencia = row.original
+  const puedeEliminarse = esEmpresa(agencia)
 
   const { openDialog: openEditDialog } = useAgenciaDialog()
   const { openDialog: openDeleteDialog } = useAgenciaDeleteDialog()
@@ -35,19 +51,43 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           <span className='sr-only'>Abrir menú</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='w-[160px]'>
+      <DropdownMenuContent align='end' className='w-[200px]'>
         <DropdownMenuItem onClick={() => openEditDialog('edit', agencia)}>
           Editar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => openDeleteDialog(agencia.id, agencia.nombre)}
-        >
-          Eliminar
-          <DropdownMenuShortcut>
-            <IconTrash size={16} />
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {puedeEliminarse ? (
+          <DropdownMenuItem
+            onClick={() => openDeleteDialog(agencia.id, agencia.nombre)}
+          >
+            Eliminar
+            <DropdownMenuShortcut>
+              <IconTrash size={16} />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+        ) : (
+          <Tooltip>
+            {/* El `span` es necesario: un item deshabilitado tiene
+                `pointer-events: none` y nunca dispararía el tooltip. Los
+                eventos los recibe el envoltorio. */}
+            <TooltipTrigger asChild>
+              <span className='block'>
+                <DropdownMenuItem
+                  disabled
+                  onSelect={(evento) => evento.preventDefault()}
+                >
+                  Eliminar
+                  <DropdownMenuShortcut>
+                    <IconTrash size={16} />
+                  </DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side='left' className='max-w-64'>
+              {MOTIVO_HIJA_NO_BORRABLE}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
