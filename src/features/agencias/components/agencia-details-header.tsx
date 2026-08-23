@@ -1,11 +1,10 @@
-import { ArrowLeft, Building2, Globe, User, Lock, FileText, ExternalLink, Eye, EyeOff, CreditCard, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Building2, Globe, User, Lock, FileText, ExternalLink, CreditCard, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useNavigate } from '@tanstack/react-router'
 import { AgenciaStats } from './agencia-stats'
-import { useState } from 'react'
 import { formatearEntero, formatearFechaHora } from '@/lib/formato'
 
 interface AgenciaHija {
@@ -45,14 +44,9 @@ interface AgenciaDetailsHeaderProps {
 
 export function AgenciaDetailsHeader({ agencia, loading }: AgenciaDetailsHeaderProps) {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
 
   const handleGoBack = () => {
     navigate({ to: '/agencias' })
-  }
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
   }
 
   if (loading) {
@@ -235,29 +229,20 @@ export function AgenciaDetailsHeader({ agencia, loading }: AgenciaDetailsHeaderP
                   </div>
                 </div>
 
+                {/* La contraseña NO se muestra, ni detrás de un botón de ojo.
+                    Son las credenciales de acceso al web service de una
+                    transportista real, y una pantalla de consulta que las
+                    revela las expone a cualquiera que pase por detrás o mire
+                    una captura. Que la API todavía las devuelva es un problema
+                    aparte, anotado para resolver del lado del backend. */}
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">
                     <Lock className="h-4 w-4 inline mr-2" />
                     Contraseña
                   </label>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono bg-muted px-2 py-1 rounded text-sm">
-                      {showPassword ? agencia.password : '••••••••'}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={togglePasswordVisibility}
-                      className="h-6 w-6 p-0"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-3 w-3" />
-                      ) : (
-                        <Eye className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    Guardada. Para cambiarla, editá la empresa.
+                  </span>
                 </div>
 
                 <div>
