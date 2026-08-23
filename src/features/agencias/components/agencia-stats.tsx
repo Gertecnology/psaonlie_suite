@@ -1,6 +1,7 @@
 import { Building2, Users, TrendingUp, CreditCard } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { formatearEntero } from '@/lib/formato'
 
 interface AgenciaHija {
   id: string
@@ -100,7 +101,7 @@ export function AgenciaStats({ agencia }: AgenciaStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {totalBoletosDisponibles.toLocaleString()}
+            {formatearEntero(totalBoletosDisponibles)}
           </div>
           <p className="text-xs text-muted-foreground">
             Total disponibles

@@ -37,6 +37,7 @@ import {
 import { ClienteConEstadisticas } from '../models/clients.model'
 import { ClientStats } from './client-stats'
 import { IconoMetodoPago } from '@/components/icono-metodo-pago'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface ClientDetailsScreenProps {
   client: ClienteConEstadisticas
@@ -68,13 +69,6 @@ export function ClientDetailsScreen({
 
   const ventas = ventasData?.data || []
   const totalPages = ventasData?.totalPages || 0
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-    }).format(amount)
-  }
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: es })
@@ -470,7 +464,7 @@ export function ClientDetailsScreen({
                             </div>
                           </TableCell>
                           <TableCell className='font-medium'>
-                            {formatCurrency(venta.importeTotal)}
+                            {formatearGuaranies(venta.importeTotal)}
                           </TableCell>
                           <TableCell>
                             <div className='flex items-center gap-1'>

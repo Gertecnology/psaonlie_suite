@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import type { ServicioInfo } from '../../models/sales.model'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface ServiceInfoProps {
   servicioInfo: ServicioInfo
@@ -39,22 +40,14 @@ export function ServiceInfo({ servicioInfo, empresaNombre, serviceCharge }: Serv
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{servicioInfo.calidadDescripcionA}</span>
               <Badge variant="outline">
-                {new Intl.NumberFormat('es-PY', {
-                  style: 'currency',
-                  currency: 'PYG',
-                  minimumFractionDigits: 0,
-                }).format(servicioInfo.tarifaA)}
+                {formatearGuaranies(servicioInfo.tarifaA)}
               </Badge>
             </div>
             {servicioInfo.calidadDescripcionB && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{servicioInfo.calidadDescripcionB}</span>
                 <Badge variant="outline">
-                  {new Intl.NumberFormat('es-PY', {
-                    style: 'currency',
-                    currency: 'PYG',
-                    minimumFractionDigits: 0,
-                  }).format(servicioInfo.tarifaB)}
+                  {formatearGuaranies(servicioInfo.tarifaB)}
                 </Badge>
               </div>
             )}

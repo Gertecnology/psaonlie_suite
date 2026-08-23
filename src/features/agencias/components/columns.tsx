@@ -12,6 +12,7 @@ import {
 } from '../models/agencia.model'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { DataTableRowActions } from './data-table-row-actions'
+import { formatearEntero } from '@/lib/formato'
 
 /**
  * Dibuja un cargo por servicio, propio o heredado.
@@ -47,7 +48,7 @@ function cargoPorServicio({
         </span>
       ) : serviceCharge.tipoAplicacion === 'FIJO' && serviceCharge.montoFijo ? (
         <span className='font-mono text-sm font-medium text-green-600'>
-          ${serviceCharge.montoFijo.toLocaleString('es-PY')}
+          ${formatearEntero(serviceCharge.montoFijo)}
         </span>
       ) : null}
     </div>
@@ -194,7 +195,7 @@ export function crearColumnasAgencias({
         }
         return (
           <span className='font-mono text-sm'>
-            {(agencia.boletosDisponibles ?? 0).toLocaleString('es-PY')}
+            {formatearEntero(agencia.boletosDisponibles ?? 0)}
           </span>
         )
       },

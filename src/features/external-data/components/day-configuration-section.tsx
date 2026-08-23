@@ -27,6 +27,7 @@ import {
 import { useDayConfiguration } from '../hooks/use-day-configuration'
 import { CreateDayConfigurationRequest, DayConfiguration } from '../services/day-configuration.service'
 import { BatchConfigurationSection } from './batch-configuration-section'
+import { formatearFecha } from '@/lib/formato'
 
 interface DayConfigurationFormProps {
   onSubmit: (data: CreateDayConfigurationRequest) => void
@@ -130,8 +131,8 @@ function DayConfigurationItem({ config }: DayConfigurationItemProps) {
         </div>
         <p className="text-sm text-muted-foreground">{config.descripcion}</p>
         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-          <span>Creado: {new Date(config.fechaCreacion).toLocaleDateString()}</span>
-          <span>Actualizado: {new Date(config.fechaActualizacion).toLocaleDateString()}</span>
+          <span>Creado: {formatearFecha(config.fechaCreacion)}</span>
+          <span>Actualizado: {formatearFecha(config.fechaActualizacion)}</span>
         </div>
       </div>
     </div>

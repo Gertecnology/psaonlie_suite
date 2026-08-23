@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { Asiento, AsientosResponse, ServicioInfo, ConfiguracionBus } from '../../models/sales.model'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface SeatSelectorProps {
   asientosData: AsientosResponse | null
@@ -120,22 +121,14 @@ function ServiceInfo({ servicioInfo, empresaNombre, serviceCharge }: { servicioI
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{servicioInfo.calidadDescripcionA}</span>
             <Badge variant="outline">
-              {new Intl.NumberFormat('es-PY', {
-                style: 'currency',
-                currency: 'PYG',
-                minimumFractionDigits: 0,
-              }).format(servicioInfo.tarifaA)}
+              {formatearGuaranies(servicioInfo.tarifaA)}
             </Badge>
           </div>
           {servicioInfo.calidadDescripcionB && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{servicioInfo.calidadDescripcionB}</span>
               <Badge variant="outline">
-                {new Intl.NumberFormat('es-PY', {
-                  style: 'currency',
-                  currency: 'PYG',
-                  minimumFractionDigits: 0,
-                }).format(servicioInfo.tarifaB)}
+                {formatearGuaranies(servicioInfo.tarifaB)}
               </Badge>
             </div>
           )}
@@ -290,11 +283,7 @@ export function SeatSelector({
                           </div>
                           <div className="text-right">
                             <span className="text-lg font-bold text-gray-900">
-                              {new Intl.NumberFormat('es-PY', {
-                                style: 'currency',
-                                currency: 'PYG',
-                                minimumFractionDigits: 0,
-                              }).format(seat.precio)}
+                              {formatearGuaranies(seat.precio)}
                             </span>
                           </div>
                         </div>
@@ -304,23 +293,14 @@ export function SeatSelector({
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Subtotal</span>
                           <span className="text-sm font-medium">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(selectedSeats.reduce((total, seat) => total + seat.precio, 0))}
+                            {formatearGuaranies(selectedSeats.reduce((total, seat) => total + seat.precio, 0))}
                           </span>
                         </div>
                         {serviceCharge && (
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Cargo por servicio ({serviceCharge}%)</span>
                             <span className="text-sm font-medium">
-                              {new Intl.NumberFormat('es-PY', {
-                                style: 'currency',
-                                currency: 'PYG',
-                                minimumFractionDigits: 0,
-                              }).format(
-                                Math.round(
+                              {formatearGuaranies(Math.round(
                                   selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 
                                   (parseFloat(serviceCharge) / 100)
                                 )
@@ -332,12 +312,7 @@ export function SeatSelector({
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Total</span>
                           <span className="text-lg font-bold">
-                            {new Intl.NumberFormat('es-PY', {
-                              style: 'currency',
-                              currency: 'PYG',
-                              minimumFractionDigits: 0,
-                            }).format(
-                              selectedSeats.reduce((total, seat) => total + seat.precio, 0) +
+                            {formatearGuaranies(selectedSeats.reduce((total, seat) => total + seat.precio, 0) +
                               (serviceCharge ? 
                                 Math.round(
                                   selectedSeats.reduce((total, seat) => total + seat.precio, 0) * 

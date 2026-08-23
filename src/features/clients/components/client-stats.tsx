@@ -1,6 +1,7 @@
 import { ShoppingCart, CheckCircle, DollarSign, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClienteConEstadisticas } from '../models/clients.model'
+import { formatearFechaCorta, formatearGuaranies } from '@/lib/formato'
 
 interface ClientStatsProps {
   client: ClienteConEstadisticas
@@ -8,22 +9,6 @@ interface ClientStatsProps {
 
 export function ClientStats({ client }: ClientStatsProps) {
   const stats = client.estadisticasVentas
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-    }).format(amount)
-  }
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'No disponible'
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -62,7 +47,7 @@ export function ClientStats({ client }: ClientStatsProps) {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(stats.montoTotalPagado)}</div>
+          <div className="text-2xl font-bold">{formatearGuaranies(stats.montoTotalPagado)}</div>
           <p className="text-xs text-muted-foreground">
             Total pagado
           </p>
@@ -77,7 +62,7 @@ export function ClientStats({ client }: ClientStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stats.ultimaVenta ? formatDate(stats.ultimaVenta) : 'N/A'}
+            {stats.ultimaVenta ? formatearFechaCorta(stats.ultimaVenta) : 'N/A'}
           </div>
           <p className="text-xs text-muted-foreground">
             Fecha más reciente

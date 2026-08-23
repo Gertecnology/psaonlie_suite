@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useNavigate } from '@tanstack/react-router'
 import { AgenciaStats } from './agencia-stats'
 import { useState } from 'react'
+import { formatearEntero, formatearFechaHora } from '@/lib/formato'
 
 interface AgenciaHija {
   id: string
@@ -52,17 +53,6 @@ export function AgenciaDetailsHeader({ agencia, loading }: AgenciaDetailsHeaderP
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
-  }
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'No disponible'
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
   }
 
   if (loading) {
@@ -321,7 +311,7 @@ export function AgenciaDetailsHeader({ agencia, loading }: AgenciaDetailsHeaderP
                     Última Sincronización SOAP
                   </label>
                   <div className="text-sm font-medium">
-                    {agencia.ultimaSincronizacionSoap ? formatDate(agencia.ultimaSincronizacionSoap) : <span className="text-muted-foreground">No disponible</span>}
+                    {agencia.ultimaSincronizacionSoap ? formatearFechaHora(agencia.ultimaSincronizacionSoap) : <span className="text-muted-foreground">No disponible</span>}
                   </div>
                 </div>
               </div>
@@ -382,11 +372,11 @@ export function AgenciaDetailsHeader({ agencia, loading }: AgenciaDetailsHeaderP
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="text-right">
-                      <div className="font-medium text-foreground">{(hija.boletosDisponibles ?? 0).toLocaleString()}</div>
+                      <div className="font-medium text-foreground">{formatearEntero(hija.boletosDisponibles ?? 0)}</div>
                       <div className="text-xs">Boletos disponibles</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-foreground">{formatDate(hija.ultimaSincronizacionSoap)}</div>
+                      <div className="font-medium text-foreground">{formatearFechaHora(hija.ultimaSincronizacionSoap)}</div>
                       <div className="text-xs">Última sincronización</div>
                     </div>
                   </div>

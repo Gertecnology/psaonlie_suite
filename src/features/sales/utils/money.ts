@@ -1,3 +1,4 @@
+import { formatearGuaranies as formatearMoneda } from '@/lib/formato'
 import type { ServiceCharge } from '../models/sales.model'
 
 /**
@@ -27,14 +28,15 @@ export function aEnteroGuaranies(valor: unknown): number {
   return 0
 }
 
-/** Formatea un monto en guaraníes, sin decimales. */
+/**
+ * Formatea un monto en guaraníes, sin decimales.
+ *
+ * Delega en `@/lib/formato`, que es el único lugar donde se decide cómo se
+ * escribe la plata en todo el panel. Acá sólo se agrega la normalización a
+ * entero, que es lo propio de la venta manual.
+ */
 export function formatearGuaranies(monto: unknown): string {
-  return new Intl.NumberFormat('es-PY', {
-    style: 'currency',
-    currency: 'PYG',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(aEnteroGuaranies(monto))
+  return formatearMoneda(aEnteroGuaranies(monto))
 }
 
 /** Suma los precios de una lista de asientos como enteros. */

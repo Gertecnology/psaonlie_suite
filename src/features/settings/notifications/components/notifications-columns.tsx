@@ -20,6 +20,7 @@ import {
   XCircle 
 } from 'lucide-react'
 import { type NotificationResponse } from '@/services/notifications'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface NotificationData {
   ventaId?: string
@@ -213,11 +214,7 @@ export function createNotificationsColumns({
               {data.monto && (
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3" />
-                  <span>{new Intl.NumberFormat('es-PY', {
-                    style: 'currency',
-                    currency: 'PYG',
-                    minimumFractionDigits: 0
-                  }).format(data.monto)}</span>
+                  <span>{formatearGuaranies(data.monto)}</span>
                 </div>
               )}
             </div>
@@ -233,11 +230,7 @@ export function createNotificationsColumns({
               {data.monto && (
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3" />
-                  <span>{new Intl.NumberFormat('es-PY', {
-                    style: 'currency',
-                    currency: 'PYG',
-                    minimumFractionDigits: 0
-                  }).format(data.monto)}</span>
+                  <span>{formatearGuaranies(data.monto)}</span>
                 </div>
               )}
               {data.motivo && (
