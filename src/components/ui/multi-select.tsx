@@ -24,7 +24,20 @@ type Option = {
   icon?: React.ElementType
 }
 
-interface MultiSelectProps {
+/**
+ * The button's own props ride along so the field can be labelled.
+ *
+ * `FormControl` hands its child an `id` and the `aria-describedby` that points
+ * at the label, the description and the error message. The previous version
+ * declared a closed prop list, so all of that was dropped on the floor: the
+ * `<label>` pointed at an id nothing carried, and a screen reader announced the
+ * selector without its name or its validation error.
+ */
+interface MultiSelectProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<'button'>,
+    'value' | 'defaultValue' | 'onChange'
+  > {
   options: Option[]
   /**
    * The current selection. This component is controlled on purpose.
@@ -54,6 +67,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
       maxCount = 3,
       disabled = false,
       className,
+      ...buttonProps
     },
     ref,
   ) {
@@ -88,6 +102,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
+            {...buttonProps}
             ref={ref}
             type='button'
             variant='outline'

@@ -39,8 +39,11 @@ import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
 import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
+import { Route as AuthenticatedReportsPorMetodoPagoRouteImport } from './routes/_authenticated/reports/por-metodo-pago'
 import { Route as AuthenticatedReportsPorAgenciaRouteImport } from './routes/_authenticated/reports/por-agencia'
 import { Route as AuthenticatedReportsEstadoVentasRouteImport } from './routes/_authenticated/reports/estado-ventas'
+import { Route as AuthenticatedReportsConciliacionBancardRouteImport } from './routes/_authenticated/reports/conciliacion-bancard'
+import { Route as AuthenticatedReportsComparativoRouteImport } from './routes/_authenticated/reports/comparativo'
 import { Route as AuthenticatedDestinationsNuevoRouteImport } from './routes/_authenticated/destinations/nuevo'
 import { Route as AuthenticatedClientsNuevoRouteImport } from './routes/_authenticated/clients/nuevo'
 import { Route as AuthenticatedAgenciasNuevaRouteImport } from './routes/_authenticated/agencias/nueva'
@@ -49,6 +52,7 @@ import { Route as AuthenticatedDestinationsIdIndexRouteImport } from './routes/_
 import { Route as AuthenticatedAgenciasIdIndexRouteImport } from './routes/_authenticated/agencias/$id/index'
 import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
 import { Route as AuthenticatedDestinationsIdEditarRouteImport } from './routes/_authenticated/destinations/$id/editar'
+import { Route as AuthenticatedClientsEmailEditarRouteImport } from './routes/_authenticated/clients/$email/editar'
 import { Route as AuthenticatedAgenciasIdEditarRouteImport } from './routes/_authenticated/agencias/$id/editar'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -214,6 +218,12 @@ const AuthenticatedReportsResumenFinancieroRoute =
     path: '/reports/resumen-financiero',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsPorMetodoPagoRoute =
+  AuthenticatedReportsPorMetodoPagoRouteImport.update({
+    id: '/reports/por-metodo-pago',
+    path: '/reports/por-metodo-pago',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsPorAgenciaRoute =
   AuthenticatedReportsPorAgenciaRouteImport.update({
     id: '/reports/por-agencia',
@@ -224,6 +234,18 @@ const AuthenticatedReportsEstadoVentasRoute =
   AuthenticatedReportsEstadoVentasRouteImport.update({
     id: '/reports/estado-ventas',
     path: '/reports/estado-ventas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportsConciliacionBancardRoute =
+  AuthenticatedReportsConciliacionBancardRouteImport.update({
+    id: '/reports/conciliacion-bancard',
+    path: '/reports/conciliacion-bancard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportsComparativoRoute =
+  AuthenticatedReportsComparativoRouteImport.update({
+    id: '/reports/comparativo',
+    path: '/reports/comparativo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDestinationsNuevoRoute =
@@ -274,6 +296,12 @@ const AuthenticatedDestinationsIdEditarRoute =
     path: '/destinations/$id/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedClientsEmailEditarRoute =
+  AuthenticatedClientsEmailEditarRouteImport.update({
+    id: '/clients/$email/editar',
+    path: '/clients/$email/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAgenciasIdEditarRoute =
   AuthenticatedAgenciasIdEditarRouteImport.update({
     id: '/agencias/$id/editar',
@@ -297,8 +325,11 @@ export interface FileRoutesByFullPath {
   '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
+  '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
+  '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -317,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
@@ -338,8 +370,11 @@ export interface FileRoutesByTo {
   '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
+  '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
+  '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -358,6 +393,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
@@ -382,8 +418,11 @@ export interface FileRoutesById {
   '/_authenticated/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/_authenticated/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/_authenticated/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/_authenticated/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
+  '/_authenticated/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/_authenticated/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/_authenticated/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
+  '/_authenticated/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -402,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/_authenticated/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/_authenticated/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/_authenticated/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/_authenticated/agencias/$id/': typeof AuthenticatedAgenciasIdIndexRoute
@@ -426,8 +466,11 @@ export interface FileRouteTypes {
     | '/agencias/nueva'
     | '/clients/nuevo'
     | '/destinations/nuevo'
+    | '/reports/comparativo'
+    | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
     | '/reports/por-agencia'
+    | '/reports/por-metodo-pago'
     | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
@@ -446,6 +489,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/users'
     | '/agencias/$id/editar'
+    | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
     | '/agencias/$id'
@@ -467,8 +511,11 @@ export interface FileRouteTypes {
     | '/agencias/nueva'
     | '/clients/nuevo'
     | '/destinations/nuevo'
+    | '/reports/comparativo'
+    | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
     | '/reports/por-agencia'
+    | '/reports/por-metodo-pago'
     | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
@@ -487,6 +534,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/agencias/$id/editar'
+    | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
     | '/agencias/$id'
@@ -510,8 +558,11 @@ export interface FileRouteTypes {
     | '/_authenticated/agencias/nueva'
     | '/_authenticated/clients/nuevo'
     | '/_authenticated/destinations/nuevo'
+    | '/_authenticated/reports/comparativo'
+    | '/_authenticated/reports/conciliacion-bancard'
     | '/_authenticated/reports/estado-ventas'
     | '/_authenticated/reports/por-agencia'
+    | '/_authenticated/reports/por-metodo-pago'
     | '/_authenticated/reports/resumen-financiero'
     | '/_authenticated/sales/checkout'
     | '/_authenticated/sales/payment'
@@ -530,6 +581,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/users/'
     | '/_authenticated/agencias/$id/editar'
+    | '/_authenticated/clients/$email/editar'
     | '/_authenticated/destinations/$id/editar'
     | '/_authenticated/settings/external-data/day-configuration'
     | '/_authenticated/agencias/$id/'
@@ -764,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsResumenFinancieroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/por-metodo-pago': {
+      id: '/_authenticated/reports/por-metodo-pago'
+      path: '/reports/por-metodo-pago'
+      fullPath: '/reports/por-metodo-pago'
+      preLoaderRoute: typeof AuthenticatedReportsPorMetodoPagoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/por-agencia': {
       id: '/_authenticated/reports/por-agencia'
       path: '/reports/por-agencia'
@@ -776,6 +835,20 @@ declare module '@tanstack/react-router' {
       path: '/reports/estado-ventas'
       fullPath: '/reports/estado-ventas'
       preLoaderRoute: typeof AuthenticatedReportsEstadoVentasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/conciliacion-bancard': {
+      id: '/_authenticated/reports/conciliacion-bancard'
+      path: '/reports/conciliacion-bancard'
+      fullPath: '/reports/conciliacion-bancard'
+      preLoaderRoute: typeof AuthenticatedReportsConciliacionBancardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/comparativo': {
+      id: '/_authenticated/reports/comparativo'
+      path: '/reports/comparativo'
+      fullPath: '/reports/comparativo'
+      preLoaderRoute: typeof AuthenticatedReportsComparativoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/destinations/nuevo': {
@@ -834,6 +907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDestinationsIdEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/clients/$email/editar': {
+      id: '/_authenticated/clients/$email/editar'
+      path: '/clients/$email/editar'
+      fullPath: '/clients/$email/editar'
+      preLoaderRoute: typeof AuthenticatedClientsEmailEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/agencias/$id/editar': {
       id: '/_authenticated/agencias/$id/editar'
       path: '/agencias/$id/editar'
@@ -879,8 +959,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgenciasNuevaRoute: typeof AuthenticatedAgenciasNuevaRoute
   AuthenticatedClientsNuevoRoute: typeof AuthenticatedClientsNuevoRoute
   AuthenticatedDestinationsNuevoRoute: typeof AuthenticatedDestinationsNuevoRoute
+  AuthenticatedReportsComparativoRoute: typeof AuthenticatedReportsComparativoRoute
+  AuthenticatedReportsConciliacionBancardRoute: typeof AuthenticatedReportsConciliacionBancardRoute
   AuthenticatedReportsEstadoVentasRoute: typeof AuthenticatedReportsEstadoVentasRoute
   AuthenticatedReportsPorAgenciaRoute: typeof AuthenticatedReportsPorAgenciaRoute
+  AuthenticatedReportsPorMetodoPagoRoute: typeof AuthenticatedReportsPorMetodoPagoRoute
   AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
   AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
@@ -893,6 +976,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedAgenciasIdEditarRoute: typeof AuthenticatedAgenciasIdEditarRoute
+  AuthenticatedClientsEmailEditarRoute: typeof AuthenticatedClientsEmailEditarRoute
   AuthenticatedDestinationsIdEditarRoute: typeof AuthenticatedDestinationsIdEditarRoute
   AuthenticatedAgenciasIdIndexRoute: typeof AuthenticatedAgenciasIdIndexRoute
   AuthenticatedDestinationsIdIndexRoute: typeof AuthenticatedDestinationsIdIndexRoute
@@ -904,8 +988,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgenciasNuevaRoute: AuthenticatedAgenciasNuevaRoute,
   AuthenticatedClientsNuevoRoute: AuthenticatedClientsNuevoRoute,
   AuthenticatedDestinationsNuevoRoute: AuthenticatedDestinationsNuevoRoute,
+  AuthenticatedReportsComparativoRoute: AuthenticatedReportsComparativoRoute,
+  AuthenticatedReportsConciliacionBancardRoute:
+    AuthenticatedReportsConciliacionBancardRoute,
   AuthenticatedReportsEstadoVentasRoute: AuthenticatedReportsEstadoVentasRoute,
   AuthenticatedReportsPorAgenciaRoute: AuthenticatedReportsPorAgenciaRoute,
+  AuthenticatedReportsPorMetodoPagoRoute:
+    AuthenticatedReportsPorMetodoPagoRoute,
   AuthenticatedReportsResumenFinancieroRoute:
     AuthenticatedReportsResumenFinancieroRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
@@ -920,6 +1009,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
   AuthenticatedAgenciasIdEditarRoute: AuthenticatedAgenciasIdEditarRoute,
+  AuthenticatedClientsEmailEditarRoute: AuthenticatedClientsEmailEditarRoute,
   AuthenticatedDestinationsIdEditarRoute:
     AuthenticatedDestinationsIdEditarRoute,
   AuthenticatedAgenciasIdIndexRoute: AuthenticatedAgenciasIdIndexRoute,

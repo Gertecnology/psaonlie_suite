@@ -10,8 +10,6 @@ interface ClientsContextType {
   setIsEditDialogOpen: (open: boolean) => void
   isDeleteDialogOpen: boolean
   setIsDeleteDialogOpen: (open: boolean) => void
-  isViewDialogOpen: boolean
-  setIsViewDialogOpen: (open: boolean) => void
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined)
@@ -25,7 +23,6 @@ export function ClientsProvider({ children }: ClientsProviderProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
 
   return (
     <ClientsContext.Provider
@@ -38,8 +35,6 @@ export function ClientsProvider({ children }: ClientsProviderProps) {
         setIsEditDialogOpen,
         isDeleteDialogOpen,
         setIsDeleteDialogOpen,
-        isViewDialogOpen,
-        setIsViewDialogOpen,
       }}
     >
       {children}

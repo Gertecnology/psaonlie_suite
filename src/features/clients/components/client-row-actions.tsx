@@ -1,4 +1,5 @@
 import { Edit, MoreHorizontal, ShoppingCart } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { type ClienteConEstadisticas } from '../models/clients.model'
-import { useClientDialog } from '../store/use-client-dialog'
 
 interface ClientRowActionsProps {
   cliente: ClienteConEstadisticas
@@ -27,8 +27,6 @@ export function ClientRowActions({
   cliente,
   onVerDetalles,
 }: ClientRowActionsProps) {
-  const { openDialog } = useClientDialog()
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -46,9 +44,17 @@ export function ClientRowActions({
           Ver detalles
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => openDialog('edit', cliente)}>
-          <Edit className='mr-2 h-4 w-4' />
-          Editar
+        {/* Un enlace y no un `onClick`: se puede abrir en otra pestaña y el
+            formulario tiene una dirección propia. El parámetro es el email
+            porque es la clave con la que la API identifica al cliente. */}
+        <DropdownMenuItem asChild>
+          <Link
+            to='/clients/$email/editar'
+            params={{ email: cliente.cliente.email }}
+          >
+            <Edit className='mr-2 h-4 w-4' />
+            Editar
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

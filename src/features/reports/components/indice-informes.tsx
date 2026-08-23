@@ -12,6 +12,11 @@ import { INFORMES, type IdInforme } from '../models/informe.model'
  */
 const DISPONIBLES = {
   'resumen-financiero': '/reports/resumen-financiero',
+  'por-agencia': '/reports/por-agencia',
+  'estado-ventas': '/reports/estado-ventas',
+  'por-metodo-pago': '/reports/por-metodo-pago',
+  comparativo: '/reports/comparativo',
+  'conciliacion-bancard': '/reports/conciliacion-bancard',
 } as const satisfies Partial<Record<IdInforme, string>>
 
 /**
