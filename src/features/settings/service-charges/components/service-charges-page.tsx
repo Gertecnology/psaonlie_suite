@@ -1,78 +1,117 @@
-import { useState } from 'react'
-import { type PaginationState } from '@tanstack/react-table'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ServiceChargeDataTable } from '../components/data-table'
-import { columns } from '../components/columns'
-import { ServiceChargesDialogs } from '../components/service-charges-dialogs'
-import { ServiceChargesPrimaryButtons } from '../components/service-charges-primary-buttons'
+import * as React from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { PageLayout } from '@/components/layout/page-layout'
+import { DataTable, useTablaServidor } from '@/components/data-table'
 import { useGetServiceCharges } from '../hooks/use-get-service-charges'
+import { columns } from './columns'
+import { ServiceChargesDialogs } from './service-charges-dialogs'
+import { ServiceChargesPrimaryButtons } from './service-charges-primary-buttons'
+import { ServiceChargesToolbar } from './service-charges-toolbar'
 
+/** The three facets, as they travel in the URL. Booleans go as text. */
+interface FiltrosServiceCharges {
+  tipoAplicacion?: 'PORCENTUAL' | 'FIJO'
+  esGlobal?: string
+  activo?: string
+}
+
+/**
+ * Service charge list.
+ *
+ * The page used to hand a server-paged list to a table that still ran
+ * `getFilteredRowModel`, so TanStack filtered the ten rows the API had already
+ * chosen and hid some of them behind a pager that kept counting them. Filters
+ * reach the API now, and the shared table no longer filters what it receives.
+ */
 export function ServiceChargesPage() {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
+  const navigate = useNavigate()
+  const { tipoAplicacion, esGlobal, activo } = useSearch({
+    strict: false,
+  }) as FiltrosServiceCharges
+
+  const tabla = useTablaServidor({ tipoAplicacion, esGlobal, activo })
+
+  const cambiarFiltro = React.useCallback(
+    (clave: keyof FiltrosServiceCharges, valor: string | undefined) => {
+      void navigate({
+        // @ts-expect-error el esquema de búsqueda lo declara la ruta.
+        search: (previa: Record<string, unknown>) => {
+          const siguiente: Record<string, unknown> = { ...previa, [clave]: valor }
+          if (valor === undefined) delete siguiente[clave]
+          // Cambiar un filtro cambia el conjunto: quedarse en la página 7
+          // mostraría una tabla vacía sin explicación.
+          delete siguiente.pagina
+          return siguiente
+        },
+        replace: true,
+      })
+    },
+    [navigate],
+  )
+
+  const { data, isLoading, isFetching, error, refetch } = useGetServiceCharges({
+    page: tabla.parametrosApi.page,
+    limit: tabla.parametrosApi.limit,
+    nombre: tabla.busquedaAplicada.trim() || undefined,
+    tipoAplicacion,
+    // El filtro es de tres estados —sí, no, sin filtrar—, así que `false` sólo
+    // se distingue de "sin filtrar" comparando contra `undefined`.
+    esGlobal: esGlobal === undefined ? undefined : esGlobal === 'true',
+    activo: activo === undefined ? undefined : activo === 'true',
   })
 
-  const { data: serviceCharges, isLoading, error } = useGetServiceCharges({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-  })
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Error</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive">Error al cargar los cargos por servicio</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Cargando cargos por servicio...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const items = serviceCharges?.items || []
-  const pageCount = serviceCharges?.totalPages || 0
+  const filas = React.useMemo(() => data?.items ?? [], [data?.items])
 
   return (
-    <div className='h-full flex flex-col'>
-      <div className='space-y-0.5 mb-6'>
-        <h1 className='text-2xl font-bold tracking-tight md:text-3xl'>
-          Cargos por Servicio
-        </h1>
-        <p className='text-muted-foreground'>
-          Gestiona los cargos por servicio del sistema, configura porcentajes y montos fijos.
-        </p>
-      </div>
-      
-      <ServiceChargeDataTable
-        data={items}
-        columns={columns}
-        pageCount={pageCount}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        actions={<ServiceChargesPrimaryButtons />}
-      />
+    <>
+      <PageLayout
+        title='Cargos por servicio'
+        description='Gestiona los cargos por servicio del sistema, configura porcentajes y montos fijos.'
+        // Se mantiene oculto el buscador global, como cuando la página colgaba
+        // del layout de configuración.
+        showSearch={false}
+      >
+        <DataTable
+          columns={columns}
+          data={filas}
+          getRowId={(fila) => fila.id}
+          pageCount={Math.max(data?.totalPages ?? 1, 1)}
+          pagination={tabla.pagination}
+          onPaginationChange={tabla.onPaginationChange}
+          caption='Listado de cargos por servicio del sistema'
+          emptyMessage='No se encontraron cargos por servicio.'
+          isLoading={isLoading}
+          isFetching={isFetching}
+          error={error}
+          onRetry={() => void refetch()}
+          resetSelectionOn={[
+            tabla.busquedaAplicada,
+            tipoAplicacion,
+            esGlobal,
+            activo,
+          ]}
+          renderToolbar={(instancia) => (
+            <ServiceChargesToolbar
+              table={instancia}
+              busqueda={tabla.busqueda}
+              onBusquedaChange={tabla.setBusqueda}
+              tipoAplicacion={tipoAplicacion}
+              onTipoAplicacionChange={(valor) =>
+                cambiarFiltro('tipoAplicacion', valor)
+              }
+              esGlobal={esGlobal}
+              onEsGlobalChange={(valor) => cambiarFiltro('esGlobal', valor)}
+              activo={activo}
+              onActivoChange={(valor) => cambiarFiltro('activo', valor)}
+              hayFiltros={tabla.hayFiltros}
+              onLimpiar={tabla.limpiarFiltros}
+              actions={<ServiceChargesPrimaryButtons />}
+            />
+          )}
+        />
+      </PageLayout>
 
       <ServiceChargesDialogs />
-    </div>
+    </>
   )
 }

@@ -14,7 +14,6 @@ export * from './hooks/use-assign-service-charge-to-company'
 // Components
 export { ServiceChargesPage } from './components/service-charges-page'
 export { ServiceChargeMutateDrawer } from './components/service-charge-mutate-drawer'
-export { ServiceChargeDataTable } from './components/data-table'
 export { ServiceChargeRowActions } from './components/service-charge-row-actions'
 export { ServiceChargesDialogs } from './components/service-charges-dialogs'
 export { ServiceChargesPrimaryButtons } from './components/service-charges-primary-buttons'

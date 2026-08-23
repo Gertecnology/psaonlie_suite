@@ -7,12 +7,47 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL
 
+/**
+ * Filters `GET /service-charges` understands.
+ *
+ * They all reach the backend on purpose. Before, the name box and the three
+ * facets were TanStack column filters running on top of a server-paged list,
+ * so they only ever matched among the rows already on screen: a charge on
+ * page three was unfindable, and the count in the pager stopped matching what
+ * the table showed.
+ */
+export interface ObtenerServiceChargesParams {
+  page?: number
+  limit?: number
+  /** Partial match on the name. */
+  nombre?: string
+  tipoAplicacion?: 'PORCENTUAL' | 'FIJO'
+  esGlobal?: boolean
+  activo?: boolean
+}
+
 // Service to get service charges
-export async function getServiceCharges(
-  page: number = 1,
-  limit: number = 10
-): Promise<PaginatedServiceChargesResponse> {
-  const response = await fetch(`${API_URL}/service-charges?page=${page}&limit=${limit}`, {
+export async function getServiceCharges({
+  page = 1,
+  limit = 10,
+  nombre,
+  tipoAplicacion,
+  esGlobal,
+  activo,
+}: ObtenerServiceChargesParams = {}): Promise<PaginatedServiceChargesResponse> {
+  const query = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  })
+
+  if (nombre) query.set('nombre', nombre)
+  if (tipoAplicacion) query.set('tipoAplicacion', tipoAplicacion)
+  // Comparación explícita contra `undefined`: `false` es un filtro válido y un
+  // chequeo de verdad lo tiraría a la basura.
+  if (esGlobal !== undefined) query.set('esGlobal', String(esGlobal))
+  if (activo !== undefined) query.set('activo', String(activo))
+
+  const response = await fetch(`${API_URL}/service-charges?${query}`, {
     headers: {
       'accept': 'application/json',
     },
@@ -21,14 +56,14 @@ export async function getServiceCharges(
   if (!response.ok) {
     throw new Error('Error al obtener los cargos por servicio')
   }
-  
+
   const result = await response.json()
-  
+
   // La respuesta tiene la estructura: { success, statusCode, message, data }
   if (result.success && result.data) {
     return result.data
   }
-  
+
   // Fallback: crear una estructura válida
   return {
     items: [],

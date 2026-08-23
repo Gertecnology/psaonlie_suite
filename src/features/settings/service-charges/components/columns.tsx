@@ -1,11 +1,18 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { DataTableColumnHeader } from '@/components/data-table'
 import { type ServiceCharge } from '../models/service-charge.model'
 import { ServiceChargeRowActions } from './service-charge-row-actions'
 
+/**
+ * Columns of the service charge list.
+ *
+ * Headers go through the shared `DataTableColumnHeader`: the hand-rolled
+ * button this file used to draw on "Nombre" toggled sorting but offered no way
+ * to hide the column, and the rest of the headers were plain text, so the same
+ * gesture worked on one column and did nothing on the next.
+ */
 export const columns: ColumnDef<ServiceCharge>[] = [
   {
     id: 'select',
@@ -31,18 +38,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'nombre',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className='h-8 px-2 lg:px-3'
-        >
-          Nombre
-          <ArrowUpDown className='ml-2 h-4 w-4' />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Nombre' />
+    ),
     cell: ({ row }) => (
       <div className='font-medium max-w-[200px] truncate' title={row.getValue('nombre')}>
         {row.getValue('nombre')}
@@ -51,7 +49,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'descripcion',
-    header: 'Descripción',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Descripción' />
+    ),
     cell: ({ row }) => {
       const descripcion = row.getValue('descripcion') as string
       return descripcion ? (
@@ -65,7 +65,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'tipoAplicacion',
-    header: 'Tipo',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Tipo' />
+    ),
     cell: ({ row }) => {
       const tipo = row.getValue('tipoAplicacion') as string
       return (
@@ -74,10 +76,14 @@ export const columns: ColumnDef<ServiceCharge>[] = [
         </Badge>
       )
     },
+    // Sin filterFn: el filtro por tipo lo resuelve el backend
+    // (`?tipoAplicacion=`), que es el único que ve la lista completa.
   },
   {
     accessorKey: 'porcentaje',
-    header: 'Porcentaje',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Porcentaje' />
+    ),
     cell: ({ row }) => {
       const porcentaje = row.getValue('porcentaje') as string
       return porcentaje ? (
@@ -91,7 +97,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'montoFijo',
-    header: 'Monto Fijo',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Monto Fijo' />
+    ),
     cell: ({ row }) => {
       const monto = row.getValue('montoFijo') as number
       return monto ? (
@@ -105,7 +113,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'esGlobal',
-    header: 'Global',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Global' />
+    ),
     cell: ({ row }) => {
       const esGlobal = row.getValue('esGlobal') as boolean
       return (
@@ -117,7 +127,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'activo',
-    header: 'Estado',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Estado' />
+    ),
     cell: ({ row }) => {
       const activo = row.getValue('activo') as boolean
       return (
@@ -129,7 +141,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'fechaInicio',
-    header: 'Fecha Inicio',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Fecha Inicio' />
+    ),
     cell: ({ row }) => {
       const fecha = row.getValue('fechaInicio') as string
       return fecha ? (
@@ -143,7 +157,9 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     accessorKey: 'fechaFin',
-    header: 'Fecha Fin',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Fecha Fin' />
+    ),
     cell: ({ row }) => {
       const fecha = row.getValue('fechaFin') as string
       return fecha ? (
@@ -157,7 +173,11 @@ export const columns: ColumnDef<ServiceCharge>[] = [
   },
   {
     id: 'actions',
+    // Una columna sin encabezado no se anuncia: un lector de pantalla lee la
+    // celda sin decir de qué columna es.
+    header: 'Acciones',
     enableHiding: false,
+    enableSorting: false,
     cell: ({ row }) => {
       return <ServiceChargeRowActions serviceCharge={row.original} />
     },
