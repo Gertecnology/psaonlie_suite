@@ -173,6 +173,56 @@ export function formatearFechaCorta(
 }
 
 /**
+ * `'2026-08-21T14:30:00Z'` → `"2026-08-21"`, en formato ISO 8601.
+ *
+ * Los informes formales usan esto y no `dd/mm/aaaa`. Una fecha como 08/09 es
+ * ambigua para quien no conoce la convención local —agosto o septiembre, según
+ * de dónde venga el lector—, y un informe que se archiva o se manda por correo
+ * pierde ese contexto. ISO 8601 no admite dos lecturas y además ordena
+ * alfabéticamente igual que cronológicamente.
+ */
+export function formatearFechaISO(
+  valor: string | Date | null | undefined
+): string {
+  const fecha = aFecha(valor)
+  if (!fecha) return '—'
+
+  // Se compone a mano y no con `toISOString`, que convierte a UTC: una fecha
+  // del 21 en Paraguay se volvería el 20 después de medianoche.
+  const anio = fecha.getFullYear()
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+  const dia = String(fecha.getDate()).padStart(2, '0')
+  return `${anio}-${mes}-${dia}`
+}
+
+/**
+ * Marca de emisión de un informe: `"2026-08-21 14:30 (UTC-03:00)"`.
+ *
+ * Lleva el huso explícito porque el momento en que se emitió es parte del dato:
+ * dos informes del mismo período generados con horas de diferencia pueden no
+ * coincidir si entre medio entró una venta, y sin la zona no se puede saber
+ * cuál es cuál.
+ */
+export function formatearEmisionISO(
+  valor: string | Date | null | undefined = new Date()
+): string {
+  const fecha = aFecha(valor)
+  if (!fecha) return '—'
+
+  const hora = String(fecha.getHours()).padStart(2, '0')
+  const minuto = String(fecha.getMinutes()).padStart(2, '0')
+
+  // `getTimezoneOffset` devuelve minutos y con el signo invertido respecto de
+  // como se escribe un huso: +180 significa UTC-03:00.
+  const desfase = -fecha.getTimezoneOffset()
+  const signo = desfase >= 0 ? '+' : '-'
+  const horasDesfase = String(Math.floor(Math.abs(desfase) / 60)).padStart(2, '0')
+  const minutosDesfase = String(Math.abs(desfase) % 60).padStart(2, '0')
+
+  return `${formatearFechaISO(fecha)} ${hora}:${minuto} (UTC${signo}${horasDesfase}:${minutosDesfase})`
+}
+
+/**
  * Convierte a `Date` tolerando los formatos que manda el backend.
  *
  * `'2026-08-21'` (columna `date` de Postgres) lo interpreta el navegador como

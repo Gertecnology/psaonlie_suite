@@ -30,7 +30,7 @@ import { Route as AuthenticatedDestinationsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients/index'
 import { Route as AuthenticatedAgenciasIndexRouteImport } from './routes/_authenticated/agencias/index'
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
-import { Route as AuthenticatedSettingsServiceChargesRouteImport } from './routes/_authenticated/settings/service-charges'
+import { Route as AuthenticatedSettingsServiceChargesRouteImport } from './routes/_authenticated/settings_.service-charges'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
@@ -38,6 +38,7 @@ import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_auth
 import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authenticated/sales/seats'
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
+import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
 import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
 import { Route as AuthenticatedAgenciasIdRouteImport } from './routes/_authenticated/agencias/$id'
 import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
@@ -155,9 +156,9 @@ const ApiAuthVerifyEmailRoute = ApiAuthVerifyEmailRouteImport.update({
 } as any)
 const AuthenticatedSettingsServiceChargesRoute =
   AuthenticatedSettingsServiceChargesRouteImport.update({
-    id: '/service-charges',
-    path: '/service-charges',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+    id: '/settings_/service-charges',
+    path: '/settings/service-charges',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
@@ -200,6 +201,12 @@ const AuthenticatedSalesCheckoutRoute =
     path: '/sales/checkout',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsResumenFinancieroRoute =
+  AuthenticatedReportsResumenFinancieroRouteImport.update({
+    id: '/reports/resumen-financiero',
+    path: '/reports/resumen-financiero',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDestinationsIdRoute =
   AuthenticatedDestinationsIdRouteImport.update({
     id: '/destinations/$id',
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -272,6 +280,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -308,6 +317,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/agencias/$id': typeof AuthenticatedAgenciasIdRoute
   '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/_authenticated/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -315,7 +325,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
-  '/_authenticated/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
+  '/_authenticated/settings_/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/_authenticated/agencias/': typeof AuthenticatedAgenciasIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agencias/$id'
     | '/destinations/$id'
+    | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
     | '/sales/seats'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agencias/$id'
     | '/destinations/$id'
+    | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
     | '/sales/seats'
@@ -412,6 +424,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/agencias/$id'
     | '/_authenticated/destinations/$id'
+    | '/_authenticated/reports/resumen-financiero'
     | '/_authenticated/sales/checkout'
     | '/_authenticated/sales/payment'
     | '/_authenticated/sales/seats'
@@ -419,7 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
-    | '/_authenticated/settings/service-charges'
+    | '/_authenticated/settings_/service-charges'
     | '/api/auth/verify-email'
     | '/_authenticated/agencias/'
     | '/_authenticated/clients/'
@@ -596,12 +609,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/settings/service-charges': {
-      id: '/_authenticated/settings/service-charges'
-      path: '/service-charges'
+    '/_authenticated/settings_/service-charges': {
+      id: '/_authenticated/settings_/service-charges'
+      path: '/settings/service-charges'
       fullPath: '/settings/service-charges'
       preLoaderRoute: typeof AuthenticatedSettingsServiceChargesRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
@@ -652,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalesCheckoutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/resumen-financiero': {
+      id: '/_authenticated/reports/resumen-financiero'
+      path: '/reports/resumen-financiero'
+      fullPath: '/reports/resumen-financiero'
+      preLoaderRoute: typeof AuthenticatedReportsResumenFinancieroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/destinations/$id': {
       id: '/_authenticated/destinations/$id'
       path: '/destinations/$id'
@@ -688,7 +708,6 @@ interface AuthenticatedSettingsRouteRouteChildren {
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsDisplayRoute: typeof AuthenticatedSettingsDisplayRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
-  AuthenticatedSettingsServiceChargesRoute: typeof AuthenticatedSettingsServiceChargesRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedSettingsExternalDataDayConfigurationRoute: typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   AuthenticatedSettingsExternalDataIndexRoute: typeof AuthenticatedSettingsExternalDataIndexRoute
@@ -701,8 +720,6 @@ const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteCh
     AuthenticatedSettingsDisplayRoute: AuthenticatedSettingsDisplayRoute,
     AuthenticatedSettingsNotificationsRoute:
       AuthenticatedSettingsNotificationsRoute,
-    AuthenticatedSettingsServiceChargesRoute:
-      AuthenticatedSettingsServiceChargesRoute,
     AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
     AuthenticatedSettingsExternalDataDayConfigurationRoute:
       AuthenticatedSettingsExternalDataDayConfigurationRoute,
@@ -720,9 +737,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAgenciasIdRoute: typeof AuthenticatedAgenciasIdRoute
   AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
+  AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
   AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
   AuthenticatedSalesSeatsRoute: typeof AuthenticatedSalesSeatsRoute
+  AuthenticatedSettingsServiceChargesRoute: typeof AuthenticatedSettingsServiceChargesRoute
   AuthenticatedAgenciasIndexRoute: typeof AuthenticatedAgenciasIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedDestinationsIndexRoute: typeof AuthenticatedDestinationsIndexRoute
@@ -736,9 +755,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAgenciasIdRoute: AuthenticatedAgenciasIdRoute,
   AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
+  AuthenticatedReportsResumenFinancieroRoute:
+    AuthenticatedReportsResumenFinancieroRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
   AuthenticatedSalesPaymentRoute: AuthenticatedSalesPaymentRoute,
   AuthenticatedSalesSeatsRoute: AuthenticatedSalesSeatsRoute,
+  AuthenticatedSettingsServiceChargesRoute:
+    AuthenticatedSettingsServiceChargesRoute,
   AuthenticatedAgenciasIndexRoute: AuthenticatedAgenciasIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedDestinationsIndexRoute: AuthenticatedDestinationsIndexRoute,
