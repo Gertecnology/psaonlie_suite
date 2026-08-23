@@ -19,12 +19,3 @@ export {
   type IdInforme,
   type PeriodoInforme,
 } from './models/informe.model'
-/**
- * Client-side spreadsheet export.
- *
- * No screen calls it any more: the reports export through
- * `/api/admin/informes/exportar`, which writes one sheet per report with the
- * amounts as numbers instead of text. It stays exported because it is a
- * general-purpose helper and nothing here decides its fate.
- */
-export { exportarAExcel, type ColumnaExcel } from './utils/exportar-excel'

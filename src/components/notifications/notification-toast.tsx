@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { X, Clock, User, CreditCard, Building2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatearGuaranies } from '@/lib/formato'
 
 export interface NotificationData {
   id: string
@@ -85,11 +86,7 @@ const getPriorityBadgeColor = (priority: string) => {
 
 export function NotificationToast({ notification, onClose, onMarkAsRead }: NotificationToastProps) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-      minimumFractionDigits: 0
-    }).format(amount)
+    return formatearGuaranies(amount)
   }
 
   return (
