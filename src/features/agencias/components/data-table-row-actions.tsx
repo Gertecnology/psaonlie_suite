@@ -15,7 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useAgenciaDialog } from '../store/use-agencia-dialog'
+import { Link } from '@tanstack/react-router'
 import { useAgenciaDeleteDialog } from '../store/use-agencia-delete-dialog'
 import { type FilaAgencia, esEmpresa } from '../models/agencia.model'
 
@@ -37,7 +37,6 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const agencia = row.original
   const puedeEliminarse = esEmpresa(agencia)
 
-  const { openDialog: openEditDialog } = useAgenciaDialog()
   const { openDialog: openDeleteDialog } = useAgenciaDeleteDialog()
 
   return (
@@ -52,8 +51,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-[200px]'>
-        <DropdownMenuItem onClick={() => openEditDialog('edit', agencia)}>
-          Editar
+        <DropdownMenuItem asChild>
+          <Link to='/agencias/$id/editar' params={{ id: agencia.id }}>
+            Editar
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {puedeEliminarse ? (

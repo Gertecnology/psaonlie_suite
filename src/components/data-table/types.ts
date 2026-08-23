@@ -21,5 +21,16 @@ declare module '@tanstack/react-table' {
      * or a count is ambiguous, and the reader has no way to resolve it.
      */
     unidad?: string
+    /**
+     * Marks a numeric column, so its `<th>` and `<td>` carry `data-tipo`.
+     *
+     * The attribute is what the report print sheet keys on to right-align
+     * figures and give them tabular digits. A utility class cannot do it:
+     * `.informe-imprimible td` sets `text-align: left` for the printed grid and
+     * outranks `.text-right`, so on paper the numbers would drift back to the
+     * left edge and stop lining up column by column — which is the only reason
+     * a column of amounts is readable at a glance.
+     */
+    tipo?: 'monto'
   }
 }

@@ -39,10 +39,17 @@ import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
 import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
-import { Route as AuthenticatedDestinationsIdRouteImport } from './routes/_authenticated/destinations/$id'
-import { Route as AuthenticatedAgenciasIdRouteImport } from './routes/_authenticated/agencias/$id'
+import { Route as AuthenticatedReportsPorAgenciaRouteImport } from './routes/_authenticated/reports/por-agencia'
+import { Route as AuthenticatedReportsEstadoVentasRouteImport } from './routes/_authenticated/reports/estado-ventas'
+import { Route as AuthenticatedDestinationsNuevoRouteImport } from './routes/_authenticated/destinations/nuevo'
+import { Route as AuthenticatedClientsNuevoRouteImport } from './routes/_authenticated/clients/nuevo'
+import { Route as AuthenticatedAgenciasNuevaRouteImport } from './routes/_authenticated/agencias/nueva'
 import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
+import { Route as AuthenticatedDestinationsIdIndexRouteImport } from './routes/_authenticated/destinations/$id/index'
+import { Route as AuthenticatedAgenciasIdIndexRouteImport } from './routes/_authenticated/agencias/$id/index'
 import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
+import { Route as AuthenticatedDestinationsIdEditarRouteImport } from './routes/_authenticated/destinations/$id/editar'
+import { Route as AuthenticatedAgenciasIdEditarRouteImport } from './routes/_authenticated/agencias/$id/editar'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -207,28 +214,71 @@ const AuthenticatedReportsResumenFinancieroRoute =
     path: '/reports/resumen-financiero',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDestinationsIdRoute =
-  AuthenticatedDestinationsIdRouteImport.update({
-    id: '/destinations/$id',
-    path: '/destinations/$id',
+const AuthenticatedReportsPorAgenciaRoute =
+  AuthenticatedReportsPorAgenciaRouteImport.update({
+    id: '/reports/por-agencia',
+    path: '/reports/por-agencia',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAgenciasIdRoute = AuthenticatedAgenciasIdRouteImport.update({
-  id: '/agencias/$id',
-  path: '/agencias/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedReportsEstadoVentasRoute =
+  AuthenticatedReportsEstadoVentasRouteImport.update({
+    id: '/reports/estado-ventas',
+    path: '/reports/estado-ventas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDestinationsNuevoRoute =
+  AuthenticatedDestinationsNuevoRouteImport.update({
+    id: '/destinations/nuevo',
+    path: '/destinations/nuevo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClientsNuevoRoute =
+  AuthenticatedClientsNuevoRouteImport.update({
+    id: '/clients/nuevo',
+    path: '/clients/nuevo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAgenciasNuevaRoute =
+  AuthenticatedAgenciasNuevaRouteImport.update({
+    id: '/agencias/nueva',
+    path: '/agencias/nueva',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsExternalDataIndexRoute =
   AuthenticatedSettingsExternalDataIndexRouteImport.update({
     id: '/external-data/',
     path: '/external-data/',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
+const AuthenticatedDestinationsIdIndexRoute =
+  AuthenticatedDestinationsIdIndexRouteImport.update({
+    id: '/destinations/$id/',
+    path: '/destinations/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAgenciasIdIndexRoute =
+  AuthenticatedAgenciasIdIndexRouteImport.update({
+    id: '/agencias/$id/',
+    path: '/agencias/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsExternalDataDayConfigurationRoute =
   AuthenticatedSettingsExternalDataDayConfigurationRouteImport.update({
     id: '/external-data/day-configuration',
     path: '/external-data/day-configuration',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedDestinationsIdEditarRoute =
+  AuthenticatedDestinationsIdEditarRouteImport.update({
+    id: '/destinations/$id/editar',
+    path: '/destinations/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAgenciasIdEditarRoute =
+  AuthenticatedAgenciasIdEditarRouteImport.update({
+    id: '/agencias/$id/editar',
+    path: '/agencias/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -244,8 +294,11 @@ export interface FileRoutesByFullPath {
   '/503': typeof errors503Route
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
-  '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
-  '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
+  '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
+  '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -263,7 +316,11 @@ export interface FileRoutesByFullPath {
   '/sales': typeof AuthenticatedSalesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
+  '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRoutesByTo {
@@ -278,8 +335,11 @@ export interface FileRoutesByTo {
   '/503': typeof errors503Route
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
-  '/agencias/$id': typeof AuthenticatedAgenciasIdRoute
-  '/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
+  '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
+  '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -297,7 +357,11 @@ export interface FileRoutesByTo {
   '/sales': typeof AuthenticatedSalesIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
+  '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRoutesById {
@@ -315,8 +379,11 @@ export interface FileRoutesById {
   '/(errors)/503': typeof errors503Route
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/agencias/$id': typeof AuthenticatedAgenciasIdRoute
-  '/_authenticated/destinations/$id': typeof AuthenticatedDestinationsIdRoute
+  '/_authenticated/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
+  '/_authenticated/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
+  '/_authenticated/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/_authenticated/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/_authenticated/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
@@ -334,7 +401,11 @@ export interface FileRoutesById {
   '/_authenticated/sales/': typeof AuthenticatedSalesIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
+  '/_authenticated/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/_authenticated/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/_authenticated/agencias/$id/': typeof AuthenticatedAgenciasIdIndexRoute
+  '/_authenticated/destinations/$id/': typeof AuthenticatedDestinationsIdIndexRoute
   '/_authenticated/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
 }
 export interface FileRouteTypes {
@@ -352,8 +423,11 @@ export interface FileRouteTypes {
     | '/503'
     | '/auth/reset-password'
     | '/'
-    | '/agencias/$id'
-    | '/destinations/$id'
+    | '/agencias/nueva'
+    | '/clients/nuevo'
+    | '/destinations/nuevo'
+    | '/reports/estado-ventas'
+    | '/reports/por-agencia'
     | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
@@ -371,7 +445,11 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings/'
     | '/users'
+    | '/agencias/$id/editar'
+    | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
+    | '/agencias/$id'
+    | '/destinations/$id'
     | '/settings/external-data'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -386,8 +464,11 @@ export interface FileRouteTypes {
     | '/503'
     | '/auth/reset-password'
     | '/'
-    | '/agencias/$id'
-    | '/destinations/$id'
+    | '/agencias/nueva'
+    | '/clients/nuevo'
+    | '/destinations/nuevo'
+    | '/reports/estado-ventas'
+    | '/reports/por-agencia'
     | '/reports/resumen-financiero'
     | '/sales/checkout'
     | '/sales/payment'
@@ -405,7 +486,11 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/users'
+    | '/agencias/$id/editar'
+    | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
+    | '/agencias/$id'
+    | '/destinations/$id'
     | '/settings/external-data'
   id:
     | '__root__'
@@ -422,8 +507,11 @@ export interface FileRouteTypes {
     | '/(errors)/503'
     | '/auth/reset-password'
     | '/_authenticated/'
-    | '/_authenticated/agencias/$id'
-    | '/_authenticated/destinations/$id'
+    | '/_authenticated/agencias/nueva'
+    | '/_authenticated/clients/nuevo'
+    | '/_authenticated/destinations/nuevo'
+    | '/_authenticated/reports/estado-ventas'
+    | '/_authenticated/reports/por-agencia'
     | '/_authenticated/reports/resumen-financiero'
     | '/_authenticated/sales/checkout'
     | '/_authenticated/sales/payment'
@@ -441,7 +529,11 @@ export interface FileRouteTypes {
     | '/_authenticated/sales/'
     | '/_authenticated/settings/'
     | '/_authenticated/users/'
+    | '/_authenticated/agencias/$id/editar'
+    | '/_authenticated/destinations/$id/editar'
     | '/_authenticated/settings/external-data/day-configuration'
+    | '/_authenticated/agencias/$id/'
+    | '/_authenticated/destinations/$id/'
     | '/_authenticated/settings/external-data/'
   fileRoutesById: FileRoutesById
 }
@@ -672,18 +764,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsResumenFinancieroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/destinations/$id': {
-      id: '/_authenticated/destinations/$id'
-      path: '/destinations/$id'
-      fullPath: '/destinations/$id'
-      preLoaderRoute: typeof AuthenticatedDestinationsIdRouteImport
+    '/_authenticated/reports/por-agencia': {
+      id: '/_authenticated/reports/por-agencia'
+      path: '/reports/por-agencia'
+      fullPath: '/reports/por-agencia'
+      preLoaderRoute: typeof AuthenticatedReportsPorAgenciaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/agencias/$id': {
-      id: '/_authenticated/agencias/$id'
-      path: '/agencias/$id'
-      fullPath: '/agencias/$id'
-      preLoaderRoute: typeof AuthenticatedAgenciasIdRouteImport
+    '/_authenticated/reports/estado-ventas': {
+      id: '/_authenticated/reports/estado-ventas'
+      path: '/reports/estado-ventas'
+      fullPath: '/reports/estado-ventas'
+      preLoaderRoute: typeof AuthenticatedReportsEstadoVentasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/destinations/nuevo': {
+      id: '/_authenticated/destinations/nuevo'
+      path: '/destinations/nuevo'
+      fullPath: '/destinations/nuevo'
+      preLoaderRoute: typeof AuthenticatedDestinationsNuevoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clients/nuevo': {
+      id: '/_authenticated/clients/nuevo'
+      path: '/clients/nuevo'
+      fullPath: '/clients/nuevo'
+      preLoaderRoute: typeof AuthenticatedClientsNuevoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agencias/nueva': {
+      id: '/_authenticated/agencias/nueva'
+      path: '/agencias/nueva'
+      fullPath: '/agencias/nueva'
+      preLoaderRoute: typeof AuthenticatedAgenciasNuevaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/external-data/': {
@@ -693,12 +806,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsExternalDataIndexRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
+    '/_authenticated/destinations/$id/': {
+      id: '/_authenticated/destinations/$id/'
+      path: '/destinations/$id'
+      fullPath: '/destinations/$id'
+      preLoaderRoute: typeof AuthenticatedDestinationsIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agencias/$id/': {
+      id: '/_authenticated/agencias/$id/'
+      path: '/agencias/$id'
+      fullPath: '/agencias/$id'
+      preLoaderRoute: typeof AuthenticatedAgenciasIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/external-data/day-configuration': {
       id: '/_authenticated/settings/external-data/day-configuration'
       path: '/external-data/day-configuration'
       fullPath: '/settings/external-data/day-configuration'
       preLoaderRoute: typeof AuthenticatedSettingsExternalDataDayConfigurationRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/destinations/$id/editar': {
+      id: '/_authenticated/destinations/$id/editar'
+      path: '/destinations/$id/editar'
+      fullPath: '/destinations/$id/editar'
+      preLoaderRoute: typeof AuthenticatedDestinationsIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agencias/$id/editar': {
+      id: '/_authenticated/agencias/$id/editar'
+      path: '/agencias/$id/editar'
+      fullPath: '/agencias/$id/editar'
+      preLoaderRoute: typeof AuthenticatedAgenciasIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -735,8 +876,11 @@ const AuthenticatedSettingsRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedAgenciasIdRoute: typeof AuthenticatedAgenciasIdRoute
-  AuthenticatedDestinationsIdRoute: typeof AuthenticatedDestinationsIdRoute
+  AuthenticatedAgenciasNuevaRoute: typeof AuthenticatedAgenciasNuevaRoute
+  AuthenticatedClientsNuevoRoute: typeof AuthenticatedClientsNuevoRoute
+  AuthenticatedDestinationsNuevoRoute: typeof AuthenticatedDestinationsNuevoRoute
+  AuthenticatedReportsEstadoVentasRoute: typeof AuthenticatedReportsEstadoVentasRoute
+  AuthenticatedReportsPorAgenciaRoute: typeof AuthenticatedReportsPorAgenciaRoute
   AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
   AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
@@ -748,13 +892,20 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
+  AuthenticatedAgenciasIdEditarRoute: typeof AuthenticatedAgenciasIdEditarRoute
+  AuthenticatedDestinationsIdEditarRoute: typeof AuthenticatedDestinationsIdEditarRoute
+  AuthenticatedAgenciasIdIndexRoute: typeof AuthenticatedAgenciasIdIndexRoute
+  AuthenticatedDestinationsIdIndexRoute: typeof AuthenticatedDestinationsIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedAgenciasIdRoute: AuthenticatedAgenciasIdRoute,
-  AuthenticatedDestinationsIdRoute: AuthenticatedDestinationsIdRoute,
+  AuthenticatedAgenciasNuevaRoute: AuthenticatedAgenciasNuevaRoute,
+  AuthenticatedClientsNuevoRoute: AuthenticatedClientsNuevoRoute,
+  AuthenticatedDestinationsNuevoRoute: AuthenticatedDestinationsNuevoRoute,
+  AuthenticatedReportsEstadoVentasRoute: AuthenticatedReportsEstadoVentasRoute,
+  AuthenticatedReportsPorAgenciaRoute: AuthenticatedReportsPorAgenciaRoute,
   AuthenticatedReportsResumenFinancieroRoute:
     AuthenticatedReportsResumenFinancieroRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
@@ -768,6 +919,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
+  AuthenticatedAgenciasIdEditarRoute: AuthenticatedAgenciasIdEditarRoute,
+  AuthenticatedDestinationsIdEditarRoute:
+    AuthenticatedDestinationsIdEditarRoute,
+  AuthenticatedAgenciasIdIndexRoute: AuthenticatedAgenciasIdIndexRoute,
+  AuthenticatedDestinationsIdIndexRoute: AuthenticatedDestinationsIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

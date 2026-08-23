@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { IconPlus } from '@tabler/icons-react'
 import { PageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
@@ -7,12 +7,8 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { DataTable, useTablaServidor } from '@/components/data-table'
 import { useDeleteDestination } from '../hooks/use-delete-destination'
 import { useGetDestinations } from '../hooks/use-get-destinations'
-import {
-  useDestinationDeleteDialog,
-  useDestinationDialog,
-} from '../store/use-destination-dialog'
+import { useDestinationDeleteDialog } from '../store/use-destination-delete-dialog'
 import { destinationColumns } from './columns'
-import { DestinationMutateDrawer } from './destination-mutate-drawer'
 import { DestinationsToolbar } from './destinations-toolbar'
 
 /**
@@ -29,8 +25,6 @@ export function DestinationsPage() {
 
   const tabla = useTablaServidor({ activo })
 
-  const { open, isUpdate, data: datosEdicion, openDialog, close } =
-    useDestinationDialog()
   const {
     open: abiertoBorrado,
     id: idABorrar,
@@ -87,8 +81,13 @@ export function DestinationsPage() {
       description='Gestiona los destinos de transporte y sus paradas homologadas.'
       showSearch
       actions={
-        <Button onClick={() => openDialog('create')}>
-          Crear destino <IconPlus size={18} />
+        // Crear un destino es una página con dirección propia, no un cajón:
+        // se puede enlazar, sobrevive a una recarga y el botón "atrás" deshace
+        // el paso en vez de descartar el formulario.
+        <Button asChild>
+          <Link to='/destinations/nuevo'>
+            Crear destino <IconPlus size={18} />
+          </Link>
         </Button>
       }
     >
@@ -123,13 +122,6 @@ export function DestinationsPage() {
             }}
           />
         )}
-      />
-
-      <DestinationMutateDrawer
-        open={open}
-        onClose={close}
-        initialData={datosEdicion}
-        isUpdate={isUpdate}
       />
 
       <ConfirmDialog

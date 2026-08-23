@@ -59,13 +59,14 @@ Componente → Hook → Service → API
   - Estados de carga durante la operación
   - Integración con toast notifications
 
-### **DestinationMutateDrawer**
+### **DestinationForm**
 
-- **Propósito**: Formulario para crear/editar destinos
+- **Propósito**: Formulario para crear/editar destinos, como página propia
+- **Rutas**: `/destinations/nuevo` y `/destinations/$id/editar`
 - **Características**:
   - Validación con Zod
-  - Selección múltiple de paradas
-  - Estados de carga optimizados
+  - Selección múltiple de paradas (controlada)
+  - Toda la lógica en `useDestinationForm`; el componente sólo presenta
   - Integración con hooks de mutación
 
 ## 🎣 Hooks Disponibles
@@ -121,10 +122,8 @@ Componente → Hook → Service → API
 
 ## 🗄️ Store (Zustand)
 
-### **useDestinationDialog**
-
-- **Estado**: `{ open, isUpdate, data }`
-- **Acciones**: `openDialog(mode, data)`, `close()`
+Sólo queda el diálogo de borrado: el destino que se edita viaja por la URL, así
+que ya no hace falta un store para el formulario.
 
 ### **useDestinationDeleteDialog**
 
@@ -210,25 +209,16 @@ export function DestinationDetailsPage({ id }: { id: string }) {
 
 ### **Formulario de Creación/Edición**
 
+El formulario es una página. La ruta sólo elige el modo: sin `destinationId`
+crea, con `destinationId` edita.
+
 ```tsx
-import {
-  useCreateDestination,
-  useUpdateDestination,
-} from '@/features/destinations'
+// src/routes/_authenticated/destinations/$id/editar.tsx
+import { DestinationForm } from '@/features/destinations'
 
-export function DestinationForm({ isUpdate, initialData }) {
-  const createDestination = useCreateDestination()
-  const updateDestination = useUpdateDestination()
-
-  const onSubmit = (data: DestinationFormValues) => {
-    if (isUpdate) {
-      updateDestination.mutate({ id: initialData.id, data })
-    } else {
-      createDestination.mutate(data)
-    }
-  }
-
-  // ... resto del componente
+function EditarDestino() {
+  const { id } = Route.useParams()
+  return <DestinationForm destinationId={id} />
 }
 ```
 

@@ -36,6 +36,6 @@ function AgenciaDetailsPage() {
   )
 }
 
-export const Route = createFileRoute('/_authenticated/agencias/$id')({
+export const Route = createFileRoute('/_authenticated/agencias/$id/')({
   component: AgenciaDetailsPage,
 })

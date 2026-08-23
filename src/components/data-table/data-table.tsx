@@ -22,6 +22,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -79,6 +80,20 @@ export interface DataTableProps<TData> {
     limpiarSeleccion: () => void,
   ) => React.ReactNode
 
+  /**
+   * Totals row. Must return `<tr>`s: they are rendered inside a `<tfoot>`.
+   *
+   * It has to live inside the table and not in a block underneath it, because
+   * the report print sheet gives `tfoot` `display: table-footer-group` — which
+   * is what repeats the totals at the bottom of *every* printed page. A block
+   * after the table prints once, at the end of the last sheet, where nobody
+   * comparing figures on page two can see it.
+   *
+   * Only rendered when there are rows: a totals line under an empty table
+   * states a total for nothing.
+   */
+  renderFooter?: () => React.ReactNode
+
   /** Which rows may be selected. Omitted means all of them. */
   enableRowSelection?: boolean | ((fila: Row<TData>) => boolean)
 
@@ -116,6 +131,7 @@ export function DataTable<TData>({
   onPaginationChange,
   renderToolbar,
   renderBulkActions,
+  renderFooter,
   enableRowSelection,
   rowProps,
   isLoading = false,
@@ -217,6 +233,7 @@ export function DataTable<TData>({
                         key={encabezado.id}
                         colSpan={encabezado.colSpan}
                         scope='col'
+                        data-tipo={columna.columnDef.meta?.tipo}
                         // `aria-sort` es lo que permite a un lector de pantalla
                         // anunciar por qué columna está ordenada la tabla.
                         aria-sort={
@@ -264,6 +281,7 @@ export function DataTable<TData>({
                     {fila.getVisibleCells().map((celda) => (
                       <TableCell
                         key={celda.id}
+                        data-tipo={celda.column.columnDef.meta?.tipo}
                         className={celda.column.columnDef.meta?.className}
                       >
                         {flexRender(
@@ -285,6 +303,10 @@ export function DataTable<TData>({
                 </TableRow>
               )}
             </TableBody>
+
+            {renderFooter && !isLoading && filas.length > 0 && (
+              <TableFooter>{renderFooter()}</TableFooter>
+            )}
           </Table>
         </div>
       )}

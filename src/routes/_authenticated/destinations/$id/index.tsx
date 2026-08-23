@@ -42,6 +42,6 @@ function DestinationDetailsPage() {
   )
 }
 
-export const Route = createFileRoute('/_authenticated/destinations/$id')({
+export const Route = createFileRoute('/_authenticated/destinations/$id/')({
   component: DestinationDetailsPage,
 }) 
