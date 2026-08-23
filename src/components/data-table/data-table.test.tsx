@@ -70,15 +70,17 @@ describe('DataTable', () => {
     expect(screen.getByText('Nuestra Señora')).toBeInTheDocument()
   })
 
-  it('pone las acciones junto a la selección, no al final de la fila', () => {
-    // Es donde las busca el ojo; al final obliga a barrer la fila entera.
+  it('las acciones van al final, no antes del nombre', () => {
+    // Una fila se lee de izquierda a derecha y lo primero que tiene que decir
+    // es QUÉ es, no qué se le puede hacer. Con el menú primero, cada fila
+    // empieza por una pregunta en vez de por una respuesta.
     renderTabla()
 
     const encabezados = screen
       .getAllByRole('columnheader')
       .map((celda) => celda.textContent)
 
-    expect(encabezados.slice(0, 2)).toEqual(['Sel.', 'Acciones'])
+    expect(encabezados).toEqual(['Sel.', 'Nombre', 'Acciones'])
   })
 
   describe('identidad de fila', () => {

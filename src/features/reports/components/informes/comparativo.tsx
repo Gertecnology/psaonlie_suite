@@ -77,14 +77,9 @@ function Cuerpo({ datos }: { datos: Comparativo }) {
 
   return (
     <div className='space-y-4'>
-      {duracionDistinta && (
-        <p className='text-muted-foreground rounded-md border border-dashed p-3 text-sm'>
-          Los períodos no duran lo mismo: {datos.periodoActual.dias} días contra{' '}
-          {datos.periodoAnterior.dias}. Las diferencias de abajo incluyen esa
-          desigualdad, no sólo el cambio del negocio.
-        </p>
-      )}
-
+      {/* Que los períodos no duren lo mismo se dice en el encabezado de cada
+          columna —"30 días" contra "7 días"—, no en un cartel arriba: ahí se
+          lee justo cuando se comparan los números. */}
       <table className='w-full text-sm'>
         <caption className='sr-only'>
           Comparación de las cifras del período actual contra el anterior
@@ -96,9 +91,19 @@ function Cuerpo({ datos }: { datos: Comparativo }) {
             </th>
             <th scope='col' className='py-2 text-right'>
               Actual
+              {duracionDistinta && (
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  {datos.periodoActual.dias} días
+                </span>
+              )}
             </th>
             <th scope='col' className='py-2 text-right'>
               Anterior
+              {duracionDistinta && (
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  {datos.periodoAnterior.dias} días
+                </span>
+              )}
             </th>
             <th scope='col' className='py-2 text-right'>
               Diferencia

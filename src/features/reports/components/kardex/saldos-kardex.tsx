@@ -1,15 +1,16 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { AlertTriangle, ArrowLeft, CheckCircle2, Printer } from 'lucide-react'
-import { PageLayout } from '@/components/layout/page-layout'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useAuth } from '@/context/auth-context'
+import { ArrowLeft, Printer } from 'lucide-react'
 import { formatearEntero, formatearGuaranies } from '@/lib/formato'
+import { useAuth } from '@/context/auth-context'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
+import { PageLayout } from '@/components/layout/page-layout'
+import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
 import {
   kardexGenerado,
   type FiltrosKardex,
@@ -17,7 +18,6 @@ import {
 } from '../../models/kardex.model'
 import { obtenerSaldos } from '../../services/kardex.service'
 import { EncabezadoInforme } from '../encabezado-informe'
-import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
 import '../informe-imprimible.css'
 
 /**
@@ -79,75 +79,62 @@ export function SaldosKardex() {
         </div>
       }
     >
-      <div className='no-imprimir mb-6 rounded-md border p-4'>
-        <p className='text-muted-foreground mb-4 max-w-prose text-sm'>
-          El kardex todavía está en fase de verificación: escribe pero los
-          informes no lo leen. Si un saldo de acá no coincide con el del informe
-          por empresa, hay un asiento faltante — se recupera corriendo el
-          backfill.
-        </p>
-        <div className='flex flex-wrap items-end gap-3'>
-          <div className='space-y-1'>
-            <Label htmlFor='kardex-desde' className='text-xs'>
-              Desde
-            </Label>
-            <Input
-              id='kardex-desde'
-              type='date'
-              className='h-9 w-[160px]'
-              disabled={acumulado}
-              max={borrador.hasta}
-              value={borrador.desde ?? ''}
-              onChange={(evento) =>
-                cambiar('desde', evento.target.value || undefined)
-              }
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label htmlFor='kardex-hasta' className='text-xs'>
-              Hasta
-            </Label>
-            <Input
-              id='kardex-hasta'
-              type='date'
-              className='h-9 w-[160px]'
-              disabled={acumulado}
-              min={borrador.desde}
-              value={borrador.hasta ?? ''}
-              onChange={(evento) =>
-                cambiar('hasta', evento.target.value || undefined)
-              }
-            />
-          </div>
-
-          <div className='flex items-center gap-2 pb-1'>
-            <Switch
-              id='kardex-acumulado'
-              checked={acumulado}
-              onCheckedChange={(valor) =>
-                cambiar('acumulado' as keyof typeof borrador, valor as never)
-              }
-            />
-            <Label htmlFor='kardex-acumulado' className='text-sm'>
-              Saldo acumulado
-            </Label>
-          </div>
-
-          <Button onClick={generar} disabled={!puedeGenerar || isLoading}>
-            {isLoading ? 'Consultando…' : 'Consultar saldos'}
-          </Button>
+      <div className='no-imprimir mb-6 flex flex-wrap items-end gap-3 border-b pb-4'>
+        <div className='space-y-1'>
+          <Label htmlFor='kardex-desde' className='text-xs'>
+            Desde
+          </Label>
+          <Input
+            id='kardex-desde'
+            type='date'
+            className='h-9 w-[160px]'
+            disabled={acumulado}
+            max={borrador.hasta}
+            value={borrador.desde ?? ''}
+            onChange={(evento) =>
+              cambiar('desde', evento.target.value || undefined)
+            }
+          />
         </div>
-        <p className='text-muted-foreground mt-2 text-xs'>
-          {acumulado
-            ? 'El acumulado ignora el período: es lo que se le debe a cada empresa hasta hoy.'
-            : 'Sin acumulado, el saldo es sólo lo que movió el período elegido.'}
-        </p>
+        <div className='space-y-1'>
+          <Label htmlFor='kardex-hasta' className='text-xs'>
+            Hasta
+          </Label>
+          <Input
+            id='kardex-hasta'
+            type='date'
+            className='h-9 w-[160px]'
+            disabled={acumulado}
+            min={borrador.desde}
+            value={borrador.hasta ?? ''}
+            onChange={(evento) =>
+              cambiar('hasta', evento.target.value || undefined)
+            }
+          />
+        </div>
+
+        <div className='flex items-center gap-2 pb-1'>
+          <Switch
+            id='kardex-acumulado'
+            checked={acumulado}
+            onCheckedChange={(valor) =>
+              cambiar('acumulado' as keyof typeof borrador, valor as never)
+            }
+          />
+          <Label htmlFor='kardex-acumulado' className='text-sm'>
+            Saldo acumulado
+          </Label>
+        </div>
+
+        <Button onClick={generar} disabled={!puedeGenerar || isLoading}>
+          {isLoading ? 'Consultando…' : 'Consultar'}
+        </Button>
       </div>
 
       <div className='informe-imprimible'>
         {!generado ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-12 text-center'>
-            Elegí un período —o marcá el acumulado— y consultá los saldos.
+          <p className='text-muted-foreground py-8 text-sm'>
+            Elegí un período —o marcá el acumulado— y apretá Consultar.
           </p>
         ) : isLoading ? (
           <div className='space-y-3'>
@@ -168,11 +155,7 @@ export function SaldosKardex() {
           <>
             <EncabezadoInforme
               titulo='Saldos del kardex'
-              periodo={
-                data.periodo
-                  ? { ...data.periodo, dias: 0 }
-                  : undefined
-              }
+              periodo={data.periodo ? { ...data.periodo, dias: 0 } : undefined}
               origen='/api/admin/kardex/saldos'
               emitidoEn={emitidoEn ?? new Date()}
               filtros={[
@@ -195,32 +178,8 @@ export function SaldosKardex() {
 function Cuerpo({ datos }: { datos: Saldos }) {
   return (
     <div className='space-y-6'>
-      {/* Antes que cualquier cifra: si el libro no cierra, ninguna sirve. */}
-      {datos.descuadre !== 0 ? (
-        <div
-          role='alert'
-          className='border-destructive/50 text-destructive flex items-start gap-3 rounded-md border p-4'
-        >
-          <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0' />
-          <div className='text-sm'>
-            <p className='font-medium'>El libro no cierra</p>
-            <p className='mt-1'>
-              La suma de todos los movimientos da{' '}
-              <strong>{formatearGuaranies(datos.descuadre)}</strong> y tiene que
-              dar cero. Hay un asiento roto: los saldos de abajo no son
-              confiables hasta explicarlo.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className='flex items-center gap-3 rounded-md border border-green-600/40 p-4 text-green-700 dark:text-green-500'>
-          <CheckCircle2 className='h-5 w-5 shrink-0' />
-          <p className='text-sm font-medium'>
-            El libro cierra: todos los movimientos suman cero.
-          </p>
-        </div>
-      )}
-
+      {/* El descuadre es una fila del pie, no un cartel: se lee junto al total
+          que pone en duda, que es donde importa. */}
       <section>
         <h3 className='mb-2 font-semibold'>
           A transferir a las empresas
@@ -234,12 +193,36 @@ function Cuerpo({ datos }: { datos: Saldos }) {
           </caption>
           <thead>
             <tr className='border-b text-left'>
-              <th scope='col' className='py-2'>Empresa</th>
-              <th scope='col' className='py-2 text-right'>Pasajes<span className='text-muted-foreground block text-xs font-normal'>PYG</span></th>
-              <th scope='col' className='py-2 text-right'>Comisión<span className='text-muted-foreground block text-xs font-normal'>PYG</span></th>
-              <th scope='col' className='py-2 text-right'>Liquidado<span className='text-muted-foreground block text-xs font-normal'>PYG</span></th>
-              <th scope='col' className='py-2 text-right'>A transferir<span className='text-muted-foreground block text-xs font-normal'>PYG</span></th>
-              <th scope='col' className='py-2 text-right'>Movimientos</th>
+              <th scope='col' className='py-2'>
+                Empresa
+              </th>
+              <th scope='col' className='py-2 text-right'>
+                Pasajes
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  PYG
+                </span>
+              </th>
+              <th scope='col' className='py-2 text-right'>
+                Comisión
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  PYG
+                </span>
+              </th>
+              <th scope='col' className='py-2 text-right'>
+                Liquidado
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  PYG
+                </span>
+              </th>
+              <th scope='col' className='py-2 text-right'>
+                A transferir
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  PYG
+                </span>
+              </th>
+              <th scope='col' className='py-2 text-right'>
+                Movimientos
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -262,7 +245,10 @@ function Cuerpo({ datos }: { datos: Saldos }) {
                 <td className='py-2 text-right tabular-nums' data-tipo='monto'>
                   {formatearGuaranies(agencia.liquidado)}
                 </td>
-                <td className='py-2 text-right font-medium tabular-nums' data-tipo='monto'>
+                <td
+                  className='py-2 text-right font-medium tabular-nums'
+                  data-tipo='monto'
+                >
                   {formatearGuaranies(agencia.netoAPagar)}
                 </td>
                 <td className='text-muted-foreground py-2 text-right tabular-nums'>
@@ -273,13 +259,29 @@ function Cuerpo({ datos }: { datos: Saldos }) {
           </tbody>
           <tfoot>
             <tr className='border-t-2 font-medium'>
-              <th scope='row' className='py-2 text-left'>Total</th>
+              <th scope='row' className='py-2 text-left'>
+                Total
+              </th>
               <td colSpan={3} />
               <td className='py-2 text-right tabular-nums' data-tipo='monto'>
                 {formatearGuaranies(datos.totalAPagarAgencias)}
               </td>
               <td />
             </tr>
+            {/* Un libro que cierra suma cero. Cualquier otra cosa significa que
+                hay un asiento roto y que el total de arriba no es confiable. */}
+            {datos.descuadre !== 0 && (
+              <tr className='text-destructive'>
+                <th scope='row' className='py-2 text-left font-medium'>
+                  Descuadre del libro
+                </th>
+                <td colSpan={3} />
+                <td className='py-2 text-right tabular-nums' data-tipo='monto'>
+                  {formatearGuaranies(datos.descuadre)}
+                </td>
+                <td />
+              </tr>
+            )}
           </tfoot>
         </table>
       </section>
@@ -292,11 +294,17 @@ function Cuerpo({ datos }: { datos: Saldos }) {
           </caption>
           <thead>
             <tr className='border-b text-left'>
-              <th scope='col' className='py-2'>Cuenta</th>
-              <th scope='col' className='py-2'>Tipo</th>
+              <th scope='col' className='py-2'>
+                Cuenta
+              </th>
+              <th scope='col' className='py-2'>
+                Tipo
+              </th>
               <th scope='col' className='py-2 text-right'>
                 Saldo
-                <span className='text-muted-foreground block text-xs font-normal'>PYG</span>
+                <span className='text-muted-foreground block text-xs font-normal'>
+                  PYG
+                </span>
               </th>
             </tr>
           </thead>

@@ -270,8 +270,9 @@ describe('nada se carga hasta apretar Generar', () => {
     async (_ruta, Pantalla) => {
       montar(Pantalla)
 
+      // El botón es la única señal de que la pantalla montó y está esperando.
       expect(
-        await screen.findByText('El informe todavía no se generó'),
+        await screen.findByRole('button', { name: 'Generar' }),
       ).toBeInTheDocument()
       // La regla no es "se ve vacío": es que no salió ninguna consulta. Un
       // informe que pide los datos y los esconde igual castiga a la base.
@@ -341,13 +342,14 @@ describe('informes paginados', () => {
     ).toBeGreaterThan(0)
   })
 
-  it('anomalías resume por tipo y conserva el detalle del backend', async () => {
+  it('anomalías dice qué le pasa a cada venta, en la fila', async () => {
     montar(InformeAnomalias, GENERADO)
 
-    // Aparece dos veces: en el resumen del período y en la fila.
+    // Una sola vez: el resumen por tipo que lo repetía arriba se sacó. El tipo
+    // y su explicación viven en la fila, junto a la venta que los tiene.
     expect(
-      (await screen.findAllByText('Comisión mayor que el pasaje')).length,
-    ).toBeGreaterThan(1)
+      await screen.findByText('Comisión mayor que el pasaje'),
+    ).toBeInTheDocument()
     expect(
       screen.getByText('La comisión supera el importe del pasaje'),
     ).toBeInTheDocument()

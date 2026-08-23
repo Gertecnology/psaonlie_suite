@@ -87,21 +87,14 @@ export function MarcoInforme({
         </div>
       }
     >
-      <div className='no-imprimir mb-6 rounded-md border p-4'>
-        <p className='text-muted-foreground mb-4 max-w-prose text-sm'>
-          {definicion.descripcion}
-        </p>
-        <div className='flex flex-wrap items-end gap-3'>
-          {children}
-          <Button onClick={onGenerar} disabled={!puedeGenerar || isLoading}>
-            {isLoading ? 'Generando…' : 'Generar informe'}
-          </Button>
-        </div>
-        {!puedeGenerar && (
-          <p className='text-muted-foreground mt-2 text-xs'>
-            Elegí un período para poder generar el informe.
-          </p>
-        )}
+      {/* Los filtros son una barra, no una tarjeta con un párrafo adentro: se
+          usan una vez al abrir y después estorban. La descripción del informe
+          ya está en el subtítulo de la página. */}
+      <div className='no-imprimir mb-6 flex flex-wrap items-end gap-3 border-b pb-4'>
+        {children}
+        <Button onClick={onGenerar} disabled={!puedeGenerar || isLoading}>
+          {isLoading ? 'Generando…' : 'Generar'}
+        </Button>
       </div>
 
       <div className='informe-imprimible'>
@@ -134,15 +127,11 @@ export function MarcoInforme({
 
 function SinGenerar() {
   return (
-    <div className='text-muted-foreground flex flex-col items-center gap-3 rounded-md border border-dashed p-12 text-center'>
-      <FileSearch className='h-10 w-10' />
-      <div>
-        <p className='font-medium'>El informe todavía no se generó</p>
-        <p className='mt-1 text-sm'>
-          Elegí el período y los filtros que necesités, y apretá{' '}
-          <strong>Generar informe</strong>.
-        </p>
-      </div>
+    <div className='text-muted-foreground flex items-center gap-3 py-8 text-sm'>
+      <FileSearch className='h-5 w-5 shrink-0' />
+      <p>
+        Elegí el período y apretá <strong>Generar</strong>.
+      </p>
     </div>
   )
 }

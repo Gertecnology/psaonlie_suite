@@ -150,12 +150,6 @@ function Cuerpo({ datos }: { datos: InformePorMetodoPago }) {
           </tr>
         </tfoot>
       </table>
-
-      <p className='text-muted-foreground mt-3 max-w-prose text-xs'>
-        El ingreso propio es la comisión más el cargo por servicio: no es lo que
-        se le transfiere a la empresa. La tasa de concreción compara las ventas
-        que terminaron cobradas contra todas las que se iniciaron por ese medio.
-      </p>
     </section>
   )
 }

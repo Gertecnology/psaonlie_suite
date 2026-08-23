@@ -84,6 +84,15 @@ export function InformePorServicio() {
   )
 }
 
+/**
+ * The report is its table.
+ *
+ * The two counters that stood above it repeated the pager, and the note
+ * underneath carried two sentences that belonged in the grid: that the dates
+ * are the trip's and not the sale's — now said by the column headers
+ * themselves — and an apology for the absent totals row, which needs none. The
+ * API sends no period totals, so the table carries no footer.
+ */
 function Cuerpo({
   datos,
   pagination,
@@ -96,42 +105,17 @@ function Cuerpo({
   isFetching: boolean
 }) {
   return (
-    <div className='space-y-6'>
-      <section className='grid gap-4 md:grid-cols-2'>
-        <Tarjeta
-          titulo='Servicios con ventas'
-          valor={formatearEntero(datos.total)}
-          unidad='servicios'
-          nota={`Página ${datos.page} de ${Math.max(datos.totalPages, 1)}.`}
-        />
-        <Tarjeta
-          titulo='Servicios en esta página'
-          valor={formatearEntero(datos.data.length)}
-          unidad='servicios'
-          nota='Las cifras de la grilla son las de estas filas, no las del período.'
-        />
-      </section>
-
-      <section className='space-y-2'>
-        <DataTable
-          columns={COLUMNAS}
-          data={datos.data}
-          getRowId={(fila) => fila.servicioId}
-          pageCount={datos.totalPages}
-          pagination={pagination}
-          onPaginationChange={onPaginationChange}
-          isFetching={isFetching}
-          caption='Ventas, boletos e importes de cada servicio del período, con el primer y el último viaje vendidos'
-          emptyMessage='El período no tiene ventas liquidables en ningún servicio.'
-        />
-        <p className='text-muted-foreground text-xs'>
-          Las fechas son las del viaje vendido, no las de la venta. La grilla no
-          lleva fila de totales: el informe se pagina en la base y la API no
-          informa los totales del período, así que sumar lo que está en pantalla
-          diría "total" sobre una sola página.
-        </p>
-      </section>
-    </div>
+    <DataTable
+      columns={COLUMNAS}
+      data={datos.data}
+      getRowId={(fila) => fila.servicioId}
+      pageCount={datos.totalPages}
+      pagination={pagination}
+      onPaginationChange={onPaginationChange}
+      isFetching={isFetching}
+      caption='Ventas, boletos e importes de cada servicio del período, con el primer y el último viaje vendidos'
+      emptyMessage='El período no tiene ventas liquidables en ningún servicio.'
+    />
   )
 }
 
@@ -204,7 +188,10 @@ const COLUMNAS: ColumnDef<FilaServicio, unknown>[] = [
   },
   {
     id: 'primer-viaje',
-    header: 'Primer viaje',
+    // "Vendido" va en el encabezado y no en una nota al pie de la tabla: la
+    // fecha es la del viaje que se vendió, no la de la venta, y es lo primero
+    // que hay que saber para leer la columna.
+    header: 'Primer viaje vendido',
     // ISO 8601 y no dd/mm/aaaa: un informe archivado pierde el contexto que
     // haría falta para desambiguar 08/09.
     meta: { unidad: 'AAAA-MM-DD', className: 'tabular-nums' },
@@ -212,33 +199,8 @@ const COLUMNAS: ColumnDef<FilaServicio, unknown>[] = [
   },
   {
     id: 'ultimo-viaje',
-    header: 'Último viaje',
+    header: 'Último viaje vendido',
     meta: { unidad: 'AAAA-MM-DD', className: 'tabular-nums' },
     cell: ({ row }) => formatearFechaISO(row.original.ultimoViaje),
   },
 ]
-
-function Tarjeta({
-  titulo,
-  valor,
-  unidad,
-  nota,
-}: {
-  titulo: string
-  valor: string
-  unidad: string
-  nota: string
-}) {
-  return (
-    <div className='tarjeta-informe rounded-md border p-4'>
-      <h3 className='text-muted-foreground text-sm'>{titulo}</h3>
-      <p className='mt-1 text-2xl font-semibold tabular-nums' data-tipo='monto'>
-        {valor}
-      </p>
-      {/* Sin la unidad, "1.240" no dice si son guaraníes, ventas o servicios, y
-          el lector de un informe archivado no tiene dónde averiguarlo. */}
-      <p className='text-muted-foreground text-xs'>{unidad}</p>
-      <p className='text-muted-foreground mt-3 text-xs'>{nota}</p>
-    </div>
-  )
-}

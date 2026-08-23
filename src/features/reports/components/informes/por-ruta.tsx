@@ -90,6 +90,16 @@ export function InformePorRuta() {
   )
 }
 
+/**
+ * The report is its table.
+ *
+ * Two figure cards used to stand above it — routes in the period, routes on
+ * this page — and a paragraph underneath explained why there is no totals row.
+ * The pager already states which page of how many this is, and the missing
+ * totals row needs no defence: the API sends no period totals, so there is
+ * nothing honest to put in a footer and none is rendered. `participacion` is
+ * the one period-wide figure per row, and its own header says so.
+ */
 function Cuerpo({
   datos,
   pagination,
@@ -102,45 +112,17 @@ function Cuerpo({
   isFetching: boolean
 }) {
   return (
-    <div className='space-y-6'>
-      <section className='grid gap-4 md:grid-cols-2'>
-        <Tarjeta
-          titulo='Rutas con ventas'
-          valor={formatearEntero(datos.total)}
-          unidad='rutas'
-          nota={`Página ${datos.page} de ${Math.max(datos.totalPages, 1)}.`}
-        />
-        <Tarjeta
-          titulo='Rutas en esta página'
-          valor={formatearEntero(datos.data.length)}
-          unidad='rutas'
-          nota='Las cifras de la grilla son las de estas filas, no las del período.'
-        />
-      </section>
-
-      <section className='space-y-2'>
-        <DataTable
-          columns={COLUMNAS}
-          data={datos.data}
-          getRowId={claveRuta}
-          pageCount={datos.totalPages}
-          pagination={pagination}
-          onPaginationChange={onPaginationChange}
-          isFetching={isFetching}
-          caption='Ventas, boletos, importe y tarifa promedio de cada par origen-destino del período'
-          emptyMessage='El período no tiene ventas liquidables en ninguna ruta.'
-        />
-        {/* El informe está paginado en base y la API no devuelve totales del
-            período. Sumar las filas de la página y llamarlo "total" sería
-            afirmar como total del período la porción que se ve. */}
-        <p className='text-muted-foreground text-xs'>
-          La grilla no lleva fila de totales: el informe se pagina en la base y
-          la API no informa los totales del período, así que sumar lo que está
-          en pantalla diría "total" sobre una sola página. La participación de
-          cada fila sí es sobre el período completo, y la calcula el servidor.
-        </p>
-      </section>
-    </div>
+    <DataTable
+      columns={COLUMNAS}
+      data={datos.data}
+      getRowId={claveRuta}
+      pageCount={datos.totalPages}
+      pagination={pagination}
+      onPaginationChange={onPaginationChange}
+      isFetching={isFetching}
+      caption='Ventas, boletos, importe y tarifa promedio de cada par origen-destino del período'
+      emptyMessage='El período no tiene ventas liquidables en ninguna ruta.'
+    />
   )
 }
 
@@ -212,28 +194,3 @@ const COLUMNAS: ColumnDef<FilaRuta, unknown>[] = [
     cell: ({ row }) => formatearPorcentaje(row.original.participacion),
   },
 ]
-
-function Tarjeta({
-  titulo,
-  valor,
-  unidad,
-  nota,
-}: {
-  titulo: string
-  valor: string
-  unidad: string
-  nota: string
-}) {
-  return (
-    <div className='tarjeta-informe rounded-md border p-4'>
-      <h3 className='text-muted-foreground text-sm'>{titulo}</h3>
-      <p className='mt-1 text-2xl font-semibold tabular-nums' data-tipo='monto'>
-        {valor}
-      </p>
-      {/* Sin la unidad, "1.240" no dice si son guaraníes, ventas o rutas, y el
-          lector de un informe archivado no tiene dónde averiguarlo. */}
-      <p className='text-muted-foreground text-xs'>{unidad}</p>
-      <p className='text-muted-foreground mt-3 text-xs'>{nota}</p>
-    </div>
-  )
-}

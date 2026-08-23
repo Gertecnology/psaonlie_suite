@@ -4,7 +4,6 @@ import type {
   OnChangeFn,
   PaginationState,
 } from '@tanstack/react-table'
-import { AlertTriangle } from 'lucide-react'
 import {
   formatearEntero,
   formatearGuaranies,
@@ -95,54 +94,13 @@ function Cuerpo({
 }) {
   const { totales } = datos
 
-  // Se mira sobre el período entero, no sobre la página: que la advertencia
-  // aparezca o no según en qué página estés parado sería un accidente.
-  const hayCobradoSinEntregar = totales.pagadasSinBoletoMonto > 0
-
   return (
-    <div className='space-y-6'>
-      {hayCobradoSinEntregar && (
-        <div
-          role='alert'
-          className='border-destructive/50 text-destructive flex items-start gap-3 rounded-md border p-4'
-        >
-          <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0' />
-          <div className='text-sm'>
-            <p className='font-medium'>
-              Hay {formatearGuaranies(totales.pagadasSinBoletoMonto)} cobrados
-              sin pasaje entregado
-            </p>
-            <p className='mt-1'>
-              Son ventas con el pago registrado y ningún boleto emitido. No
-              entran en el saldo a transferir —la empresa no prestó el
-              servicio—, pero el dinero ya salió del bolsillo del cliente. Las
-              filas marcadas abajo son las empresas donde ocurre.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <section className='grid gap-4 md:grid-cols-3'>
-        <Tarjeta
-          titulo='Saldo a pagar'
-          valor={formatearGuaranies(totales.saldoAPagar)}
-          unidad='PYG'
-          nota='La suma de todas las transferencias pendientes del período.'
-        />
-        <Tarjeta
-          titulo='Comisión descontada'
-          valor={formatearGuaranies(totales.comisionDescontada)}
-          unidad='PYG'
-          nota='Se descuenta de la transferencia, no se le cobra a la empresa.'
-        />
-        <Tarjeta
-          titulo='Empresas con saldo'
-          valor={formatearEntero(datos.total)}
-          unidad='empresas'
-          nota={`Página ${datos.page} de ${Math.max(datos.totalPages, 1)}.`}
-        />
-      </section>
-
+    <div className='space-y-4'>
+      {/* El informe es la tabla. No lleva encabezado de cifras ni bloques de
+          texto explicando lo que las columnas ya dicen: eran media pantalla
+          de preámbulo antes del primer dato. Los totales van en el pie de la
+          tabla, que es donde se leen — y donde la impresión los repite en
+          cada hoja. */}
       <section className='space-y-2'>
         <DataTable
           columns={COLUMNAS}
@@ -305,28 +263,3 @@ const COLUMNAS: ColumnDef<SaldoAgencia, unknown>[] = [
     cell: ({ row }) => formatearPorcentaje(row.original.participacion),
   },
 ]
-
-function Tarjeta({
-  titulo,
-  valor,
-  unidad,
-  nota,
-}: {
-  titulo: string
-  valor: string
-  unidad: string
-  nota: string
-}) {
-  return (
-    <div className='tarjeta-informe rounded-md border p-4'>
-      <h3 className='text-muted-foreground text-sm'>{titulo}</h3>
-      <p className='mt-1 text-2xl font-semibold tabular-nums' data-tipo='monto'>
-        {valor}
-      </p>
-      {/* Sin la unidad, "1.240" no dice si son guaraníes, ventas o empresas, y
-          el lector de un informe archivado no tiene dónde averiguarlo. */}
-      <p className='text-muted-foreground text-xs'>{unidad}</p>
-      <p className='text-muted-foreground mt-3 text-xs'>{nota}</p>
-    </div>
-  )
-}

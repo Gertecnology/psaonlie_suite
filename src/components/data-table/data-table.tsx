@@ -120,6 +120,17 @@ export interface DataTableProps<TData> {
   caption: string
 
   emptyMessage?: string
+
+  /**
+   * Columns hidden until the user asks for them, by id.
+   *
+   * A list is read to answer a question, and nine columns of everything answer
+   * none of them: the eye has to sweep the whole row to find the two figures
+   * that matter. Connection details — the web service URL, its user, the
+   * agency code — are needed when you edit a company, not when you scan the
+   * list looking for one. They stay one click away in the column menu.
+   */
+  columnasOcultasPorDefecto?: string[]
 }
 
 export function DataTable<TData>({
@@ -141,25 +152,37 @@ export function DataTable<TData>({
   resetSelectionOn = [],
   caption,
   emptyMessage = 'No hay resultados.',
+  columnasOcultasPorDefecto,
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
+    () =>
+      Object.fromEntries(
+        (columnasOcultasPorDefecto ?? []).map((id) => [id, false]),
+      ),
+  )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
-  // La columna de acciones va junto a la de selección, al principio: es donde
-  // la busca el ojo y evita tener que barrer la fila entera hasta el borde.
+  /**
+   * Actions go last.
+   *
+   * They used to be pinned right after the checkbox, on the theory that it is
+   * where the eye looks. It is not: a row is read left to right and the first
+   * thing it has to say is *what* it is — the name — not what you can do to it.
+   * Opening a list whose first column is a menu button means every row starts
+   * with a question instead of an answer.
+   */
   const columnasOrdenadas = React.useMemo(() => {
     if (!columns?.length) return columns
 
     const indiceAcciones = columns.findIndex((columna) => columna.id === 'actions')
-    if (indiceAcciones === -1) return columns
+    if (indiceAcciones === -1 || indiceAcciones === columns.length - 1) {
+      return columns
+    }
 
     const reordenadas = [...columns]
     const [acciones] = reordenadas.splice(indiceAcciones, 1)
-    const seleccionPrimero = reordenadas[0]?.id === 'select'
-
-    reordenadas.splice(seleccionPrimero ? 1 : 0, 0, acciones)
+    reordenadas.push(acciones)
     return reordenadas
   }, [columns])
 

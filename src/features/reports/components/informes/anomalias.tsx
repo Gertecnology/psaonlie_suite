@@ -4,12 +4,7 @@ import type {
   OnChangeFn,
   PaginationState,
 } from '@tanstack/react-table'
-import { AlertTriangle } from 'lucide-react'
-import {
-  formatearEntero,
-  formatearFechaISO,
-  formatearGuaranies,
-} from '@/lib/formato'
+import { formatearFechaISO, formatearGuaranies } from '@/lib/formato'
 import { DataTable, useTablaServidor } from '@/components/data-table'
 import {
   informePorRuta,
@@ -97,78 +92,10 @@ function Cuerpo({
   onPaginationChange: OnChangeFn<PaginationState>
   isFetching: boolean
 }) {
-  // `resumen` es del período completo; ordenarlo por cantidad pone arriba lo
-  // que más se repite, que es por donde conviene empezar a mirar.
-  const porTipo = Object.entries(datos.resumen).sort(
-    ([, unaCantidad], [, otraCantidad]) => otraCantidad - unaCantidad,
-  )
-
   return (
-    <div className='space-y-6'>
-      {datos.total > 0 && (
-        <div
-          role='alert'
-          className='border-destructive/50 text-destructive flex items-start gap-3 rounded-md border p-4'
-        >
-          <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0' />
-          <div className='text-sm'>
-            <p className='font-medium'>
-              {formatearEntero(datos.total)} ventas del período no se sostienen
-              consigo mismas
-            </p>
-            <p className='mt-1'>
-              Sus importes y comisiones se contradicen, y aun así entran en los
-              demás informes: una comisión mal calculada ya está sumada en el
-              saldo que se le transfiere a la empresa. Hasta resolverlas, las
-              cifras de los otros informes arrastran estas filas.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {porTipo.length > 0 && (
-        <section>
-          <h3 className='mb-2 font-semibold'>Anomalías por tipo</h3>
-          <table className='w-full max-w-xl text-sm'>
-            <caption className='sr-only'>
-              Cantidad de anomalías de cada tipo en todo el período
-            </caption>
-            <thead>
-              <tr className='border-b text-left'>
-                <th scope='col' className='py-2'>
-                  Tipo
-                </th>
-                <th scope='col' className='py-2 text-right' data-tipo='monto'>
-                  Ventas
-                  <span className='text-muted-foreground block text-xs font-normal'>
-                    en todo el período
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {porTipo.map(([tipo, cantidad]) => (
-                <tr key={tipo} className='border-b last:border-0'>
-                  <th scope='row' className='py-2 text-left font-normal'>
-                    {etiquetaAnomalia(tipo)}
-                  </th>
-                  <td
-                    className='py-2 text-right tabular-nums'
-                    data-tipo='monto'
-                  >
-                    {formatearEntero(cantidad)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className='text-muted-foreground mt-2 max-w-prose text-xs'>
-            Una misma venta puede aparecer en más de un tipo, así que la suma de
-            esta columna no tiene por qué coincidir con el total de filas.
-          </p>
-        </section>
-      )}
-
+    <div className='space-y-4'>
+      {/* Sin cartel de advertencia ni resumen por tipo: la tabla ES la lista de
+          lo que hay que revisar, y cada fila dice qué le pasa. */}
       <section className='space-y-2'>
         <DataTable
           columns={COLUMNAS}
@@ -183,12 +110,6 @@ function Cuerpo({
           caption='Ventas del período cuyos importes y comisiones no se sostienen entre sí, con el detalle de cada inconsistencia'
           emptyMessage='El período no tiene anomalías. Es el resultado que se busca.'
         />
-        <p className='text-muted-foreground text-xs'>
-          La grilla no lleva fila de totales: sumar comisiones que ya se saben
-          mal calculadas daría una cifra sin significado. La comisión esperada
-          es la que corresponde según el snapshot que la venta guardó al
-          cobrarse.
-        </p>
       </section>
     </div>
   )

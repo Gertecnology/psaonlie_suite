@@ -96,6 +96,10 @@ export function AgenciasPage() {
           pagination={tabla.pagination}
           onPaginationChange={tabla.onPaginationChange}
           caption='Listado de empresas de transporte y sus agencias'
+          // Lo que se necesita para operar: nombre, estado, stock, comisión y
+          // cargo. Los datos de la conexión al web service se ven al editar la
+          // empresa, que es donde se cambian.
+          columnasOcultasPorDefecto={['usuario', 'agenciaPrincipal', 'url']}
           isLoading={isLoading}
           isFetching={isFetching}
           error={error}

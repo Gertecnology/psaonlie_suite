@@ -64,15 +64,17 @@ export function InformeSerieTemporal() {
   )
 }
 
+/**
+ * The report is its table.
+ *
+ * The closing paragraph glossed three columns — what counts as an started sale,
+ * what counts as a completed one, and what "ingreso propio" is made of — and a
+ * column that needs a sentence has the wrong header, so each of those now sits
+ * under the header it explains. The empty period is a row inside the table
+ * instead of a block that replaced it: the screen is filters and then one
+ * table, whether or not the period sold anything.
+ */
 function Cuerpo({ datos }: { datos: SerieTemporal }) {
-  if (datos.data.length === 0) {
-    return (
-      <p className='text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm'>
-        El período no registra ventas en ningún tramo.
-      </p>
-    )
-  }
-
   const totales = calcularTotales(datos.data)
   const agrupacion = etiquetaAgrupacion(datos.agruparPor).toLowerCase()
 
@@ -158,13 +160,6 @@ function Cuerpo({ datos }: { datos: SerieTemporal }) {
         </tfoot>
       </table>
 
-      <p className='text-muted-foreground mt-3 max-w-prose text-xs'>
-        Cada fila es un tramo de {agrupacion} y la fecha es el día en que
-        empieza. Las ventas iniciadas incluyen las que nunca llegaron a
-        cobrarse; las concretadas son las que terminaron pagadas y con boletos
-        emitidos. El ingreso propio es la comisión más el cargo por servicio: no
-        es lo que se le transfiere a la empresa.
-      </p>
     </section>
   )
 }

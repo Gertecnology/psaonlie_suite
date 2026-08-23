@@ -4,7 +4,6 @@ import type {
   OnChangeFn,
   PaginationState,
 } from '@tanstack/react-table'
-import { AlertTriangle } from 'lucide-react'
 import {
   formatearEntero,
   formatearFechaISO,
@@ -103,60 +102,10 @@ function Cuerpo({
   isFetching: boolean
 }) {
   return (
-    <div className='space-y-6'>
-      {/* Se mira sobre el período entero —`total` y `montoTotal` son del
-          período, no de la página—: que la advertencia apareciera o no según
-          en qué página estés parado sería un accidente. */}
-      {datos.total > 0 && (
-        <div
-          role='alert'
-          className='border-destructive/50 text-destructive flex items-start gap-3 rounded-md border p-4'
-        >
-          <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0' />
-          <div className='text-sm'>
-            <p className='font-medium'>
-              {formatearEntero(datos.total)} ventas cobradas y sin pasaje
-              entregado, por {formatearGuaranies(datos.montoTotal)}
-            </p>
-            <p className='mt-1'>
-              El dinero ya salió del bolsillo del cliente y no hay boleto que lo
-              respalde. No entra en el saldo a transferir a la empresa —no
-              prestó el servicio—, así que hasta que se resuelva no es ingreso
-              de nadie. Las filas marcadas llevan más de{' '}
-              {formatearEntero(HORAS_PARA_ANTIGUA)} horas así: ésas ya no son
-              un cobro en curso, son un caso para atender.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <section className='grid gap-4 md:grid-cols-3'>
-        <Tarjeta
-          titulo='Cobrado y no entregado'
-          valor={formatearGuaranies(datos.montoTotal)}
-          unidad='PYG'
-          nota='Todo el período, no sólo esta página.'
-        />
-        <Tarjeta
-          titulo='Ventas afectadas'
-          valor={formatearEntero(datos.total)}
-          unidad='ventas'
-          nota={`Página ${datos.page} de ${Math.max(datos.totalPages, 1)}.`}
-        />
-        <Tarjeta
-          titulo='Con más de 24 horas'
-          valor={formatearEntero(
-            datos.data.filter(
-              (venta) => venta.antiguedadHoras >= HORAS_PARA_ANTIGUA,
-            ).length,
-          )}
-          unidad='ventas en esta página'
-          // La API no informa cuántas antiguas hay en el período: sólo se
-          // pueden contar las que están a la vista, y la tarjeta lo dice.
-          nota='La API no informa este conteo sobre el período: es el de las filas en pantalla.'
-        />
-      </section>
-
+    <div className='space-y-4'>
+      {/* Ni cartel ni tarjetas: la tabla es la lista de casos a atender, y el
+          total del período cierra el pie. Las filas con más de
+          HORAS_PARA_ANTIGUA horas quedan marcadas ahí mismo. */}
       <section className='space-y-2'>
         <DataTable
           columns={COLUMNAS}
@@ -356,31 +305,6 @@ function Contacto({ venta }: { venta: VentaPagadaSinBoleto }) {
           {venta.contactoTelefono}
         </span>
       )}
-    </div>
-  )
-}
-
-function Tarjeta({
-  titulo,
-  valor,
-  unidad,
-  nota,
-}: {
-  titulo: string
-  valor: string
-  unidad: string
-  nota: string
-}) {
-  return (
-    <div className='tarjeta-informe rounded-md border p-4'>
-      <h3 className='text-muted-foreground text-sm'>{titulo}</h3>
-      <p className='mt-1 text-2xl font-semibold tabular-nums' data-tipo='monto'>
-        {valor}
-      </p>
-      {/* Sin la unidad, "1.240" no dice si son guaraníes o ventas, y el lector
-          de un informe archivado no tiene dónde averiguarlo. */}
-      <p className='text-muted-foreground text-xs'>{unidad}</p>
-      <p className='text-muted-foreground mt-3 text-xs'>{nota}</p>
     </div>
   )
 }

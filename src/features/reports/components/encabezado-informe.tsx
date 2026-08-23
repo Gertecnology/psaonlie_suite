@@ -6,7 +6,7 @@ interface EncabezadoInformeProps {
   titulo: string
   /** Period the backend echoed back, not the one that was requested. */
   periodo?: PeriodoInforme
-  /** API path the figures came from. */
+  /** API path the figures came from. Printed only, never on screen. */
   origen: string
   /** Instant the data arrived, so reprinting does not change the stamp. */
   emitidoEn: Date
@@ -15,16 +15,21 @@ interface EncabezadoInformeProps {
 }
 
 /**
- * Identifies a report so it can be read away from the screen that produced it.
+ * Identifies a report, without getting in the way of it.
  *
- * A printed table of figures with no header is unusable evidence: there is no
- * way to tell what period it covers, when it was produced, who produced it, or
- * against what to reconcile it. That is what ISO 9001 §7.5 asks of documented
- * information, and what an auditor asks first.
+ * The first version of this was a five-field grid across the full width, above
+ * the data — so a report opened showing the period, the timestamp, the user,
+ * the API endpoint and a note saying the currency complies with ISO 4217, and
+ * you had to scroll past all of that to see a single figure. Two of those
+ * fields were usually empty, so it read as a wall of dashes.
  *
- * Dates are ISO 8601 on purpose. `08/09` is ambiguous once the document leaves
- * the country that wrote it, and a report is exactly the kind of thing that
- * gets emailed and filed.
+ * That is backwards. A report is the numbers; everything else is a caption. On
+ * screen this is now one line — the period, which is the only piece a reader
+ * needs to interpret the figures. The rest identifies the document and only
+ * matters once it leaves the screen, so it prints and nothing more.
+ *
+ * The endpoint in particular has no business being visible: whoever reads a
+ * report about ticket sales is not going to reproduce it by calling an API.
  */
 export function EncabezadoInforme({
   titulo,
@@ -37,68 +42,58 @@ export function EncabezadoInforme({
 
   const emisor = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-    : 'No identificado'
+    : null
 
   return (
-    <header className='bg-muted/30 mb-6 rounded-md border p-4 print:mb-4 print:border-black print:bg-transparent'>
-      <h2 className='text-lg font-semibold'>{titulo}</h2>
-
-      <dl className='mt-3 grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3'>
-        <Dato etiqueta='Período'>
-          {periodo ? (
-            <>
-              <time dateTime={periodo.desde}>{formatearFechaISO(periodo.desde)}</time>
-              {' a '}
-              <time dateTime={periodo.hasta}>{formatearFechaISO(periodo.hasta)}</time>
-              <span className='text-muted-foreground'>
-                {' '}
-                ({periodo.dias} {periodo.dias === 1 ? 'día' : 'días'})
-              </span>
-            </>
-          ) : (
-            '—'
-          )}
-        </Dato>
-
-        <Dato etiqueta='Emitido'>
-          <time dateTime={emitidoEn.toISOString()}>
-            {formatearEmisionISO(emitidoEn)}
-          </time>
-        </Dato>
-
-        <Dato etiqueta='Emitido por'>{emisor}</Dato>
-
+    <>
+      {/* En pantalla: el período y nada más. */}
+      <div className='text-muted-foreground mb-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm print:hidden'>
+        {periodo && (
+          <span>
+            <time dateTime={periodo.desde}>
+              {formatearFechaISO(periodo.desde)}
+            </time>
+            {' — '}
+            <time dateTime={periodo.hasta}>
+              {formatearFechaISO(periodo.hasta)}
+            </time>
+            <span className='ml-1 opacity-70'>
+              ({periodo.dias} {periodo.dias === 1 ? 'día' : 'días'})
+            </span>
+          </span>
+        )}
         {filtros.map((filtro) => (
-          <Dato key={filtro.etiqueta} etiqueta={filtro.etiqueta}>
-            {filtro.valor}
-          </Dato>
+          <span key={filtro.etiqueta}>
+            {filtro.etiqueta}: <strong>{filtro.valor}</strong>
+          </span>
         ))}
+      </div>
 
-        {/* De dónde salieron las cifras: sin esto, dos informes que difieren no
-            se pueden contrastar contra su fuente. */}
-        <Dato etiqueta='Origen'>
-          <code className='text-xs'>{origen}</code>
-        </Dato>
-
-        <Dato etiqueta='Moneda'>Guaraníes (PYG, ISO 4217)</Dato>
-      </dl>
-    </header>
-  )
-}
-
-function Dato({
-  etiqueta,
-  children,
-}: {
-  etiqueta: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <dt className='text-muted-foreground text-xs tracking-wide uppercase'>
-        {etiqueta}
-      </dt>
-      <dd className='font-medium'>{children}</dd>
-    </div>
+      {/* Al imprimir: la identificación completa, porque el papel se archiva y
+          se manda, y ahí sí hace falta saber de dónde salió y quién lo sacó. */}
+      <div className='hidden print:mb-4 print:block print:border-b print:pb-2'>
+        <h1 className='text-base font-bold'>{titulo}</h1>
+        <p className='mt-1 text-xs'>
+          {periodo && (
+            <>
+              Período {formatearFechaISO(periodo.desde)} a{' '}
+              {formatearFechaISO(periodo.hasta)} · {periodo.dias}{' '}
+              {periodo.dias === 1 ? 'día' : 'días'} ·{' '}
+            </>
+          )}
+          Importes en guaraníes
+          {filtros.map((filtro) => (
+            <span key={filtro.etiqueta}>
+              {' · '}
+              {filtro.etiqueta}: {filtro.valor}
+            </span>
+          ))}
+        </p>
+        <p className='mt-0.5 text-[10px] opacity-70'>
+          Emitido {formatearEmisionISO(emitidoEn)}
+          {emisor && ` por ${emisor}`} · {origen}
+        </p>
+      </div>
+    </>
   )
 }
