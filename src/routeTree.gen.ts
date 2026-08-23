@@ -41,6 +41,7 @@ import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authen
 import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
 import { Route as AuthenticatedReportsPorMetodoPagoRouteImport } from './routes/_authenticated/reports/por-metodo-pago'
 import { Route as AuthenticatedReportsPorAgenciaRouteImport } from './routes/_authenticated/reports/por-agencia'
+import { Route as AuthenticatedReportsKardexSaldosRouteImport } from './routes/_authenticated/reports/kardex-saldos'
 import { Route as AuthenticatedReportsEstadoVentasRouteImport } from './routes/_authenticated/reports/estado-ventas'
 import { Route as AuthenticatedReportsConciliacionBancardRouteImport } from './routes/_authenticated/reports/conciliacion-bancard'
 import { Route as AuthenticatedReportsComparativoRouteImport } from './routes/_authenticated/reports/comparativo'
@@ -230,6 +231,12 @@ const AuthenticatedReportsPorAgenciaRoute =
     path: '/reports/por-agencia',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsKardexSaldosRoute =
+  AuthenticatedReportsKardexSaldosRouteImport.update({
+    id: '/reports/kardex-saldos',
+    path: '/reports/kardex-saldos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsEstadoVentasRoute =
   AuthenticatedReportsEstadoVentasRouteImport.update({
     id: '/reports/estado-ventas',
@@ -328,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
@@ -373,6 +381,7 @@ export interface FileRoutesByTo {
   '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
@@ -421,6 +430,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/_authenticated/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/_authenticated/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
+  '/_authenticated/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/_authenticated/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/_authenticated/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
@@ -469,6 +479,7 @@ export interface FileRouteTypes {
     | '/reports/comparativo'
     | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
+    | '/reports/kardex-saldos'
     | '/reports/por-agencia'
     | '/reports/por-metodo-pago'
     | '/reports/resumen-financiero'
@@ -514,6 +525,7 @@ export interface FileRouteTypes {
     | '/reports/comparativo'
     | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
+    | '/reports/kardex-saldos'
     | '/reports/por-agencia'
     | '/reports/por-metodo-pago'
     | '/reports/resumen-financiero'
@@ -561,6 +573,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/comparativo'
     | '/_authenticated/reports/conciliacion-bancard'
     | '/_authenticated/reports/estado-ventas'
+    | '/_authenticated/reports/kardex-saldos'
     | '/_authenticated/reports/por-agencia'
     | '/_authenticated/reports/por-metodo-pago'
     | '/_authenticated/reports/resumen-financiero'
@@ -830,6 +843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsPorAgenciaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/kardex-saldos': {
+      id: '/_authenticated/reports/kardex-saldos'
+      path: '/reports/kardex-saldos'
+      fullPath: '/reports/kardex-saldos'
+      preLoaderRoute: typeof AuthenticatedReportsKardexSaldosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/estado-ventas': {
       id: '/_authenticated/reports/estado-ventas'
       path: '/reports/estado-ventas'
@@ -962,6 +982,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsComparativoRoute: typeof AuthenticatedReportsComparativoRoute
   AuthenticatedReportsConciliacionBancardRoute: typeof AuthenticatedReportsConciliacionBancardRoute
   AuthenticatedReportsEstadoVentasRoute: typeof AuthenticatedReportsEstadoVentasRoute
+  AuthenticatedReportsKardexSaldosRoute: typeof AuthenticatedReportsKardexSaldosRoute
   AuthenticatedReportsPorAgenciaRoute: typeof AuthenticatedReportsPorAgenciaRoute
   AuthenticatedReportsPorMetodoPagoRoute: typeof AuthenticatedReportsPorMetodoPagoRoute
   AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
@@ -992,6 +1013,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsConciliacionBancardRoute:
     AuthenticatedReportsConciliacionBancardRoute,
   AuthenticatedReportsEstadoVentasRoute: AuthenticatedReportsEstadoVentasRoute,
+  AuthenticatedReportsKardexSaldosRoute: AuthenticatedReportsKardexSaldosRoute,
   AuthenticatedReportsPorAgenciaRoute: AuthenticatedReportsPorAgenciaRoute,
   AuthenticatedReportsPorMetodoPagoRoute:
     AuthenticatedReportsPorMetodoPagoRoute,

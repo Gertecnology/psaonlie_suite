@@ -20,6 +20,24 @@ const DISPONIBLES = {
 } as const satisfies Partial<Record<IdInforme, string>>
 
 /**
+ * Ledger views. Separate from the reports on purpose.
+ *
+ * The reports above are computed from `ventas`; these are the sum of the
+ * ledger's own movements. They should agree, and while the ledger is in its
+ * verification phase the difference between the two is the point — so
+ * presenting them as one list would suggest they are interchangeable.
+ */
+const KARDEX = [
+  {
+    ruta: '/reports/kardex-saldos',
+    titulo: 'Saldos del kardex',
+    responde: '¿Qué dice el libro de movimientos?',
+    descripcion:
+      'Lo que se le debe a cada empresa sumando los asientos, para contrastarlo con el informe de saldos.',
+  },
+] as const
+
+/**
  * The reports index.
  *
  * The seven reports used to be tabs inside one route, which made the section a
@@ -56,6 +74,34 @@ export function IndiceInformes() {
           </li>
         ))}
       </ul>
+
+      <section className='mt-10'>
+        <h2 className='font-semibold'>Kardex</h2>
+        <p className='text-muted-foreground mb-4 max-w-prose text-sm'>
+          El libro de movimientos. Todavía está en verificación: escribe pero
+          los informes de arriba no lo leen, así que sirve para contrastar, no
+          para reemplazarlos.
+        </p>
+        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+          {KARDEX.map((vista) => (
+            <li key={vista.ruta}>
+              <Link
+                to={vista.ruta}
+                className='hover:border-primary focus-visible:ring-ring group block h-full rounded-md border p-4 transition-colors focus-visible:ring-2 focus-visible:outline-none'
+              >
+                <p className='text-muted-foreground text-sm'>{vista.responde}</p>
+                <h3 className='mt-1 flex items-center gap-2 font-semibold'>
+                  {vista.titulo}
+                  <ArrowRight className='h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100' />
+                </h3>
+                <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
+                  {vista.descripcion}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </PageLayout>
   )
 }
