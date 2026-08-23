@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { type PaginationState, type OnChangeFn } from '@tanstack/react-table'
 import { useNotificationsList } from './hooks/use-notifications-list'
 import { createNotificationsColumns } from './components/notifications-columns'
-import { NotificationsDataTable } from './components/notifications-data-table'
+import { DataTable } from '@/components/data-table'
+import { NotificationsTableToolbar } from './components/notifications-table-toolbar'
 import { toast } from 'sonner'
 
 export default function SettingsNotifications() {
@@ -116,15 +117,23 @@ export default function SettingsNotifications() {
         </p>
       </div>
       
-      <NotificationsDataTable
+      <DataTable
         columns={columns}
         data={notifications}
-        pageCount={totalPages}
+        getRowId={(fila) => fila.id}
+        pageCount={Math.max(totalPages, 1)}
         pagination={pagination}
         onPaginationChange={handlePaginationChange}
-        onFilterChange={handleFilterChange}
-        onMarkAllAsRead={handleMarkAllAsRead}
-        unreadCount={unreadCount}
+        caption='Listado de notificaciones del sistema'
+        emptyMessage='No hay notificaciones.'
+        renderToolbar={(instancia) => (
+          <NotificationsTableToolbar
+            table={instancia}
+            onFilterChange={handleFilterChange}
+            onMarkAllAsRead={handleMarkAllAsRead}
+            unreadCount={unreadCount}
+          />
+        )}
       />
     </div>
   )

@@ -9,7 +9,7 @@ import {
   verificationStatusColors,
 } from '../data/data'
 import { User } from '../models/user'
-import { DataTableColumnHeader } from './data-table-column-header'
+import { DataTableColumnHeader } from '@/components/data-table'
 import { DataTableRowActions } from './data-table-row-actions'
 
 export const columns: ColumnDef<User>[] = [

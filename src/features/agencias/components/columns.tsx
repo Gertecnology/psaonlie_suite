@@ -10,7 +10,7 @@ import {
   esEmpresa,
   resolverComision,
 } from '../models/agencia.model'
-import { DataTableColumnHeader } from './data-table-column-header'
+import { DataTableColumnHeader } from '@/components/data-table'
 import { DataTableRowActions } from './data-table-row-actions'
 
 /**
