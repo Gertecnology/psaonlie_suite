@@ -3,9 +3,6 @@ export { DestinationDetailsHeader } from './components/destination-details-heade
 export { DestinationParadasList } from './components/destination-paradas-list'
 export { RemoveParadaDialog } from './components/remove-parada-dialog'
 
-// Componentes adicionales disponibles
-export { DestinationStats } from './components/destination-stats'
-
 // Hooks para gestión de estado y API
 export { useGetDestination } from './hooks/use-get-destination'
 export { useGetDestinations } from './hooks/use-get-destinations'

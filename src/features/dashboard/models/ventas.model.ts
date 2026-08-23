@@ -38,13 +38,18 @@ export type EstadoAsientos = (typeof ESTADOS_ASIENTOS)[number]
 // Los métodos de pago viven en `lib/` porque también los usan las pantallas de
 // cobro, que no son parte del dashboard. Se reexportan acá para que el resto
 // del modelo de ventas se siga leyendo de corrido.
+//
+// El `import` es necesario además del `export`: reexportar un tipo no lo trae
+// al alcance de este archivo, y las interfaces de abajo lo usan.
+import type { MetodoPago } from '@/lib/metodo-pago'
+
 export {
   METODOS_PAGO,
   ETIQUETAS_METODO_PAGO,
   METODOS_PAGO_MANUAL,
   OPCIONES_METODO_PAGO,
-  type MetodoPago,
 } from '@/lib/metodo-pago'
+export type { MetodoPago }
 
 export const ETIQUETAS_ESTADO_PAGO: Record<EstadoPago, string> = {
   PENDIENTE: 'Pendiente',
