@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { Link } from '@tanstack/react-router'
-import { AlertCircle, ArrowLeft, Download, FileSearch, Printer } from 'lucide-react'
+import { AlertCircle, Download, FileSearch, Printer } from 'lucide-react'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -64,12 +63,6 @@ export function MarcoInforme({
       showSearch={false}
       actions={
         <div className='no-imprimir flex items-center gap-2'>
-          <Button variant='ghost' size='sm' asChild>
-            <Link to='/reports'>
-              <ArrowLeft className='mr-2 h-4 w-4' />
-              Informes
-            </Link>
-          </Button>
           {generado && resultado && (
             <>
               <Button variant='outline' size='sm' onClick={() => window.print()}>

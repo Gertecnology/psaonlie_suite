@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { Printer } from 'lucide-react'
 import { formatearEntero, formatearGuaranies } from '@/lib/formato'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
@@ -64,12 +63,6 @@ export function SaldosKardex() {
       showSearch={false}
       actions={
         <div className='no-imprimir flex items-center gap-2'>
-          <Button variant='ghost' size='sm' asChild>
-            <Link to='/reports'>
-              <ArrowLeft className='mr-2 h-4 w-4' />
-              Informes
-            </Link>
-          </Button>
           {data && (
             <Button variant='outline' size='sm' onClick={() => window.print()}>
               <Printer className='mr-2 h-4 w-4' />
