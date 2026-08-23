@@ -5,7 +5,7 @@ import { PageLayout } from '@/components/layout/page-layout'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { DefinicionInforme, FiltrosInforme, PeriodoInforme } from '../models/informe.model'
-import { estaGenerado } from '../models/informe.model'
+import { estaGenerado, rutaApi } from '../models/informe.model'
 import { EncabezadoInforme } from './encabezado-informe'
 import './informe-imprimible.css'
 
@@ -116,7 +116,11 @@ export function MarcoInforme({
             <EncabezadoInforme
               titulo={definicion.titulo}
               periodo={periodo}
-              origen={`/api/admin/informes/${definicion.ruta}`}
+              // El endpoint, no el segmento del navegador: el encabezado existe
+              // para que otro pueda reproducir estas cifras, y un informe
+              // cuya ruta de API difiere de su URL imprimiría un path que no
+              // responde.
+              origen={`/api/admin/informes/${rutaApi(definicion)}`}
               emitidoEn={emitidoEn ?? new Date()}
               filtros={filtrosDescritos}
             />

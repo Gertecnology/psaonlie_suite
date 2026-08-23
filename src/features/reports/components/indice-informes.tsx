@@ -15,8 +15,15 @@ const DISPONIBLES = {
   'por-agencia': '/reports/por-agencia',
   'estado-ventas': '/reports/estado-ventas',
   'por-metodo-pago': '/reports/por-metodo-pago',
+  'por-ruta': '/reports/por-ruta',
+  'por-servicio': '/reports/por-servicio',
+  'serie-temporal': '/reports/serie-temporal',
   comparativo: '/reports/comparativo',
   'conciliacion-bancard': '/reports/conciliacion-bancard',
+  // La ruta del navegador es `ventas-sin-boleto`; el endpoint que la alimenta
+  // se llama `ventas-pagadas-sin-boleto`. El catálogo guarda las dos.
+  'ventas-sin-boleto': '/reports/ventas-sin-boleto',
+  anomalias: '/reports/anomalias',
 } as const satisfies Partial<Record<IdInforme, string>>
 
 /**

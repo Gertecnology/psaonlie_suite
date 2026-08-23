@@ -30,6 +30,7 @@ import { Route as AuthenticatedDestinationsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients/index'
 import { Route as AuthenticatedAgenciasIndexRouteImport } from './routes/_authenticated/agencias/index'
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
+import { Route as AuthenticatedUsersNuevoRouteImport } from './routes/_authenticated/users/nuevo'
 import { Route as AuthenticatedSettingsServiceChargesRouteImport } from './routes/_authenticated/settings_.service-charges'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsDisplayRouteImport } from './routes/_authenticated/settings/display'
@@ -38,23 +39,31 @@ import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_auth
 import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authenticated/sales/seats'
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
 import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authenticated/sales/checkout'
+import { Route as AuthenticatedReportsVentasSinBoletoRouteImport } from './routes/_authenticated/reports/ventas-sin-boleto'
+import { Route as AuthenticatedReportsSerieTemporalRouteImport } from './routes/_authenticated/reports/serie-temporal'
 import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
+import { Route as AuthenticatedReportsPorServicioRouteImport } from './routes/_authenticated/reports/por-servicio'
+import { Route as AuthenticatedReportsPorRutaRouteImport } from './routes/_authenticated/reports/por-ruta'
 import { Route as AuthenticatedReportsPorMetodoPagoRouteImport } from './routes/_authenticated/reports/por-metodo-pago'
 import { Route as AuthenticatedReportsPorAgenciaRouteImport } from './routes/_authenticated/reports/por-agencia'
 import { Route as AuthenticatedReportsKardexSaldosRouteImport } from './routes/_authenticated/reports/kardex-saldos'
 import { Route as AuthenticatedReportsEstadoVentasRouteImport } from './routes/_authenticated/reports/estado-ventas'
 import { Route as AuthenticatedReportsConciliacionBancardRouteImport } from './routes/_authenticated/reports/conciliacion-bancard'
 import { Route as AuthenticatedReportsComparativoRouteImport } from './routes/_authenticated/reports/comparativo'
+import { Route as AuthenticatedReportsAnomaliasRouteImport } from './routes/_authenticated/reports/anomalias'
 import { Route as AuthenticatedDestinationsNuevoRouteImport } from './routes/_authenticated/destinations/nuevo'
 import { Route as AuthenticatedClientsNuevoRouteImport } from './routes/_authenticated/clients/nuevo'
 import { Route as AuthenticatedAgenciasNuevaRouteImport } from './routes/_authenticated/agencias/nueva'
 import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
 import { Route as AuthenticatedDestinationsIdIndexRouteImport } from './routes/_authenticated/destinations/$id/index'
 import { Route as AuthenticatedAgenciasIdIndexRouteImport } from './routes/_authenticated/agencias/$id/index'
+import { Route as AuthenticatedUsersIdEditarRouteImport } from './routes/_authenticated/users/$id/editar'
+import { Route as AuthenticatedSettingsServiceChargesNuevoRouteImport } from './routes/_authenticated/settings_.service-charges_.nuevo'
 import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
 import { Route as AuthenticatedDestinationsIdEditarRouteImport } from './routes/_authenticated/destinations/$id/editar'
 import { Route as AuthenticatedClientsEmailEditarRouteImport } from './routes/_authenticated/clients/$email/editar'
 import { Route as AuthenticatedAgenciasIdEditarRouteImport } from './routes/_authenticated/agencias/$id/editar'
+import { Route as AuthenticatedSettingsServiceChargesIdEditarRouteImport } from './routes/_authenticated/settings_.service-charges_.$id.editar'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -166,6 +175,11 @@ const ApiAuthVerifyEmailRoute = ApiAuthVerifyEmailRouteImport.update({
   path: '/api/auth/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedUsersNuevoRoute = AuthenticatedUsersNuevoRouteImport.update({
+  id: '/users/nuevo',
+  path: '/users/nuevo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsServiceChargesRoute =
   AuthenticatedSettingsServiceChargesRouteImport.update({
     id: '/settings_/service-charges',
@@ -213,10 +227,34 @@ const AuthenticatedSalesCheckoutRoute =
     path: '/sales/checkout',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsVentasSinBoletoRoute =
+  AuthenticatedReportsVentasSinBoletoRouteImport.update({
+    id: '/reports/ventas-sin-boleto',
+    path: '/reports/ventas-sin-boleto',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportsSerieTemporalRoute =
+  AuthenticatedReportsSerieTemporalRouteImport.update({
+    id: '/reports/serie-temporal',
+    path: '/reports/serie-temporal',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsResumenFinancieroRoute =
   AuthenticatedReportsResumenFinancieroRouteImport.update({
     id: '/reports/resumen-financiero',
     path: '/reports/resumen-financiero',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportsPorServicioRoute =
+  AuthenticatedReportsPorServicioRouteImport.update({
+    id: '/reports/por-servicio',
+    path: '/reports/por-servicio',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportsPorRutaRoute =
+  AuthenticatedReportsPorRutaRouteImport.update({
+    id: '/reports/por-ruta',
+    path: '/reports/por-ruta',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedReportsPorMetodoPagoRoute =
@@ -255,6 +293,12 @@ const AuthenticatedReportsComparativoRoute =
     path: '/reports/comparativo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsAnomaliasRoute =
+  AuthenticatedReportsAnomaliasRouteImport.update({
+    id: '/reports/anomalias',
+    path: '/reports/anomalias',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDestinationsNuevoRoute =
   AuthenticatedDestinationsNuevoRouteImport.update({
     id: '/destinations/nuevo',
@@ -291,6 +335,18 @@ const AuthenticatedAgenciasIdIndexRoute =
     path: '/agencias/$id/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedUsersIdEditarRoute =
+  AuthenticatedUsersIdEditarRouteImport.update({
+    id: '/users/$id/editar',
+    path: '/users/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsServiceChargesNuevoRoute =
+  AuthenticatedSettingsServiceChargesNuevoRouteImport.update({
+    id: '/settings_/service-charges_/nuevo',
+    path: '/settings/service-charges/nuevo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsExternalDataDayConfigurationRoute =
   AuthenticatedSettingsExternalDataDayConfigurationRouteImport.update({
     id: '/external-data/day-configuration',
@@ -315,6 +371,12 @@ const AuthenticatedAgenciasIdEditarRoute =
     path: '/agencias/$id/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsServiceChargesIdEditarRoute =
+  AuthenticatedSettingsServiceChargesIdEditarRouteImport.update({
+    id: '/settings_/service-charges_/$id/editar',
+    path: '/settings/service-charges/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
@@ -332,13 +394,18 @@ export interface FileRoutesByFullPath {
   '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/anomalias': typeof AuthenticatedReportsAnomaliasRoute
   '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
+  '/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
+  '/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
+  '/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
+  '/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -347,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
+  '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/agencias': typeof AuthenticatedAgenciasIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
@@ -359,9 +427,12 @@ export interface FileRoutesByFullPath {
   '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/settings/service-charges/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
+  '/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
+  '/settings/service-charges/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -378,13 +449,18 @@ export interface FileRoutesByTo {
   '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/reports/anomalias': typeof AuthenticatedReportsAnomaliasRoute
   '/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
+  '/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
+  '/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
+  '/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
+  '/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
   '/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -393,6 +469,7 @@ export interface FileRoutesByTo {
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
+  '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/agencias': typeof AuthenticatedAgenciasIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
@@ -405,9 +482,12 @@ export interface FileRoutesByTo {
   '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/settings/service-charges/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
+  '/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
+  '/settings/service-charges/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -427,13 +507,18 @@ export interface FileRoutesById {
   '/_authenticated/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/_authenticated/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/_authenticated/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
+  '/_authenticated/reports/anomalias': typeof AuthenticatedReportsAnomaliasRoute
   '/_authenticated/reports/comparativo': typeof AuthenticatedReportsComparativoRoute
   '/_authenticated/reports/conciliacion-bancard': typeof AuthenticatedReportsConciliacionBancardRoute
   '/_authenticated/reports/estado-ventas': typeof AuthenticatedReportsEstadoVentasRoute
   '/_authenticated/reports/kardex-saldos': typeof AuthenticatedReportsKardexSaldosRoute
   '/_authenticated/reports/por-agencia': typeof AuthenticatedReportsPorAgenciaRoute
   '/_authenticated/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
+  '/_authenticated/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
+  '/_authenticated/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
   '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
+  '/_authenticated/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
+  '/_authenticated/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
   '/_authenticated/sales/checkout': typeof AuthenticatedSalesCheckoutRoute
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/_authenticated/sales/seats': typeof AuthenticatedSalesSeatsRoute
@@ -442,6 +527,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings_/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
+  '/_authenticated/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/_authenticated/agencias/': typeof AuthenticatedAgenciasIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
@@ -454,9 +540,12 @@ export interface FileRoutesById {
   '/_authenticated/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/_authenticated/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/_authenticated/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
+  '/_authenticated/settings_/service-charges_/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
+  '/_authenticated/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/_authenticated/agencias/$id/': typeof AuthenticatedAgenciasIdIndexRoute
   '/_authenticated/destinations/$id/': typeof AuthenticatedDestinationsIdIndexRoute
   '/_authenticated/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
+  '/_authenticated/settings_/service-charges_/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -476,13 +565,18 @@ export interface FileRouteTypes {
     | '/agencias/nueva'
     | '/clients/nuevo'
     | '/destinations/nuevo'
+    | '/reports/anomalias'
     | '/reports/comparativo'
     | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
     | '/reports/kardex-saldos'
     | '/reports/por-agencia'
     | '/reports/por-metodo-pago'
+    | '/reports/por-ruta'
+    | '/reports/por-servicio'
     | '/reports/resumen-financiero'
+    | '/reports/serie-temporal'
+    | '/reports/ventas-sin-boleto'
     | '/sales/checkout'
     | '/sales/payment'
     | '/sales/seats'
@@ -491,6 +585,7 @@ export interface FileRouteTypes {
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/service-charges'
+    | '/users/nuevo'
     | '/api/auth/verify-email'
     | '/agencias'
     | '/clients'
@@ -503,9 +598,12 @@ export interface FileRouteTypes {
     | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
+    | '/settings/service-charges/nuevo'
+    | '/users/$id/editar'
     | '/agencias/$id'
     | '/destinations/$id'
     | '/settings/external-data'
+    | '/settings/service-charges/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -522,13 +620,18 @@ export interface FileRouteTypes {
     | '/agencias/nueva'
     | '/clients/nuevo'
     | '/destinations/nuevo'
+    | '/reports/anomalias'
     | '/reports/comparativo'
     | '/reports/conciliacion-bancard'
     | '/reports/estado-ventas'
     | '/reports/kardex-saldos'
     | '/reports/por-agencia'
     | '/reports/por-metodo-pago'
+    | '/reports/por-ruta'
+    | '/reports/por-servicio'
     | '/reports/resumen-financiero'
+    | '/reports/serie-temporal'
+    | '/reports/ventas-sin-boleto'
     | '/sales/checkout'
     | '/sales/payment'
     | '/sales/seats'
@@ -537,6 +640,7 @@ export interface FileRouteTypes {
     | '/settings/display'
     | '/settings/notifications'
     | '/settings/service-charges'
+    | '/users/nuevo'
     | '/api/auth/verify-email'
     | '/agencias'
     | '/clients'
@@ -549,9 +653,12 @@ export interface FileRouteTypes {
     | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
+    | '/settings/service-charges/nuevo'
+    | '/users/$id/editar'
     | '/agencias/$id'
     | '/destinations/$id'
     | '/settings/external-data'
+    | '/settings/service-charges/$id/editar'
   id:
     | '__root__'
     | '/_authenticated'
@@ -570,13 +677,18 @@ export interface FileRouteTypes {
     | '/_authenticated/agencias/nueva'
     | '/_authenticated/clients/nuevo'
     | '/_authenticated/destinations/nuevo'
+    | '/_authenticated/reports/anomalias'
     | '/_authenticated/reports/comparativo'
     | '/_authenticated/reports/conciliacion-bancard'
     | '/_authenticated/reports/estado-ventas'
     | '/_authenticated/reports/kardex-saldos'
     | '/_authenticated/reports/por-agencia'
     | '/_authenticated/reports/por-metodo-pago'
+    | '/_authenticated/reports/por-ruta'
+    | '/_authenticated/reports/por-servicio'
     | '/_authenticated/reports/resumen-financiero'
+    | '/_authenticated/reports/serie-temporal'
+    | '/_authenticated/reports/ventas-sin-boleto'
     | '/_authenticated/sales/checkout'
     | '/_authenticated/sales/payment'
     | '/_authenticated/sales/seats'
@@ -585,6 +697,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings_/service-charges'
+    | '/_authenticated/users/nuevo'
     | '/api/auth/verify-email'
     | '/_authenticated/agencias/'
     | '/_authenticated/clients/'
@@ -597,9 +710,12 @@ export interface FileRouteTypes {
     | '/_authenticated/clients/$email/editar'
     | '/_authenticated/destinations/$id/editar'
     | '/_authenticated/settings/external-data/day-configuration'
+    | '/_authenticated/settings_/service-charges_/nuevo'
+    | '/_authenticated/users/$id/editar'
     | '/_authenticated/agencias/$id/'
     | '/_authenticated/destinations/$id/'
     | '/_authenticated/settings/external-data/'
+    | '/_authenticated/settings_/service-charges_/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -766,6 +882,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/users/nuevo': {
+      id: '/_authenticated/users/nuevo'
+      path: '/users/nuevo'
+      fullPath: '/users/nuevo'
+      preLoaderRoute: typeof AuthenticatedUsersNuevoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings_/service-charges': {
       id: '/_authenticated/settings_/service-charges'
       path: '/settings/service-charges'
@@ -822,11 +945,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSalesCheckoutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/ventas-sin-boleto': {
+      id: '/_authenticated/reports/ventas-sin-boleto'
+      path: '/reports/ventas-sin-boleto'
+      fullPath: '/reports/ventas-sin-boleto'
+      preLoaderRoute: typeof AuthenticatedReportsVentasSinBoletoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/serie-temporal': {
+      id: '/_authenticated/reports/serie-temporal'
+      path: '/reports/serie-temporal'
+      fullPath: '/reports/serie-temporal'
+      preLoaderRoute: typeof AuthenticatedReportsSerieTemporalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/resumen-financiero': {
       id: '/_authenticated/reports/resumen-financiero'
       path: '/reports/resumen-financiero'
       fullPath: '/reports/resumen-financiero'
       preLoaderRoute: typeof AuthenticatedReportsResumenFinancieroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/por-servicio': {
+      id: '/_authenticated/reports/por-servicio'
+      path: '/reports/por-servicio'
+      fullPath: '/reports/por-servicio'
+      preLoaderRoute: typeof AuthenticatedReportsPorServicioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports/por-ruta': {
+      id: '/_authenticated/reports/por-ruta'
+      path: '/reports/por-ruta'
+      fullPath: '/reports/por-ruta'
+      preLoaderRoute: typeof AuthenticatedReportsPorRutaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/por-metodo-pago': {
@@ -871,6 +1022,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsComparativoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/anomalias': {
+      id: '/_authenticated/reports/anomalias'
+      path: '/reports/anomalias'
+      fullPath: '/reports/anomalias'
+      preLoaderRoute: typeof AuthenticatedReportsAnomaliasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/destinations/nuevo': {
       id: '/_authenticated/destinations/nuevo'
       path: '/destinations/nuevo'
@@ -913,6 +1071,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgenciasIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/users/$id/editar': {
+      id: '/_authenticated/users/$id/editar'
+      path: '/users/$id/editar'
+      fullPath: '/users/$id/editar'
+      preLoaderRoute: typeof AuthenticatedUsersIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings_/service-charges_/nuevo': {
+      id: '/_authenticated/settings_/service-charges_/nuevo'
+      path: '/settings/service-charges/nuevo'
+      fullPath: '/settings/service-charges/nuevo'
+      preLoaderRoute: typeof AuthenticatedSettingsServiceChargesNuevoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/external-data/day-configuration': {
       id: '/_authenticated/settings/external-data/day-configuration'
       path: '/external-data/day-configuration'
@@ -939,6 +1111,13 @@ declare module '@tanstack/react-router' {
       path: '/agencias/$id/editar'
       fullPath: '/agencias/$id/editar'
       preLoaderRoute: typeof AuthenticatedAgenciasIdEditarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings_/service-charges_/$id/editar': {
+      id: '/_authenticated/settings_/service-charges_/$id/editar'
+      path: '/settings/service-charges/$id/editar'
+      fullPath: '/settings/service-charges/$id/editar'
+      preLoaderRoute: typeof AuthenticatedSettingsServiceChargesIdEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -979,17 +1158,23 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgenciasNuevaRoute: typeof AuthenticatedAgenciasNuevaRoute
   AuthenticatedClientsNuevoRoute: typeof AuthenticatedClientsNuevoRoute
   AuthenticatedDestinationsNuevoRoute: typeof AuthenticatedDestinationsNuevoRoute
+  AuthenticatedReportsAnomaliasRoute: typeof AuthenticatedReportsAnomaliasRoute
   AuthenticatedReportsComparativoRoute: typeof AuthenticatedReportsComparativoRoute
   AuthenticatedReportsConciliacionBancardRoute: typeof AuthenticatedReportsConciliacionBancardRoute
   AuthenticatedReportsEstadoVentasRoute: typeof AuthenticatedReportsEstadoVentasRoute
   AuthenticatedReportsKardexSaldosRoute: typeof AuthenticatedReportsKardexSaldosRoute
   AuthenticatedReportsPorAgenciaRoute: typeof AuthenticatedReportsPorAgenciaRoute
   AuthenticatedReportsPorMetodoPagoRoute: typeof AuthenticatedReportsPorMetodoPagoRoute
+  AuthenticatedReportsPorRutaRoute: typeof AuthenticatedReportsPorRutaRoute
+  AuthenticatedReportsPorServicioRoute: typeof AuthenticatedReportsPorServicioRoute
   AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
+  AuthenticatedReportsSerieTemporalRoute: typeof AuthenticatedReportsSerieTemporalRoute
+  AuthenticatedReportsVentasSinBoletoRoute: typeof AuthenticatedReportsVentasSinBoletoRoute
   AuthenticatedSalesCheckoutRoute: typeof AuthenticatedSalesCheckoutRoute
   AuthenticatedSalesPaymentRoute: typeof AuthenticatedSalesPaymentRoute
   AuthenticatedSalesSeatsRoute: typeof AuthenticatedSalesSeatsRoute
   AuthenticatedSettingsServiceChargesRoute: typeof AuthenticatedSettingsServiceChargesRoute
+  AuthenticatedUsersNuevoRoute: typeof AuthenticatedUsersNuevoRoute
   AuthenticatedAgenciasIndexRoute: typeof AuthenticatedAgenciasIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedDestinationsIndexRoute: typeof AuthenticatedDestinationsIndexRoute
@@ -999,8 +1184,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgenciasIdEditarRoute: typeof AuthenticatedAgenciasIdEditarRoute
   AuthenticatedClientsEmailEditarRoute: typeof AuthenticatedClientsEmailEditarRoute
   AuthenticatedDestinationsIdEditarRoute: typeof AuthenticatedDestinationsIdEditarRoute
+  AuthenticatedSettingsServiceChargesNuevoRoute: typeof AuthenticatedSettingsServiceChargesNuevoRoute
+  AuthenticatedUsersIdEditarRoute: typeof AuthenticatedUsersIdEditarRoute
   AuthenticatedAgenciasIdIndexRoute: typeof AuthenticatedAgenciasIdIndexRoute
   AuthenticatedDestinationsIdIndexRoute: typeof AuthenticatedDestinationsIdIndexRoute
+  AuthenticatedSettingsServiceChargesIdEditarRoute: typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1009,6 +1197,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgenciasNuevaRoute: AuthenticatedAgenciasNuevaRoute,
   AuthenticatedClientsNuevoRoute: AuthenticatedClientsNuevoRoute,
   AuthenticatedDestinationsNuevoRoute: AuthenticatedDestinationsNuevoRoute,
+  AuthenticatedReportsAnomaliasRoute: AuthenticatedReportsAnomaliasRoute,
   AuthenticatedReportsComparativoRoute: AuthenticatedReportsComparativoRoute,
   AuthenticatedReportsConciliacionBancardRoute:
     AuthenticatedReportsConciliacionBancardRoute,
@@ -1017,13 +1206,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsPorAgenciaRoute: AuthenticatedReportsPorAgenciaRoute,
   AuthenticatedReportsPorMetodoPagoRoute:
     AuthenticatedReportsPorMetodoPagoRoute,
+  AuthenticatedReportsPorRutaRoute: AuthenticatedReportsPorRutaRoute,
+  AuthenticatedReportsPorServicioRoute: AuthenticatedReportsPorServicioRoute,
   AuthenticatedReportsResumenFinancieroRoute:
     AuthenticatedReportsResumenFinancieroRoute,
+  AuthenticatedReportsSerieTemporalRoute:
+    AuthenticatedReportsSerieTemporalRoute,
+  AuthenticatedReportsVentasSinBoletoRoute:
+    AuthenticatedReportsVentasSinBoletoRoute,
   AuthenticatedSalesCheckoutRoute: AuthenticatedSalesCheckoutRoute,
   AuthenticatedSalesPaymentRoute: AuthenticatedSalesPaymentRoute,
   AuthenticatedSalesSeatsRoute: AuthenticatedSalesSeatsRoute,
   AuthenticatedSettingsServiceChargesRoute:
     AuthenticatedSettingsServiceChargesRoute,
+  AuthenticatedUsersNuevoRoute: AuthenticatedUsersNuevoRoute,
   AuthenticatedAgenciasIndexRoute: AuthenticatedAgenciasIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedDestinationsIndexRoute: AuthenticatedDestinationsIndexRoute,
@@ -1034,8 +1230,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientsEmailEditarRoute: AuthenticatedClientsEmailEditarRoute,
   AuthenticatedDestinationsIdEditarRoute:
     AuthenticatedDestinationsIdEditarRoute,
+  AuthenticatedSettingsServiceChargesNuevoRoute:
+    AuthenticatedSettingsServiceChargesNuevoRoute,
+  AuthenticatedUsersIdEditarRoute: AuthenticatedUsersIdEditarRoute,
   AuthenticatedAgenciasIdIndexRoute: AuthenticatedAgenciasIdIndexRoute,
   AuthenticatedDestinationsIdIndexRoute: AuthenticatedDestinationsIdIndexRoute,
+  AuthenticatedSettingsServiceChargesIdEditarRoute:
+    AuthenticatedSettingsServiceChargesIdEditarRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

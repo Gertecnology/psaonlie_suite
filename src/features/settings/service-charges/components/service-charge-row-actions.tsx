@@ -1,4 +1,5 @@
 import { MoreHorizontal, Building2 } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -8,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useServiceChargeDialog } from '../store/use-service-charge-dialog'
 import { useAssignServiceChargeDialog } from '../store/use-assign-service-charge-dialog'
 import { useServiceChargeDeleteDialog } from '../store/use-service-charge-delete-dialog'
 import { type ServiceCharge } from '../models/service-charge.model'
@@ -17,22 +17,11 @@ interface ServiceChargeRowActionsProps {
   serviceCharge: ServiceCharge
 }
 
-export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActionsProps) {
-  const { openDialog } = useServiceChargeDialog()
+export function ServiceChargeRowActions({
+  serviceCharge,
+}: ServiceChargeRowActionsProps) {
   const { openDialog: openAssignDialog } = useAssignServiceChargeDialog()
   const { openDialog: openDeleteDialog } = useServiceChargeDeleteDialog()
-
-  const handleEdit = () => {
-    openDialog('edit', serviceCharge)
-  }
-
-  const handleAssign = () => {
-    openAssignDialog(serviceCharge.id, serviceCharge.nombre)
-  }
-
-  const handleDelete = () => {
-    openDeleteDialog(serviceCharge.id, serviceCharge.nombre)
-  }
 
   return (
     <DropdownMenu>
@@ -44,16 +33,29 @@ export function ServiceChargeRowActions({ serviceCharge }: ServiceChargeRowActio
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuItem onClick={handleEdit}>
-          Editar
+        {/* `asChild` para que la opción sea un enlace real: se abre en otra
+            pestaña con el clic del medio y tiene dirección propia. */}
+        <DropdownMenuItem asChild>
+          <Link
+            to='/settings/service-charges/$id/editar'
+            params={{ id: serviceCharge.id }}
+          >
+            Editar
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleAssign}>
+        <DropdownMenuItem
+          onClick={() =>
+            openAssignDialog(serviceCharge.id, serviceCharge.nombre)
+          }
+        >
           <Building2 className='mr-2 h-4 w-4' />
-          Asignar a Empresa
+          Asignar a empresa
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={handleDelete}
+        <DropdownMenuItem
+          onClick={() =>
+            openDeleteDialog(serviceCharge.id, serviceCharge.nombre)
+          }
           className='text-destructive'
         >
           Eliminar

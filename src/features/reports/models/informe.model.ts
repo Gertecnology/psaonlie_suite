@@ -81,6 +81,15 @@ export interface DefinicionInforme {
   id: IdInforme
   /** Path segment and API path — they are deliberately the same. */
   ruta: string
+  /**
+   * API path, only when it cannot be `ruta`.
+   *
+   * It exists for the single case below. Keeping it in the catalogue and not
+   * hardcoded in the screen is what stops the traceability header — which
+   * prints the endpoint the figures came from — from naming a path that
+   * returns 404 to whoever tries to reproduce the report.
+   */
+  endpoint?: string
   titulo: string
   descripcion: string
   /** What the reader should be able to answer after looking at it. */
@@ -184,6 +193,7 @@ export const INFORMES: readonly DefinicionInforme[] = [
   {
     id: 'ventas-sin-boleto',
     ruta: 'ventas-sin-boleto',
+    endpoint: 'ventas-pagadas-sin-boleto',
     titulo: 'Ventas cobradas sin boleto',
     descripcion:
       'Ventas con el pago registrado y sin pasaje emitido, con su antigüedad y el contacto del cliente.',
@@ -203,6 +213,17 @@ export const INFORMES: readonly DefinicionInforme[] = [
 
 export function informePorRuta(ruta: string): DefinicionInforme | undefined {
   return INFORMES.find((informe) => informe.ruta === ruta)
+}
+
+/**
+ * The path under `/api/admin/informes` this report is fetched from.
+ *
+ * Almost always the same string as the browser route; the one report where it
+ * is not declares `endpoint`. Callers use this instead of `ruta` so the
+ * exception lives in the catalogue and not scattered across screens.
+ */
+export function rutaApi(definicion: DefinicionInforme): string {
+  return definicion.endpoint ?? definicion.ruta
 }
 
 /** True once the user pressed Generar and there is a period to report on. */

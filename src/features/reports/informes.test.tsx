@@ -1,17 +1,28 @@
+import type { FunctionComponent } from 'react'
+import { screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderEnRuta } from '@/test/router'
 import { contieneDinero, respuestaJson } from '@/test/utils'
-import { screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { InformesPage } from './components/informes-page'
-import { DEFINICIONES } from './models/informes.model'
+import { esquemaFiltrosInforme } from './models/informe.model'
+import { InformeAnomalias } from './components/informes/anomalias'
+import { InformePorRuta } from './components/informes/por-ruta'
+import { InformePorServicio } from './components/informes/por-servicio'
+import { InformeSerieTemporal } from './components/informes/serie-temporal'
+import { InformeVentasSinBoleto } from './components/informes/ventas-sin-boleto'
 
 /**
- * Prueba de humo de los siete informes.
+ * The report screens, against the payloads the API actually returns.
  *
- * Cada uno se abre y se verifica que renderice con datos reales del backend
- * simulado. Como la app no se puede levantar contra producción, esto es lo que
- * garantiza que ninguno reviente al montarse.
+ * This file replaces the smoke test of the old tabbed page. That one asserted
+ * that seven tabs rendered inside one route; there is no such page any more, so
+ * there was nothing left to keep — but the guarantee it gave is still needed and
+ * is the first thing checked here: a screen that crashes on mount crashes in
+ * this test too, since the app cannot be run against the backend.
+ *
+ * On top of it comes the rule the whole migration exists for — **nothing is
+ * fetched until Generar is pressed** — and one assertion per screen on the
+ * figure that screen is read for. The fixtures mirror the DTOs field by field,
+ * so a payload that changes shape fails here rather than on someone's monitor.
  */
 vi.mock('@/context/auth-context', () => ({
   useAuth: () => ({
@@ -31,131 +42,207 @@ vi.mock('@/components/profile-dropdown', () => ({
 }))
 vi.mock('@/components/search', () => ({ Search: () => null }))
 
-const ESTADISTICAS = {
-  periodo: { fechaDesde: '2026-07-23', fechaHasta: '2026-08-21' },
-  generales: {
-    totalVentas: 40,
-    ventasCompletadas: 33,
-    ventasPendientes: 7,
-    montoTotal: '1000000.00',
-    montoCompletado: '800000.00',
-    montoPendiente: '200000.00',
-    totalComisiones: '100000.00',
-    comisionesPagadas: '80000.00',
-    comisionesPendientes: '20000.00',
-    totalServiceCharges: '50000.00',
-    serviceChargesPagados: '40000.00',
-    serviceChargesPendientes: '10000.00',
-    totalBoletos: 35,
-  },
-  porMetodoPago: [
-    {
-      metodoPago: 'BANCARD',
-      cantidad: 30,
-      monto: '700000.00',
-      porcentaje: 87.5,
-    },
-  ],
-  porAgencia: [
-    {
-      agenciaId: 'e1',
-      empresaNombre: 'Canindeyú',
-      cantidad: 20,
-      monto: '600000.00',
-      montoPagado: '500000.00',
-      montoPendiente: '100000.00',
-      comisiones: '60000.00',
-      comisionesPagadas: '50000.00',
-      comisionesPendientes: '10000.00',
-      serviceCharges: '30000.00',
-      serviceChargesPagados: '25000.00',
-      serviceChargesPendientes: '5000.00',
-      porcentaje: 60,
-    },
-  ],
-  porRuta: [
-    {
-      origenNombre: 'Asunción',
-      destinoNombre: 'Ciudad del Este',
-      cantidad: 15,
-      monto: '450000.00',
-      porcentaje: 45,
-    },
-  ],
-  temporales: [{ fecha: '2026-08-20', ventas: 5, monto: '250000.00' }],
-  topClientes: [],
-  comparacion: {},
-}
+const PERIODO = { desde: '2026-08-01', hasta: '2026-08-31', dias: 31 }
 
-const VENTAS = {
+/** Mirrors `InformePorRutaDto`. */
+const POR_RUTA = {
+  periodo: PERIODO,
   data: [
     {
-      id: 'v1',
-      numeroTransaccion: 'TX-001',
-      empresaNombre: 'Canindeyú',
       origenNombre: 'Asunción',
       destinoNombre: 'Ciudad del Este',
-      fechaVenta: '2026-08-20T10:00:00.000Z',
-      fechaViaje: '2026-08-25',
-      horaSalida: '08:00',
-      metodoPago: 'BANCARD',
-      estadoPago: 'PAGADO',
-      estadoVenta: 'CONFIRMADO',
-      estadoAsientos: 'CONFIRMADO',
-      importeTotal: '100000.00',
-      serviceChargeMontoTotal: '5000.00',
-      comisionTotal: '10000.00',
-      totalBoletos: 1,
-      numerosBoleto: '123',
-      asientosOriginales: ['12'],
-      datosContacto: {},
-      cliente: { nombre: 'María', apellido: 'Duarte' },
+      ventasLiquidables: 12,
+      boletosVigentes: 15,
+      pasajes: 1500000,
+      cargoServicio: 75000,
+      comision: 150000,
+      ingresoPropio: 225000,
+      tarifaPromedio: 100000,
+      participacion: 62.5,
     },
   ],
   total: 1,
   page: 1,
-  limit: 25,
+  limit: 10,
   totalPages: 1,
-  resumenFiltros: {
-    totalImporte: '800000.00',
-    totalComision: '80000.00',
-    totalServiceCharge: '40000.00',
-    estadosPago: { PAGADO: 33, PENDIENTE: 7 },
-    estadosVenta: { CONFIRMADO: 30, PAGO_APROBADO: 3, PENDIENTE_PAGO: 7 },
-    metodosPago: { BANCARD: 35, TRANSFERENCIA: 5 },
-  },
 }
 
-const PAGOS = {
-  bancard: {
-    totaltransacciones: '20',
-    aprobadas: '15',
-    rechazadas: '3',
-    canceladas: '1',
-    expiradas: '1',
-    montoaprobado: '840000.00',
-    tasaExito: 0,
-  },
-  pagosManules: { totalcomprobantes: '5', aprobados: '4', pendientes: '1' },
-  resumen: {
-    totalTransacciones: null,
-    tasaExitoGeneral: 0,
-    montoTotalProcesado: 0,
-  },
+/** Mirrors `InformePorServicioDto`. */
+const POR_SERVICIO = {
+  periodo: PERIODO,
+  data: [
+    {
+      servicioId: 'servicio-1',
+      empresaNombre: 'Canindeyú',
+      calidad: 'EJECUTIVO',
+      ventasLiquidables: 4,
+      boletosVigentes: 6,
+      pasajes: 600000,
+      cargoServicio: 30000,
+      comision: 60000,
+      ingresoPropio: 90000,
+      primerViaje: '2026-08-03',
+      ultimoViaje: '2026-08-28',
+    },
+  ],
+  total: 1,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
+}
+
+/** Mirrors `SerieTemporalDto`. Two buckets, so the footer has something to add. */
+const SERIE_TEMPORAL = {
+  periodo: PERIODO,
+  agruparPor: 'semana',
+  data: [
+    {
+      periodo: '2026-08-03',
+      ventasTotales: 10,
+      ventasLiquidables: 8,
+      pagadasSinBoleto: 2,
+      pasajes: 800000,
+      cargoServicio: 40000,
+      comision: 80000,
+      cobradoAlCliente: 840000,
+      netoATransferirEmpresas: 720000,
+      ingresoPropio: 120000,
+    },
+    {
+      periodo: '2026-08-10',
+      ventasTotales: 5,
+      ventasLiquidables: 5,
+      pagadasSinBoleto: 0,
+      pasajes: 500000,
+      cargoServicio: 25000,
+      comision: 50000,
+      cobradoAlCliente: 525000,
+      netoATransferirEmpresas: 450000,
+      ingresoPropio: 75000,
+    },
+  ],
+}
+
+/** Mirrors `InformeVentasPagadasSinBoletoDto`. */
+const VENTAS_SIN_BOLETO = {
+  periodo: PERIODO,
+  data: [
+    {
+      ventaId: 'venta-1',
+      numeroTransaccion: 'TX-001',
+      empresaNombre: 'Canindeyú',
+      fechaVenta: '2026-08-02T10:00:00.000Z',
+      fechaViaje: '2026-08-09',
+      metodoPago: 'BANCARD',
+      estadoVenta: 'PAGO_APROBADO',
+      pasaje: 100000,
+      cargoServicio: 5000,
+      cobradoAlCliente: 105000,
+      antiguedadHoras: 72,
+      bancardTransactionId: 'BC-9',
+      contactoEmail: 'maria@ejemplo.py',
+      contactoTelefono: '0981000000',
+    },
+    {
+      ventaId: 'venta-2',
+      numeroTransaccion: 'TX-002',
+      empresaNombre: 'Canindeyú',
+      fechaVenta: '2026-08-30T10:00:00.000Z',
+      fechaViaje: '2026-09-02',
+      metodoPago: 'TRANSFERENCIA',
+      estadoVenta: 'PAGO_APROBADO',
+      pasaje: 100000,
+      cargoServicio: 5000,
+      cobradoAlCliente: 105000,
+      antiguedadHoras: 2,
+      bancardTransactionId: null,
+      contactoEmail: null,
+      contactoTelefono: null,
+    },
+  ],
+  total: 2,
+  montoTotal: 210000,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
+}
+
+/** Mirrors `InformeAnomaliasDto`. */
+const ANOMALIAS = {
+  periodo: PERIODO,
+  data: [
+    {
+      tipo: 'COMISION_MAYOR_QUE_PASAJE',
+      ventaId: 'venta-1',
+      numeroTransaccion: 'TX-001',
+      empresaNombre: 'Canindeyú',
+      fechaVenta: '2026-08-02',
+      estadoPago: 'PAGADO',
+      pasaje: 100000,
+      comision: 150000,
+      comisionEsperada: 10000,
+      detalle: 'La comisión supera el importe del pasaje',
+    },
+  ],
+  total: 1,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
+  resumen: { COMISION_MAYOR_QUE_PASAJE: 1 },
+}
+
+/** Keyed by the API path, which is not always the browser route. */
+const RESPUESTAS: Record<string, unknown> = {
+  'por-ruta': POR_RUTA,
+  'por-servicio': POR_SERVICIO,
+  'serie-temporal': SERIE_TEMPORAL,
+  'ventas-pagadas-sin-boleto': VENTAS_SIN_BOLETO,
+  anomalias: ANOMALIAS,
+}
+
+const PANTALLAS: Array<[string, FunctionComponent]> = [
+  ['por-ruta', InformePorRuta],
+  ['por-servicio', InformePorServicio],
+  ['serie-temporal', InformeSerieTemporal],
+  ['ventas-sin-boleto', InformeVentasSinBoleto],
+  ['anomalias', InformeAnomalias],
+]
+
+/** What a shared link carries: the period plus the Generar mark. */
+const GENERADO = '?generado=true&desde=2026-08-01&hasta=2026-08-31'
+
+function montar(Pantalla: FunctionComponent, busqueda = '') {
+  return renderEnRuta(Pantalla, {
+    ruta: '/reports',
+    busqueda,
+    // Con el esquema del panel, Zod descartaría `generado` y la pantalla nunca
+    // saldría del estado "todavía no se generó".
+    esquema: esquemaFiltrosInforme,
+  })
+}
+
+function urlsDeInformes(): string[] {
+  return fetchMock.mock.calls
+    .map(([url]) => String(url))
+    .filter((url) => url.includes('/api/admin/informes/'))
 }
 
 let fetchMock: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   fetchMock = vi.fn().mockImplementation((url: string) => {
-    if (url.includes('/api/admin/ventas/estadisticas')) {
-      return Promise.resolve(respuestaJson(ESTADISTICAS))
-    }
-    if (url.includes('/api/admin/ventas/lista')) {
-      return Promise.resolve(respuestaJson(VENTAS))
-    }
-    if (url.includes('/api/pagos/estadisticas/resumen')) {
-      return Promise.resolve(respuestaJson(PAGOS))
+    for (const [ruta, cuerpo] of Object.entries(RESPUESTAS)) {
+      // El `?` evita que `por-ruta` atrape también a `por-ruta-cualquier-cosa`.
+      if (url.includes(`/api/admin/informes/${ruta}?`)) {
+        return Promise.resolve(
+          respuestaJson({
+            success: true,
+            statusCode: 200,
+            message: 'ok',
+            data: cuerpo,
+          }),
+        )
+      }
     }
     if (url.includes('/agencias')) {
       return Promise.resolve(
@@ -164,7 +251,7 @@ beforeEach(() => {
           statusCode: 200,
           message: 'ok',
           data: { items: [], total: 0, page: 1, limit: 100, totalPages: 0 },
-        })
+        }),
       )
     }
     return Promise.reject(new Error(`Ruta no mockeada: ${url}`))
@@ -177,107 +264,112 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('Sección de informes', () => {
-  it('ofrece los siete informes en la navegación', async () => {
-    renderEnRuta(InformesPage, { ruta: '/reports' })
+describe('nada se carga hasta apretar Generar', () => {
+  it.each(PANTALLAS)(
+    'el informe "%s" se abre sin consultar nada',
+    async (_ruta, Pantalla) => {
+      montar(Pantalla)
 
-    for (const informe of DEFINICIONES) {
       expect(
-        await screen.findByRole('button', { name: informe.titulo })
+        await screen.findByText('El informe todavía no se generó'),
       ).toBeInTheDocument()
-    }
-  })
-
-  it.each(DEFINICIONES.map((d) => [d.id, d.titulo] as const))(
-    'el informe "%s" se abre sin romperse',
-    async (id, titulo) => {
-      renderEnRuta(InformesPage, {
-        ruta: '/reports',
-        busqueda: `?informe=${id}`,
-      })
-
-      await waitFor(() =>
-        expect(
-          screen.getByRole('heading', { name: titulo, level: 2 })
-        ).toBeInTheDocument()
-      )
-    }
+      // La regla no es "se ve vacío": es que no salió ninguna consulta. Un
+      // informe que pide los datos y los esconde igual castiga a la base.
+      expect(urlsDeInformes()).toHaveLength(0)
+    },
   )
+})
 
-  it('el informe de ventas suma sobre todo el conjunto filtrado', async () => {
-    // `resumenFiltros` lo calcula el backend sobre el total, no sobre la
-    // página: por eso el encabezado dice 800.000 con una sola fila en pantalla.
-    renderEnRuta(InformesPage, {
-      ruta: '/reports',
-      busqueda: '?informe=ventas',
-    })
+describe('informes paginados', () => {
+  it('por ruta muestra la tarifa promedio de cada par origen-destino', async () => {
+    montar(InformePorRuta, GENERADO)
 
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(contieneDinero('Gs. 800.000')).length
-      ).toBeGreaterThan(0)
-    )
-    expect(screen.getByText('TX-001')).toBeInTheDocument()
-  })
-
-  it('el informe por empresa calcula el neto a transferir', async () => {
-    // 500.000 cobrados − 50.000 de comisión = 450.000.
-    renderEnRuta(InformesPage, {
-      ruta: '/reports',
-      busqueda: '?informe=empresas',
-    })
-
-    await waitFor(() =>
-      expect(
-        screen.getAllByText(contieneDinero('Gs. 450.000')).length
-      ).toBeGreaterThan(0)
-    )
-    expect(screen.getAllByText('Canindeyú').length).toBeGreaterThan(0)
-  })
-
-  it('la conciliación recupera el monto real de la pasarela', async () => {
-    // El backend informa `montoTotalProcesado: 0` por el problema de
-    // mayúsculas en los alias SQL; el dato verdadero está en `montoaprobado`.
-    renderEnRuta(InformesPage, {
-      ruta: '/reports',
-      busqueda: '?informe=conciliacion',
-    })
-
-    await waitFor(() =>
-      expect(
-        screen.getAllByText('Aprobado por la pasarela').length
-      ).toBeGreaterThan(0)
-    )
+    expect(await screen.findByText('Tarifa promedio')).toBeInTheDocument()
     expect(
-      screen.getAllByText(contieneDinero('Gs. 840.000')).length
+      screen.getAllByText((contenido) => contenido.includes('Ciudad del Este'))
+        .length,
     ).toBeGreaterThan(0)
-    // Y la tasa de éxito se recalcula: 15 de 20 = 75%.
-    expect(screen.getByText('75,0%')).toBeInTheDocument()
+    // 1.500.000 de pasajes sobre 15 boletos vigentes: la tarifa es por boleto,
+    // no por venta, y es el número por el que se lee este informe.
+    expect(
+      screen.getAllByText(contieneDinero('Gs. 100.000')).length,
+    ).toBeGreaterThan(0)
   })
 
-  it('el comparativo dice "Sin base" en vez de inventar un 0%', async () => {
-    renderEnRuta(InformesPage, {
-      ruta: '/reports',
-      busqueda: '?informe=comparativo',
-    })
+  it('la página y el tamaño viajan explícitos en la consulta', async () => {
+    // Sin ellos el servidor aplica su límite por defecto (25) mientras la tabla
+    // pagina de a 10: el pie diría una cosa y la grilla otra.
+    montar(InformePorRuta, GENERADO)
 
-    await waitFor(() =>
-      expect(screen.getAllByText('Período anterior').length).toBeGreaterThan(0)
-    )
-    // Los dos períodos devuelven lo mismo en este mock, así que no hay
-    // variación; lo que se verifica es que la tabla se arma completa.
-    expect(screen.getAllByText('Cobrado al cliente').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Neto a las empresas').length).toBeGreaterThan(0)
+    await screen.findByText('Tarifa promedio')
+
+    expect(urlsDeInformes()[0]).toContain('page=1')
+    expect(urlsDeInformes()[0]).toContain('limit=10')
   })
 
-  it('cambiar de informe actualiza la URL', async () => {
-    const { router } = renderEnRuta(InformesPage, { ruta: '/reports' })
+  it('por servicio muestra el primer y el último viaje en ISO 8601', async () => {
+    montar(InformePorServicio, GENERADO)
 
-    await screen.findByRole('button', { name: 'Por ruta' })
-    await userEvent.click(screen.getByRole('button', { name: 'Por ruta' }))
+    // ISO y no dd/mm/aaaa: 08/09 es ambiguo para quien lee el informe
+    // archivado sin conocer la convención local.
+    expect(await screen.findByText('2026-08-03')).toBeInTheDocument()
+    expect(screen.getByText('2026-08-28')).toBeInTheDocument()
+    expect(screen.getByText('EJECUTIVO')).toBeInTheDocument()
+  })
 
-    await waitFor(() =>
-      expect(router.state.location.search).toMatchObject({ informe: 'rutas' })
+  it('ventas sin boleto pega contra el endpoint de nombre largo', async () => {
+    // La ruta del navegador es `ventas-sin-boleto` y el endpoint
+    // `ventas-pagadas-sin-boleto`: si se usara la ruta, la API devolvería 404.
+    montar(InformeVentasSinBoleto, GENERADO)
+
+    expect(await screen.findByText('hace 3 días')).toBeInTheDocument()
+    expect(urlsDeInformes()[0]).toContain(
+      '/api/admin/informes/ventas-pagadas-sin-boleto?',
     )
+  })
+
+  it('ventas sin boleto destaca las antiguas y avisa cuando no hay a quién llamar', async () => {
+    montar(InformeVentasSinBoleto, GENERADO)
+
+    // 72 horas: ya no es un cobro en curso, es un caso para atender. Y se dice
+    // con texto, no sólo con color, porque en papel el color no se imprime.
+    expect(await screen.findByText('hace 3 días')).toBeInTheDocument()
+    expect(screen.getByText('Sin datos de contacto')).toBeInTheDocument()
+    // El monto es el del período completo, no el de la página.
+    expect(
+      screen.getAllByText(contieneDinero('Gs. 210.000')).length,
+    ).toBeGreaterThan(0)
+  })
+
+  it('anomalías resume por tipo y conserva el detalle del backend', async () => {
+    montar(InformeAnomalias, GENERADO)
+
+    // Aparece dos veces: en el resumen del período y en la fila.
+    expect(
+      (await screen.findAllByText('Comisión mayor que el pasaje')).length,
+    ).toBeGreaterThan(1)
+    expect(
+      screen.getByText('La comisión supera el importe del pasaje'),
+    ).toBeInTheDocument()
+  })
+})
+
+describe('serie temporal', () => {
+  it('suma el período entero en el pie porque el informe no está paginado', async () => {
+    montar(InformeSerieTemporal, GENERADO)
+
+    // 840.000 + 525.000. Se puede sumar acá y no en los paginados: `data` trae
+    // todos los tramos del período, no una página de ellos.
+    expect(
+      (await screen.findAllByText(contieneDinero('Gs. 1.365.000'))).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText('Total del período')).toBeInTheDocument()
+  })
+
+  it('cada tramo se identifica por el día en que empieza', async () => {
+    montar(InformeSerieTemporal, GENERADO)
+
+    expect(await screen.findByText('2026-08-03')).toBeInTheDocument()
+    expect(screen.getByText('2026-08-10')).toBeInTheDocument()
   })
 })

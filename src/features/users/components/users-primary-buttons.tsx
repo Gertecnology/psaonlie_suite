@@ -1,14 +1,15 @@
 import { IconUserPlus } from '@tabler/icons-react'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import { useUsers } from '../context/users-context'
 
 export function UsersPrimaryButtons() {
-  const { setOpen } = useUsers()
   return (
-    <div className='flex gap-2'>
-      <Button className='space-x-1' onClick={() => setOpen('add')}>
-        <span>Agregar Usuario</span> <IconUserPlus size={18} />
-      </Button>
-    </div>
+    // Un enlace y no un botón: crear un usuario tiene su propia dirección, así
+    // que se puede abrir en otra pestaña, compartir y recargar.
+    <Button asChild className='space-x-1'>
+      <Link to='/users/nuevo'>
+        <span>Agregar usuario</span> <IconUserPlus size={18} />
+      </Link>
+    </Button>
   )
 }

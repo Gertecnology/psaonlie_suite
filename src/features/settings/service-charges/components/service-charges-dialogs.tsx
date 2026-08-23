@@ -1,48 +1,54 @@
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { ServiceChargeMutateDrawer } from './service-charge-mutate-drawer'
 import { AssignServiceChargeDialog } from './assign-service-charge-dialog'
 import { useAssignServiceChargeDialog } from '../store/use-assign-service-charge-dialog'
 import { useServiceChargeDeleteDialog } from '../store/use-service-charge-delete-dialog'
 import { useDeleteServiceCharge } from '../hooks/use-delete-service-charge'
 
+/**
+ * What is left of the list's overlays once the form moved to its own page:
+ * a delete confirmation and a one-step assignment. Both are decisions taken on
+ * a record already chosen, not data to fill in.
+ */
 export function ServiceChargesDialogs() {
-  const { open, serviceChargeId, serviceChargeName, close } = useAssignServiceChargeDialog()
-  const { isOpen, serviceChargeId: deleteServiceChargeId, serviceChargeName: deleteServiceChargeName, closeDialog } = useServiceChargeDeleteDialog()
+  const {
+    open: assignOpen,
+    serviceChargeId,
+    serviceChargeName,
+    close: closeAssign,
+  } = useAssignServiceChargeDialog()
+  const {
+    isOpen: deleteOpen,
+    serviceChargeId: deleteId,
+    serviceChargeName: deleteName,
+    closeDialog: closeDelete,
+  } = useServiceChargeDeleteDialog()
   const deleteServiceCharge = useDeleteServiceCharge()
 
   const handleConfirmDelete = () => {
-    if (deleteServiceChargeId) {
-      deleteServiceCharge.mutate(deleteServiceChargeId, {
-        onSuccess: () => {
-          closeDialog()
-        },
-      })
-    }
+    if (!deleteId) return
+
+    deleteServiceCharge.mutate(deleteId, { onSuccess: closeDelete })
   }
 
   return (
     <>
-      <ServiceChargeMutateDrawer />
       <AssignServiceChargeDialog
-        open={open}
-        onOpenChange={close}
-        serviceChargeId={serviceChargeId || ''}
-        serviceChargeName={serviceChargeName || ''}
+        open={assignOpen}
+        onClose={closeAssign}
+        serviceChargeId={serviceChargeId ?? ''}
+        serviceChargeName={serviceChargeName ?? ''}
       />
       <ConfirmDialog
         destructive
-        open={isOpen}
-        onOpenChange={closeDialog}
+        open={deleteOpen}
+        onOpenChange={closeDelete}
         handleConfirm={handleConfirmDelete}
         className='max-w-md'
         title='¿Eliminar este cargo por servicio?'
         desc={
           <>
             Estás a punto de eliminar el cargo por servicio{' '}
-            {deleteServiceChargeName && (
-              <strong>{deleteServiceChargeName}</strong>
-            )}
-            .<br />
+            {deleteName && <strong>{deleteName}</strong>}.<br />
             Esta acción no se puede deshacer.
           </>
         }

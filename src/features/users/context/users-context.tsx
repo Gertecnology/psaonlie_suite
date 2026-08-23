@@ -2,7 +2,11 @@ import React, { useState } from 'react'
 import useDialogState from '@/hooks/use-dialog-state'
 import { User } from '../models/user'
 
-type UsersDialogType = 'invite' | 'add' | 'edit' | 'delete'
+/**
+ * Sólo queda el borrado: crear y editar son páginas, y la invitación nunca
+ * llegó a existir del lado del servidor.
+ */
+type UsersDialogType = 'delete'
 
 interface UsersContextType {
   open: UsersDialogType | null
