@@ -75,32 +75,35 @@ export function useDestinationForm(destinationId?: string) {
   /**
    * Options for the stop selector.
    *
-   * The catalogue endpoint only lists stops that are still available, so a stop
-   * already attached to this destination can be missing from it. Merging the
-   * record's own stops in first keeps them visible instead of silently dropping
-   * them from the selection the moment the form loads.
+   * Every stop is listed, not only the unassigned ones — the catalogue used to
+   * filter those, and since none were left it came back empty, so no
+   * destination could ever gain a stop.
+   *
+   * Each option says which company reports it and which destination holds it
+   * today. A stop belongs to exactly one destination, so choosing one that is
+   * taken moves it: that is how a bad homologation gets corrected, and it has
+   * to be visible before it happens, not discovered afterwards in the other
+   * destination.
    */
   const paradaOptions = React.useMemo<ParadaOption[]>(() => {
-    const catalogo: ParadaOption[] = (paradasQuery.data ?? []).map((parada) => ({
-      value: parada.id,
-      label: parada.descripcion,
-    }))
+    return (paradasQuery.data ?? []).map((parada) => {
+      const ajena =
+        parada.destinoId && parada.destinoId !== destinationId
+          ? parada.destinoNombre
+          : null
 
-    if (!isEdit || !destination) return catalogo
+      const partes = [
+        parada.empresaNombre,
+        ajena ? `hoy en «${ajena}» — se mueve acá` : null,
+      ].filter(Boolean)
 
-    const yaSeleccionadas: ParadaOption[] = (
-      destination.paradasHomologadas ?? []
-    ).map((parada) => ({ value: parada.id, label: parada.nombre }))
-
-    const seleccionadas = new Set(
-      yaSeleccionadas.map((opcion) => opcion.value),
-    )
-
-    return [
-      ...yaSeleccionadas,
-      ...catalogo.filter((opcion) => !seleccionadas.has(opcion.value)),
-    ]
-  }, [paradasQuery.data, isEdit, destination])
+      return {
+        value: parada.id,
+        label: parada.descripcion,
+        hint: partes.join(' · ') || undefined,
+      }
+    })
+  }, [paradasQuery.data, destinationId])
 
   const backToList = React.useCallback(() => {
     void navigate({ to: '/destinations' })

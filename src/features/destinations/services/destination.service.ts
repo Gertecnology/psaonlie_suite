@@ -66,6 +66,11 @@ export async function deleteDestination(id: string): Promise<void> {
 export interface ParadaHomologadaOption {
   id: string
   descripcion: string
+  /** Empresa que reporta esta parada con ese nombre. */
+  empresaNombre?: string
+  /** Destino al que pertenece hoy, si tiene uno. */
+  destinoId?: string | null
+  destinoNombre?: string | null
 }
 
 // Servicio para obtener paradas homologadas para el selector múltiple

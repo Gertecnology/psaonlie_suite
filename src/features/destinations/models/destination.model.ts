@@ -15,7 +15,9 @@ export const destinationSchema = z.object({
 
 export const destinationFormSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
-  paradasHomologadasIds: z.array(z.string()).min(1, 'Selecciona al menos una parada.'),
+  // Sin mínimo: un destino existe antes de que se le homologue una parada, y
+  // exigir una impedía incluso corregirle el nombre a los que no tienen.
+  paradasHomologadasIds: z.array(z.string()),
 })
 
 export const clientSchema = z.object({

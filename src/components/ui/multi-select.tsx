@@ -22,6 +22,14 @@ type Option = {
   value: string
   label: string
   icon?: React.ElementType
+  /**
+   * Secondary line shown only in the dropdown, never in the selected chips.
+   *
+   * It carries what the reader needs to choose but not to recognise afterwards
+   * — for a homologated stop, which company reports it and which destination
+   * currently owns it.
+   */
+  hint?: string
 }
 
 /**
@@ -94,7 +102,7 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
       const termino = query.trim().toLowerCase()
       if (!termino) return options
       return options.filter((option) =>
-        option.label.toLowerCase().includes(termino),
+        `${option.label} ${option.hint ?? ''}`.toLowerCase().includes(termino),
       )
     }, [options, query])
 
@@ -174,7 +182,14 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                       {option.icon && (
                         <option.icon className='text-muted-foreground mr-2 h-4 w-4' />
                       )}
-                      <span>{option.label}</span>
+                      <span className='flex min-w-0 flex-col'>
+                        <span className='truncate'>{option.label}</span>
+                        {option.hint && (
+                          <span className='text-muted-foreground truncate text-xs'>
+                            {option.hint}
+                          </span>
+                        )}
+                      </span>
                       <span className='sr-only'>
                         {isSelected ? '(seleccionado)' : ''}
                       </span>
