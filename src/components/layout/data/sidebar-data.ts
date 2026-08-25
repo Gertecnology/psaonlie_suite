@@ -7,7 +7,7 @@ import {
   IconShoppingCart,
   IconCurrencyDollar,
   IconUsers,
-  IconBell,
+  IconPalette,
   IconFileReport,
   IconExternalLink,
   IconBook,
@@ -16,11 +16,6 @@ import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
-  user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
   // Un solo espacio de trabajo: el selector queda como identidad, no como
   // conmutador. Los tres nombres de ejemplo que traía la plantilla
   // ("Acme Inc", "Acme Corp.") se veían en producción.
@@ -129,9 +124,9 @@ export const sidebarData: SidebarData = {
               icon: IconCurrencyDollar,
             },
             {
-              title: 'Notificaciones',
-              url: '/settings/notifications',
-              icon: IconBell,
+              title: 'Apariencia',
+              url: '/settings/appearance',
+              icon: IconPalette,
             },
             {
               title: 'Datos externos',

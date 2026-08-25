@@ -23,9 +23,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             />
           ) : (
             <img
-              src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-jk7LpXOiFM0FqL2A0IR1k0vHJXmllm.png'
-              alt='pasajeonline'
-              className='p-2 rounded-md'
+              src='/images/pasajeonline.svg'
+              alt='Pasaje Online'
+              className='rounded-md p-2'
             />
           )}
         </button>

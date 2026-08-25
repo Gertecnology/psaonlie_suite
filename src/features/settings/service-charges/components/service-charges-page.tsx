@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
 import { DataTable, useTablaServidor } from '@/components/data-table'
+import { PageLayout } from '@/components/layout/page-layout'
 import { useGetServiceCharges } from '../hooks/use-get-service-charges'
 import { columns } from './columns'
 import { ServiceChargesDialogs } from './service-charges-dialogs'
@@ -36,7 +36,10 @@ export function ServiceChargesPage() {
       void navigate({
         // @ts-expect-error el esquema de búsqueda lo declara la ruta.
         search: (previa: Record<string, unknown>) => {
-          const siguiente: Record<string, unknown> = { ...previa, [clave]: valor }
+          const siguiente: Record<string, unknown> = {
+            ...previa,
+            [clave]: valor,
+          }
           if (valor === undefined) delete siguiente[clave]
           // Cambiar un filtro cambia el conjunto: quedarse en la página 7
           // mostraría una tabla vacía sin explicación.
@@ -46,7 +49,7 @@ export function ServiceChargesPage() {
         replace: true,
       })
     },
-    [navigate],
+    [navigate]
   )
 
   const { data, isLoading, isFetching, error, refetch } = useGetServiceCharges({
@@ -66,7 +69,7 @@ export function ServiceChargesPage() {
     <>
       <PageLayout
         title='Cargos por servicio'
-        description='Gestiona los cargos por servicio del sistema, configura porcentajes y montos fijos.'
+        description='Lo que el sistema suma al precio del pasaje, con su porcentaje o monto y su vigencia.'
         // Se mantiene oculto el buscador global, como cuando la página colgaba
         // del layout de configuración.
         showSearch={false}
@@ -80,6 +83,7 @@ export function ServiceChargesPage() {
           onPaginationChange={tabla.onPaginationChange}
           caption='Listado de cargos por servicio del sistema'
           emptyMessage='No se encontraron cargos por servicio.'
+          emptyHint='Creá el primero con «Nuevo cargo»; aplica a las ventas dentro de su vigencia.'
           isLoading={isLoading}
           isFetching={isFetching}
           error={error}

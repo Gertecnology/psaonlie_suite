@@ -106,18 +106,10 @@ import { PageLayoutSimple } from '@/components/layout/page-layout'
 ```tsx
 <PageLayout
   title='Configuración'
-  description='Gestiona tu cuenta y preferencias'
-  fixedMain={true}
-  className='space-y-6'
+  description='Gestiona tus configuraciones y preferencias.'
+  showSearch={false}
 >
-  <div className='flex gap-6'>
-    <aside className='w-1/5'>
-      <SidebarNav />
-    </aside>
-    <div className='flex-1'>
-      <Outlet />
-    </div>
-  </div>
+  <Outlet />
 </PageLayout>
 ```
 
@@ -143,7 +135,7 @@ El componente maneja automáticamente:
 
 <main class="px-4 py-6 peer-[.header-fixed]/header:mt-16">
   <div
-    class="mb-2 flex flex-wrap items-center justify-between gap-x-4 space-y-2"
+    class="mb-2 flex flex-wrap items-center justify-between space-y-2 gap-x-4"
   >
     <div>
       <h2 class="text-2xl font-bold tracking-tight">Título</h2>
@@ -155,7 +147,7 @@ El componente maneja automáticamente:
   </div>
 
   <div
-    class="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0"
+    class="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-y-0 lg:space-x-12"
   >
     <!-- Contenido -->
   </div>
