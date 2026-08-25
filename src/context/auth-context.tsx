@@ -3,6 +3,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { login as loginService, AuthResponse, RefreshTokenResponse } from '@/services/auth';
 import { useTokenRefresh } from '@/hooks/use-token-refresh';
 import { AuthErrorHandler } from '@/utils/auth-error-handler';
+import { reiniciarSesion } from '@/services/sesion';
+import { socketService } from '@/utils/socket';
 
 interface AuthContextType {
   user: AuthResponse['user'] | null;
@@ -32,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
+      // A previous session may have given up after a failed renewal. This one
+      // starts clean, so renewal is allowed again.
+      reiniciarSesion();
     },
     logout: () => {
       setUser(null);
@@ -43,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Limpiar estado de inicialización del socket
       sessionStorage.removeItem('socket-initialized');
       sessionStorage.removeItem('socket-state');
+      socketService.disconnect();
     }
   };
 
