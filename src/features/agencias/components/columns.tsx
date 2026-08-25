@@ -143,9 +143,19 @@ export function crearColumnasAgencias({
               // Una agencia hija no tiene página propia: no hay paradas
               // homologadas ni conexión que mostrar, todo eso es del padre.
               <span className='flex items-center gap-2'>
-                <span className='max-w-32 truncate sm:max-w-72 md:max-w-[24rem]'>
-                  {agencia.nombre}
-                </span>
+                {agencia.nombre ? (
+                  <span className='max-w-32 truncate sm:max-w-72 md:max-w-[24rem]'>
+                    {agencia.nombre}
+                  </span>
+                ) : (
+                  // Sin nombre todavía: el servidor de la transportista no lo
+                  // dio o la sincronización no corrió desde que se arregló.
+                  // Decirlo es mejor que mostrar el código como si fuera un
+                  // nombre — que es exactamente el defecto que se corrigió.
+                  <span className='text-muted-foreground italic'>
+                    Sin nombre
+                  </span>
+                )}
                 {agencia.codigo && (
                   <Badge variant='outline' className='font-mono text-xs'>
                     {agencia.codigo}
