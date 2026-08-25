@@ -11,7 +11,7 @@ import '@tanstack/react-table'
 declare module '@tanstack/react-table' {
   // TValue is required by the library's signature even though it is unused here.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData extends unknown, TValue> {
+  interface ColumnMeta<TData, TValue> {
     /** Extra classes for this column's `<th>` and `<td>`, e.g. a fixed width. */
     className?: string
     /**
