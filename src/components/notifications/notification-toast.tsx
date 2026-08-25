@@ -1,10 +1,10 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { X, Clock, User, CreditCard, Building2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { X, Clock, User, CreditCard, Building2 } from 'lucide-react'
 import { formatearGuaranies } from '@/lib/formato'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 
 export interface NotificationData {
   id: string
@@ -43,114 +43,102 @@ interface NotificationToastProps {
   onMarkAsRead?: () => void
 }
 
+/**
+ * El estado se comunica con ícono (color de la escala de estados) + texto del
+ * título y la etiqueta de prioridad. Nunca solo con color.
+ */
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'VENTA_PENDIENTE':
-      return <Clock className="w-5 h-5 text-yellow-600" />
+      return <Clock className='text-estado-atencion h-5 w-5' />
     case 'PAGO_CONFIRMADO':
-      return <CreditCard className="w-5 h-5 text-green-600" />
+      return <CreditCard className='text-estado-ok h-5 w-5' />
     case 'SISTEMA':
-      return <Building2 className="w-5 h-5 text-red-600" />
+      return <Building2 className='text-estado-critico h-5 w-5' />
     case 'PAGO_RECHAZADO':
-      return <CreditCard className="w-5 h-5 text-red-600" />
+      return <CreditCard className='text-estado-critico h-5 w-5' />
     default:
-      return <Clock className="w-5 h-5 text-blue-600" />
+      return <Clock className='text-muted-foreground h-5 w-5' />
   }
 }
 
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case 'HIGH':
-      return 'bg-red-50 border-red-200'
-    case 'MEDIUM':
-      return 'bg-yellow-50 border-yellow-200'
-    case 'LOW':
-      return 'bg-blue-50 border-blue-200'
-    default:
-      return 'bg-gray-50 border-gray-200'
-  }
-}
-
-const getPriorityBadgeColor = (priority: string) => {
-  switch (priority) {
-    case 'HIGH':
-      return 'bg-red-100 text-red-800'
-    case 'MEDIUM':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'LOW':
-      return 'bg-blue-100 text-blue-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
-}
-
-export function NotificationToast({ notification, onClose, onMarkAsRead }: NotificationToastProps) {
+export function NotificationToast({
+  notification,
+  onClose,
+  onMarkAsRead,
+}: NotificationToastProps) {
   const formatCurrency = (amount: number) => {
     return formatearGuaranies(amount)
   }
 
   return (
-    <Card className={`w-96 shadow-lg border-l-4 border-l-blue-500 ${getPriorityColor(notification.priority)}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
+    <Card className='w-96 shadow-lg'>
+      <CardContent className='p-4'>
+        <div className='mb-3 flex items-start justify-between'>
+          <div className='flex items-center gap-2'>
             {getNotificationIcon(notification.type)}
-            <h4 className="font-semibold text-sm">{notification.title}</h4>
+            <h4 className='text-sm font-semibold'>{notification.title}</h4>
           </div>
-          <div className="flex items-center gap-1">
-            <Badge variant="secondary" className={`text-xs ${getPriorityBadgeColor(notification.priority)}`}>
+          <div className='flex items-center gap-1'>
+            <Badge variant='secondary' className='text-xs'>
               {notification.priority}
             </Badge>
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={onClose}
-              className="h-6 w-6 p-0 hover:bg-gray-200"
+              className='hover:bg-accent h-6 w-6 p-0'
             >
-              <X className="w-4 h-4" />
+              <X className='h-4 w-4' />
             </Button>
           </div>
         </div>
 
-        <p className="text-sm text-gray-700 mb-3">{notification.message}</p>
+        <p className='text-foreground mb-3 text-sm'>{notification.message}</p>
 
         {/* Detalles específicos según el tipo */}
         {notification.type === 'VENTA_PENDIENTE' && (
-          <div className="space-y-2 text-xs text-gray-600">
-            <div className="flex items-center gap-2">
-              <User className="w-3 h-3" />
+          <div className='text-muted-foreground space-y-2 text-xs'>
+            <div className='flex items-center gap-2'>
+              <User className='h-3 w-3' />
               <span>{notification.data.clienteNombre}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-3 h-3" />
+            <div className='flex items-center gap-2'>
+              <Building2 className='h-3 w-3' />
               <span>{notification.data.empresaNombre}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-3 h-3" />
-              <span>{notification.data.metodoPago} - {formatCurrency(notification.data.importeTotal || 0)}</span>
+            <div className='flex items-center gap-2'>
+              <CreditCard className='h-3 w-3' />
+              <span>
+                {notification.data.metodoPago} -{' '}
+                {formatCurrency(notification.data.importeTotal || 0)}
+              </span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className='text-muted-foreground text-xs'>
               Transacción: {notification.data.numeroTransaccion}
             </div>
           </div>
         )}
 
         {notification.type === 'PAGO_CONFIRMADO' && (
-          <div className="space-y-2 text-xs text-gray-600">
-            <div className="flex items-center gap-2">
-              <User className="w-3 h-3" />
+          <div className='text-muted-foreground space-y-2 text-xs'>
+            <div className='flex items-center gap-2'>
+              <User className='h-3 w-3' />
               <span>{notification.data.clienteNombre}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-3 h-3" />
+            <div className='flex items-center gap-2'>
+              <Building2 className='h-3 w-3' />
               <span>{notification.data.empresaNombre}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-3 h-3" />
-              <span>{notification.data.metodoPago} - {formatCurrency(Number(notification.data.importeTotal) || 0)}</span>
+            <div className='flex items-center gap-2'>
+              <CreditCard className='h-3 w-3' />
+              <span>
+                {notification.data.metodoPago} -{' '}
+                {formatCurrency(Number(notification.data.importeTotal) || 0)}
+              </span>
             </div>
             {notification.data.authorizationNumber && (
-              <div className="text-xs text-gray-500">
+              <div className='text-muted-foreground text-xs'>
                 Auth: {notification.data.authorizationNumber}
               </div>
             )}
@@ -158,31 +146,31 @@ export function NotificationToast({ notification, onClose, onMarkAsRead }: Notif
         )}
 
         {notification.type === 'SISTEMA' && (
-          <div className="space-y-2 text-xs text-gray-600">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-3 h-3" />
+          <div className='text-muted-foreground space-y-2 text-xs'>
+            <div className='flex items-center gap-2'>
+              <Building2 className='h-3 w-3' />
               <span>{notification.data.empresaNombre}</span>
             </div>
-            <div className="text-xs text-red-600">
+            <div className='text-destructive text-xs'>
               Motivo: {notification.data.motivo}
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200">
-          <span className="text-xs text-gray-500">
+        <div className='border-border mt-3 flex items-center justify-between border-t pt-2'>
+          <span className='text-muted-foreground text-xs'>
             {formatDistanceToNow(new Date(notification.createdAt), {
               addSuffix: true,
-              locale: es
+              locale: es,
             })}
           </span>
-          
+
           {!notification.isRead && onMarkAsRead && (
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={onMarkAsRead}
-              className="h-6 px-2 text-xs"
+              className='h-6 px-2 text-xs'
             >
               Marcar como leída
             </Button>

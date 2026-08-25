@@ -46,45 +46,15 @@ const appendUniqueNotifications = (
 const getPriorityIcon = (priority: string) => {
   switch (priority) {
     case 'URGENT':
-      return <Zap className='h-4 w-4 text-red-600' />
+      return <Zap className='text-estado-critico h-4 w-4' />
     case 'HIGH':
-      return <AlertCircle className='h-4 w-4 text-orange-600' />
+      return <AlertCircle className='text-estado-serio h-4 w-4' />
     case 'MEDIUM':
-      return <AlertTriangle className='h-4 w-4 text-yellow-600' />
+      return <AlertTriangle className='text-estado-atencion h-4 w-4' />
     case 'LOW':
-      return <Info className='h-4 w-4 text-blue-600' />
+      return <Info className='text-muted-foreground h-4 w-4' />
     default:
-      return <Info className='h-4 w-4 text-gray-600' />
-  }
-}
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case 'URGENT':
-      return 'border-l-red-500 bg-red-50 dark:bg-red-500/10'
-    case 'HIGH':
-      return 'border-l-orange-500 bg-orange-50 dark:bg-orange-500/10'
-    case 'MEDIUM':
-      return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-500/10'
-    case 'LOW':
-      return 'border-l-blue-500 bg-blue-50 dark:bg-blue-500/10'
-    default:
-      return 'border-l-gray-500 bg-gray-50 dark:bg-gray-500/10'
-  }
-}
-
-const getPriorityBadgeColor = (priority: string) => {
-  switch (priority) {
-    case 'URGENT':
-      return 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400'
-    case 'HIGH':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400'
-    case 'MEDIUM':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400'
-    case 'LOW':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400'
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-400'
+      return <Info className='text-muted-foreground h-4 w-4' />
   }
 }
 
@@ -335,10 +305,8 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                     return (
                       <div key={notification.id}>
                         <div
-                          className={`rounded-lg border-l-4 p-3 transition-all duration-500 ease-in-out ${
-                            isMarkingAsRead
-                              ? 'scale-95 border-l-green-500 bg-green-50 dark:bg-green-500/10 opacity-50'
-                              : getPriorityColor(notification.priority)
+                          className={`bg-muted/40 rounded-lg border p-3 transition-all duration-500 ease-in-out ${
+                            isMarkingAsRead ? 'scale-95 opacity-50' : ''
                           }`}
                         >
                           <div className='mb-2 flex items-start justify-between gap-2'>
@@ -349,7 +317,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                               </h4>
                               <Badge
                                 variant='secondary'
-                                className={`shrink-0 text-xs ${getPriorityBadgeColor(notification.priority)}`}
+                                className='shrink-0 text-xs'
                               >
                                 {notification.priority}
                               </Badge>
@@ -363,9 +331,9 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                                   handleMarkAsRead(notification.id)
                                 }
                                 disabled={isMarkingAsRead}
-                                className={`h-6 w-6 p-0 transition-colors hover:bg-gray-200 dark:hover:bg-gray-800 ${
+                                className={`hover:bg-accent h-6 w-6 p-0 transition-colors ${
                                   isMarkingAsRead
-                                    ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400'
+                                    ? 'bg-muted text-estado-ok'
                                     : ''
                                 }`}
                                 title={
@@ -382,7 +350,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                                 variant='ghost'
                                 size='sm'
                                 onClick={handleClose}
-                                className='h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800'
+                                className='hover:bg-accent h-6 w-6 p-0'
                                 title='Cerrar'
                               >
                                 <X className='h-3 w-3' />
@@ -391,7 +359,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                           </div>
 
                           <p
-                            className={`mb-2 text-sm break-words text-gray-700 dark:text-gray-300 ${!isExpanded ? 'line-clamp-2' : ''}`}
+                            className={`text-foreground mb-2 text-sm break-words ${!isExpanded ? 'line-clamp-2' : ''}`}
                           >
                             {notification.message}
                           </p>
@@ -400,7 +368,7 @@ export function HeaderNotifications({ className }: HeaderNotificationsProps) {
                             variant='ghost'
                             size='sm'
                             onClick={() => toggleExpanded(notification.id)}
-                            className='h-6 px-2 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                            className='text-muted-foreground hover:text-foreground h-6 px-2 text-xs'
                           >
                             {isExpanded ? 'Ver menos' : 'Ver todo'}
                           </Button>

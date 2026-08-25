@@ -1,18 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Users, Info, CheckCircle, Lock, Unlock, AlertTriangle } from 'lucide-react'
+import {
+  ArrowLeft,
+  Users,
+  Info,
+  CheckCircle,
+  Lock,
+  Unlock,
+  AlertTriangle,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { SeatGrid } from './seat-grid'
-import { ServiceInfo } from './service-info'
-import { SeatLegend } from './seat-legend'
-import { TiempoBloqueo } from './tiempo-bloqueo'
-import { useGetAsientos } from '../../hooks/use-get-asientos'
 import { useBloquearAsientos } from '../../hooks/use-bloquear-asientos'
+import { useGetAsientos } from '../../hooks/use-get-asientos'
 import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
 import { useLiberarBloqueosAlSalir } from '../../hooks/use-liberar-bloqueos-al-salir'
+import type {
+  Asiento,
+  ConsultarAsientosRequest,
+  ServiceCharge,
+} from '../../models/sales.model'
 import {
   calcularCargoServicio,
   describirCargoServicio,
@@ -23,8 +33,10 @@ import {
   deserializarServiceCharge,
   serializarServiceCharge,
 } from '../../utils/service-charge-url'
-import type { Asiento, ConsultarAsientosRequest, ServiceCharge } from '../../models/sales.model'
-import { toast } from 'sonner'
+import { SeatGrid } from './seat-grid'
+import { SeatLegend } from './seat-legend'
+import { ServiceInfo } from './service-info'
+import { TiempoBloqueo } from './tiempo-bloqueo'
 
 const MAX_ASIENTOS = 2
 
@@ -50,10 +62,14 @@ interface SeatSelectionSearch {
 
 export function SeatSelectionPage() {
   const [search, setSearch] = useState<SeatSelectionSearch | null>(null)
-  const [serviceCharge, setServiceCharge] = useState<ServiceCharge | undefined>()
+  const [serviceCharge, setServiceCharge] = useState<
+    ServiceCharge | undefined
+  >()
   const [selectedSeats, setSelectedSeats] = useState<Asiento[]>([])
   const [blockedSeats, setBlockedSeats] = useState<Asiento[]>([])
-  const [blockReferenceCode, setBlockReferenceCode] = useState<string | null>(null)
+  const [blockReferenceCode, setBlockReferenceCode] = useState<string | null>(
+    null
+  )
   const [bloqueoExpiraEn, setBloqueoExpiraEn] = useState<string | null>(null)
   const [errorBloqueo, setErrorBloqueo] = useState<string | null>(null)
   const [bloqueoVencido, setBloqueoVencido] = useState(false)
@@ -94,21 +110,31 @@ export function SeatSelectionPage() {
     setServiceCharge(deserializarServiceCharge(urlParams))
 
     // Si hay asientos bloqueados en la URL, restaurarlos
-    if (searchData.asientosBloqueados && searchData.preciosBloqueados &&
-        searchData.tiposBloqueados && searchData.pisosBloqueados) {
+    if (
+      searchData.asientosBloqueados &&
+      searchData.preciosBloqueados &&
+      searchData.tiposBloqueados &&
+      searchData.pisosBloqueados
+    ) {
       const asientosIds = searchData.asientosBloqueados.split(',')
       const precios = searchData.preciosBloqueados.split(',').map(Number)
-      const tipos = searchData.tiposBloqueados.split(',') as ('VENTANA' | 'PASILLO' | 'CENTRO')[]
+      const tipos = searchData.tiposBloqueados.split(',') as (
+        | 'VENTANA'
+        | 'PASILLO'
+        | 'CENTRO'
+      )[]
       const pisos = searchData.pisosBloqueados.split(',').map(Number)
 
-      const asientosBloqueadosData: Asiento[] = asientosIds.map((id, index) => ({
-        numero: id,
-        disponible: true,
-        precio: precios[index],
-        tipo: tipos[index],
-        piso: pisos[index],
-        calidad: 'Estándar',
-      }))
+      const asientosBloqueadosData: Asiento[] = asientosIds.map(
+        (id, index) => ({
+          numero: id,
+          disponible: true,
+          precio: precios[index],
+          tipo: tipos[index],
+          piso: pisos[index],
+          calidad: 'Estándar',
+        })
+      )
 
       setBlockedSeats(asientosBloqueadosData)
       if (searchData.codigoReferencia) {
@@ -129,14 +155,20 @@ export function SeatSelectionPage() {
     },
   ])
 
-  const consultarAsientosRequest: ConsultarAsientosRequest | null = search ? {
-    servicioId: search.servicioId,
-    origenId: search.origenId,
-    destinoId: search.destinoId,
-    agenciaId: search.agenciaId,
-  } : null
+  const consultarAsientosRequest: ConsultarAsientosRequest | null = search
+    ? {
+        servicioId: search.servicioId,
+        origenId: search.origenId,
+        destinoId: search.destinoId,
+        agenciaId: search.agenciaId,
+      }
+    : null
 
-  const { data: asientosData, isLoading, error } = useGetAsientos(consultarAsientosRequest)
+  const {
+    data: asientosData,
+    isLoading,
+    error,
+  } = useGetAsientos(consultarAsientosRequest)
   const bloquearAsientosMutation = useBloquearAsientos()
   const liberarBloqueoMutation = useLiberarBloqueo()
 
@@ -144,9 +176,9 @@ export function SeatSelectionPage() {
     if (blockedSeats.length > 0) return
 
     setErrorBloqueo(null)
-    setSelectedSeats(prev => {
-      if (prev.some(seat => seat.numero === asiento.numero)) {
-        return prev.filter(seat => seat.numero !== asiento.numero)
+    setSelectedSeats((prev) => {
+      if (prev.some((seat) => seat.numero === asiento.numero)) {
+        return prev.filter((seat) => seat.numero !== asiento.numero)
       }
 
       if (prev.length >= MAX_ASIENTOS) {
@@ -175,7 +207,7 @@ export function SeatSelectionPage() {
         origenId: search.origenId,
         destinoId: search.destinoId,
         agenciaId: search.agenciaId,
-        asientos: selectedSeats.map(seat => seat.numero),
+        asientos: selectedSeats.map((seat) => seat.numero),
       })
 
       setBlockedSeats(selectedSeats)
@@ -255,10 +287,10 @@ export function SeatSelectionPage() {
       destino: search.destino || '',
       fecha: search.fecha || '',
       hora: search.hora || '',
-      asientosIds: blockedSeats.map(seat => seat.numero).join(','),
-      precios: blockedSeats.map(seat => seat.precio.toString()).join(','),
-      tipos: blockedSeats.map(seat => seat.tipo).join(','),
-      pisos: blockedSeats.map(seat => seat.piso.toString()).join(','),
+      asientosIds: blockedSeats.map((seat) => seat.numero).join(','),
+      precios: blockedSeats.map((seat) => seat.precio.toString()).join(','),
+      tipos: blockedSeats.map((seat) => seat.tipo).join(','),
+      pisos: blockedSeats.map((seat) => seat.piso.toString()).join(','),
       codigoReferencia: blockReferenceCode || '',
       bloqueoExpiraEn: bloqueoExpiraEn || '',
       empresaBoleto: search.empresaBoleto || '',
@@ -272,48 +304,59 @@ export function SeatSelectionPage() {
 
   if (!search || !search.servicioId) {
     return (
-      <div className="space-y-4">
+      <div className='space-y-4'>
         <Alert>
-          <Info className="h-4 w-4" />
+          <Info className='h-4 w-4' />
           <AlertDescription>
-            No se encontró información del servicio. Por favor, selecciona un servicio desde la página anterior.
+            No se encontró información del servicio. Por favor, selecciona un
+            servicio desde la página anterior.
           </AlertDescription>
         </Alert>
-        <Button onClick={handleGoBack} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <Button onClick={handleGoBack} variant='outline'>
+          <ArrowLeft className='mr-2 h-4 w-4' />
           Volver a Servicios
         </Button>
       </div>
     )
   }
 
-  const asientosVisibles = blockedSeats.length > 0 ? blockedSeats : selectedSeats
+  const asientosVisibles =
+    blockedSeats.length > 0 ? blockedSeats : selectedSeats
   const importePasajes = sumarPreciosAsientos(asientosVisibles)
   const cargoServicio = calcularCargoServicio(importePasajes, serviceCharge)
   const total = importePasajes + cargoServicio
   const bloqueando = bloquearAsientosMutation.isPending
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleGoBack} disabled={liberarBloqueoMutation.isPending}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={handleGoBack}
+            disabled={liberarBloqueoMutation.isPending}
+          >
+            <ArrowLeft className='mr-2 h-4 w-4' />
             Volver
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Selección de Asientos</h1>
-            <p className="text-muted-foreground">
-              {search.origen} → {search.destino} • {search.fecha?.split('T')[0]} {search.hora}
+            <h1 className='text-2xl font-bold'>Selección de Asientos</h1>
+            <p className='text-muted-foreground'>
+              {search.origen} → {search.destino} • {search.fecha?.split('T')[0]}{' '}
+              {search.hora}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <TiempoBloqueo expiraEn={bloqueoExpiraEn} onExpirado={handleBloqueoVencido} />
+        <div className='flex items-center gap-2'>
+          <TiempoBloqueo
+            expiraEn={bloqueoExpiraEn}
+            onExpirado={handleBloqueoVencido}
+          />
           {asientosData && (
-            <Badge variant="secondary" className="text-sm">
-              <Users className="h-4 w-4 mr-1" />
+            <Badge variant='secondary' className='text-sm'>
+              <Users className='mr-1 h-4 w-4' />
               {asientosData.totalDisponibles} disponibles
             </Badge>
           )}
@@ -323,10 +366,12 @@ export function SeatSelectionPage() {
       {/* Loading State */}
       {isLoading && (
         <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Cargando asientos disponibles...</p>
+          <CardContent className='flex items-center justify-center py-12'>
+            <div className='text-center'>
+              <div className='border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2'></div>
+              <p className='text-muted-foreground'>
+                Cargando asientos disponibles...
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -335,10 +380,10 @@ export function SeatSelectionPage() {
       {/* Error State */}
       {error && (
         <Card>
-          <CardContent className="text-center py-12">
-            <p className="text-destructive mb-2">Error al cargar asientos</p>
-            <p className="text-sm text-muted-foreground">{error.message}</p>
-            <Button onClick={handleGoBack} variant="outline" className="mt-4">
+          <CardContent className='py-12 text-center'>
+            <p className='text-destructive mb-2'>Error al cargar asientos</p>
+            <p className='text-muted-foreground text-sm'>{error.message}</p>
+            <Button onClick={handleGoBack} variant='outline' className='mt-4'>
               Volver a Servicios
             </Button>
           </CardContent>
@@ -347,13 +392,13 @@ export function SeatSelectionPage() {
 
       {/* Seat Selection */}
       {asientosData && !isLoading && !error && (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className='grid gap-6 lg:grid-cols-3'>
           {/* Seat Grid */}
-          <div className="lg:col-span-2">
+          <div className='lg:col-span-2'>
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <Users className='h-5 w-5' />
                   Asientos Disponibles
                 </CardTitle>
               </CardHeader>
@@ -365,7 +410,7 @@ export function SeatSelectionPage() {
                   blockedSeats={blockedSeats}
                   configuracionBus={asientosData.configuracionBus}
                 />
-                <div className="mt-6">
+                <div className='mt-6'>
                   <SeatLegend />
                 </div>
               </CardContent>
@@ -373,19 +418,22 @@ export function SeatSelectionPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            <ServiceInfo servicioInfo={asientosData.servicioInfo} empresaNombre={search.empresa} />
+          <div className='space-y-4'>
+            <ServiceInfo
+              servicioInfo={asientosData.servicioInfo}
+              empresaNombre={search.empresa}
+            />
 
             {errorBloqueo && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
+              <Alert variant='destructive'>
+                <AlertTriangle className='h-4 w-4' />
                 <AlertDescription>{errorBloqueo}</AlertDescription>
               </Alert>
             )}
 
             {bloqueoVencido && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
+              <Alert variant='destructive'>
+                <AlertTriangle className='h-4 w-4' />
                 <AlertDescription>
                   El bloqueo de asientos venció. Liberá la reserva y volvé a
                   seleccionar los asientos.
@@ -397,70 +445,79 @@ export function SeatSelectionPage() {
             {asientosVisibles.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className='flex items-center gap-2 text-base'>
                     {blockedSeats.length > 0 ? (
                       <>
-                        <Lock className="h-4 w-4 text-blue-600" />
-                        Asientos Reservados ({blockedSeats.length}/{MAX_ASIENTOS})
+                        <Lock className='text-estado-ok h-4 w-4' />
+                        Asientos Reservados ({blockedSeats.length}/
+                        {MAX_ASIENTOS})
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        Asientos Seleccionados ({selectedSeats.length}/{MAX_ASIENTOS})
+                        <CheckCircle className='text-primary h-4 w-4' />
+                        Asientos Seleccionados ({selectedSeats.length}/
+                        {MAX_ASIENTOS})
                       </>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className='space-y-3'>
                     {asientosVisibles.map((seat) => (
-                      <div key={seat.numero} className={`flex items-center justify-between p-3 rounded-lg border ${
-                        blockedSeats.length > 0
-                          ? 'bg-blue-50 border-blue-200'
-                          : 'bg-green-50 border-green-200'
-                      }`}>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-base text-gray-900">Asiento {seat.numero}</span>
-                            <Badge variant="outline" className="text-xs bg-white text-gray-700 border-gray-300">Piso {seat.piso}</Badge>
+                      <div
+                        key={seat.numero}
+                        className='border-border bg-muted/40 flex items-center justify-between rounded-lg border p-3'
+                      >
+                        <div className='flex flex-col'>
+                          <div className='mb-1 flex items-center gap-2'>
+                            <span className='text-foreground text-base font-semibold'>
+                              Asiento {seat.numero}
+                            </span>
+                            <Badge variant='outline' className='text-xs'>
+                              Piso {seat.piso}
+                            </Badge>
                             {blockedSeats.length > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Lock className="h-3 w-3 mr-1" />
+                              <Badge variant='secondary' className='text-xs'>
+                                <Lock className='mr-1 h-3 w-3' />
                                 Bloqueado
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">{seat.calidad}</p>
+                          <p className='text-muted-foreground text-sm'>
+                            {seat.calidad}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-gray-900">
+                        <div className='text-right'>
+                          <span className='text-foreground text-lg font-bold'>
                             {formatearGuaranies(seat.precio)}
                           </span>
                         </div>
                       </div>
                     ))}
                     <Separator />
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Pasajes</span>
-                        <span className="text-sm font-medium">
+                    <div className='space-y-2'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-muted-foreground text-sm'>
+                          Pasajes
+                        </span>
+                        <span className='text-sm font-medium'>
                           {formatearGuaranies(importePasajes)}
                         </span>
                       </div>
                       {cargoServicio > 0 && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
+                        <div className='flex items-center justify-between'>
+                          <span className='text-muted-foreground text-sm'>
                             {describirCargoServicio(serviceCharge)}
                           </span>
-                          <span className="text-sm font-medium">
+                          <span className='text-sm font-medium'>
                             {formatearGuaranies(cargoServicio)}
                           </span>
                         </div>
                       )}
                       <Separator />
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Total</span>
-                        <span className="text-lg font-bold">
+                      <div className='flex items-center justify-between'>
+                        <span className='text-sm font-medium'>Total</span>
+                        <span className='text-lg font-bold'>
                           {formatearGuaranies(total)}
                         </span>
                       </div>
@@ -471,42 +528,44 @@ export function SeatSelectionPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="space-y-2">
+            <div className='space-y-2'>
               {blockedSeats.length > 0 ? (
                 <>
                   <Button
                     onClick={handleContinueToCheckout}
-                    className="w-full"
-                    size="lg"
+                    className='w-full'
+                    size='lg'
                     disabled={bloqueoVencido}
                   >
                     Continuar al Checkout
                   </Button>
                   <Button
                     onClick={handleReleaseSeats}
-                    variant="outline"
-                    className="w-full"
+                    variant='outline'
+                    className='w-full'
                     disabled={liberarBloqueoMutation.isPending}
                   >
-                    <Unlock className="h-4 w-4 mr-2" />
-                    {liberarBloqueoMutation.isPending ? 'Liberando...' : 'Liberar Asientos'}
+                    <Unlock className='mr-2 h-4 w-4' />
+                    {liberarBloqueoMutation.isPending
+                      ? 'Liberando...'
+                      : 'Liberar Asientos'}
                   </Button>
                 </>
               ) : (
                 <Button
                   onClick={handleConfirmSelection}
                   disabled={selectedSeats.length === 0 || bloqueando}
-                  className="w-full"
-                  size="lg"
+                  className='w-full'
+                  size='lg'
                 >
                   {bloqueando ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className='mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
                       Reservando asientos con la empresa...
                     </>
                   ) : selectedSeats.length > 0 ? (
                     <>
-                      <Lock className="h-4 w-4 mr-2" />
+                      <Lock className='mr-2 h-4 w-4' />
                       Reservar asientos ({selectedSeats.length})
                     </>
                   ) : (

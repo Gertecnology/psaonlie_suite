@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { Asiento, ConfiguracionBus } from '../../models/sales.model'
+import { SEAT_STATE_CLASSES } from './seat-states'
 
 interface SeatGridProps {
   asientos: Asiento[]
@@ -9,21 +10,25 @@ interface SeatGridProps {
   configuracionBus: ConfiguracionBus
 }
 
-const getSeatTypeColor = (disponible: boolean, isSelected: boolean = false, isBlocked: boolean = false) => {
+const getSeatTypeColor = (
+  disponible: boolean,
+  isSelected: boolean = false,
+  isBlocked: boolean = false
+) => {
   if (isBlocked) {
-    return 'bg-blue-500 text-white border-blue-600 shadow-lg'
+    return SEAT_STATE_CLASSES.bloqueado
   }
-  
+
   if (isSelected) {
-    return 'bg-green-500 text-white border-green-600 shadow-lg'
+    return SEAT_STATE_CLASSES.seleccionado
   }
-  
+
   if (!disponible) {
-    return 'bg-gray-300 text-gray-500 cursor-not-allowed'
+    return SEAT_STATE_CLASSES.ocupado
   }
-  
+
   // Todos los asientos son de tipo ventana según los datos
-  return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300'
+  return SEAT_STATE_CLASSES.libre
 }
 
 const getSeatTypeLabel = (_tipo: string) => {
@@ -31,14 +36,14 @@ const getSeatTypeLabel = (_tipo: string) => {
   return 'Ventana'
 }
 
-function FloorGrid({ 
-  floorSeats, 
-  piso, 
-  onSeatSelect, 
+function FloorGrid({
+  floorSeats,
+  piso,
+  onSeatSelect,
   selectedSeats,
   blockedSeats,
-  columnas
-}: { 
+  columnas,
+}: {
   floorSeats: Asiento[]
   piso: number
   onSeatSelect: (asiento: Asiento) => void
@@ -53,35 +58,45 @@ function FloorGrid({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-center">
-        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+    <div className='space-y-3'>
+      <div className='text-center'>
+        <h4 className='text-muted-foreground mb-2 text-sm font-semibold'>
           Piso {piso}
         </h4>
-        <div className="w-full h-px bg-border"></div>
+        <div className='bg-border h-px w-full'></div>
       </div>
-      
-      <div className="space-y-2">
+
+      <div className='space-y-2'>
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex gap-2 justify-center">
+          <div key={rowIndex} className='flex justify-center gap-2'>
             {row.map((asiento) => {
-              const isSelected = selectedSeats?.some(seat => seat.numero === asiento.numero) || false
-              const isBlocked = blockedSeats?.some(seat => seat.numero === asiento.numero) || false
+              const isSelected =
+                selectedSeats?.some((seat) => seat.numero === asiento.numero) ||
+                false
+              const isBlocked =
+                blockedSeats?.some((seat) => seat.numero === asiento.numero) ||
+                false
               return (
                 <button
                   key={asiento.numero}
-                  onClick={() => asiento.disponible && !isBlocked && onSeatSelect(asiento)}
+                  onClick={() =>
+                    asiento.disponible && !isBlocked && onSeatSelect(asiento)
+                  }
                   disabled={!asiento.disponible || isBlocked}
                   className={cn(
-                    "w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-medium",
-                    "transition-all duration-200",
+                    'flex h-12 w-12 items-center justify-center rounded-lg border-2 text-sm font-medium transition-all duration-200',
                     getSeatTypeColor(asiento.disponible, isSelected, isBlocked),
-                    asiento.disponible && !isSelected && !isBlocked && "cursor-pointer hover:scale-105 hover:shadow-md",
-                    isSelected && "ring-2 ring-green-400 ring-offset-2",
-                    isBlocked && "ring-2 ring-blue-400 ring-offset-2"
+                    asiento.disponible &&
+                      !isSelected &&
+                      !isBlocked &&
+                      'cursor-pointer hover:scale-105 hover:shadow-md'
                   )}
                   title={`Asiento ${asiento.numero} - ${getSeatTypeLabel(asiento.tipo)} - ${
-                    isBlocked ? 'Bloqueado' : asiento.disponible ? 'Disponible' : 'Ocupado'
+                    isBlocked
+                      ? 'Bloqueado'
+                      : asiento.disponible
+                        ? 'Disponible'
+                        : 'Ocupado'
                   }`}
                 >
                   {asiento.numero}
@@ -95,27 +110,33 @@ function FloorGrid({
   )
 }
 
-export function SeatGrid({ asientos, onSeatSelect, selectedSeats, blockedSeats, configuracionBus }: SeatGridProps) {
+export function SeatGrid({
+  asientos,
+  onSeatSelect,
+  selectedSeats,
+  blockedSeats,
+  configuracionBus,
+}: SeatGridProps) {
   // Separate seats by floor
-  const piso1 = asientos.filter(asiento => asiento.piso === 1)
-  const piso2 = asientos.filter(asiento => asiento.piso === 2)
+  const piso1 = asientos.filter((asiento) => asiento.piso === 1)
+  const piso2 = asientos.filter((asiento) => asiento.piso === 2)
 
   const hasTwoFloors = configuracionBus.pisos > 1
 
   if (hasTwoFloors) {
     return (
-      <div className="grid gap-8 lg:grid-cols-2">
-        <FloorGrid 
-          floorSeats={piso1} 
-          piso={1} 
+      <div className='grid gap-8 lg:grid-cols-2'>
+        <FloorGrid
+          floorSeats={piso1}
+          piso={1}
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
           columnas={configuracionBus.columnas}
         />
-        <FloorGrid 
-          floorSeats={piso2} 
-          piso={2} 
+        <FloorGrid
+          floorSeats={piso2}
+          piso={2}
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
@@ -126,11 +147,11 @@ export function SeatGrid({ asientos, onSeatSelect, selectedSeats, blockedSeats, 
   }
 
   return (
-    <div className="flex justify-center">
-      <div className="max-w-md">
-        <FloorGrid 
-          floorSeats={piso1} 
-          piso={1} 
+    <div className='flex justify-center'>
+      <div className='max-w-md'>
+        <FloorGrid
+          floorSeats={piso1}
+          piso={1}
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
