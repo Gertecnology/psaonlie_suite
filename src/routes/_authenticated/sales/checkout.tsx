@@ -9,8 +9,8 @@ export const Route = createFileRoute('/_authenticated/sales/checkout')({
 function RouteComponent() {
   return (
     <PageLayout
-      title="Checkout"
-      description="Confirma tu reserva antes del pago."
+      title='Checkout'
+      description='Revisá pasajeros, asientos y montos antes de cobrar.'
       showSearch={false}
     >
       <CheckoutPage />

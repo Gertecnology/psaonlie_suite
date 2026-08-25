@@ -1,15 +1,15 @@
 import * as React from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
 import { DataTable, useTablaServidor } from '@/components/data-table'
-import { aplanarJerarquia, esEmpresa } from '../models/agencia.model'
+import { PageLayout } from '@/components/layout/page-layout'
 import { useAgencias } from '../hooks/use-agencias'
 import { useHijas } from '../hooks/use-hijas'
-import { crearColumnasAgencias } from './columns'
+import { aplanarJerarquia, esEmpresa } from '../models/agencia.model'
 import { AgenciaBulkActions } from './agencia-bulk-actions'
 import { AgenciaDialogs } from './agencia-dialogs'
 import { AgenciaPrimaryButtons } from './agencia-primary-buttons'
 import { AgenciasToolbar } from './agencias-toolbar'
+import { crearColumnasAgencias } from './columns'
 
 /**
  * Companies and their agencies.
@@ -28,7 +28,7 @@ export function AgenciasPage() {
   // Qué empresas tienen sus agencias desplegadas. Es estado de la vista, no del
   // servidor, así que no va a la URL: el listado siempre trae las dos ramas.
   const [expandidas, setExpandidas] = React.useState<ReadonlySet<string>>(
-    () => new Set(),
+    () => new Set()
   )
 
   const cambiarActivo = (valor: boolean | undefined) => {
@@ -73,19 +73,19 @@ export function AgenciasPage() {
         expandidas,
         onToggleExpandir: alternarExpandir,
       }),
-    [expandidas, alternarExpandir],
+    [expandidas, alternarExpandir]
   )
 
   const filas = React.useMemo(
     () => aplanarJerarquia(data?.items ?? [], expandidas, hijasCompletas),
-    [data?.items, expandidas, hijasCompletas],
+    [data?.items, expandidas, hijasCompletas]
   )
 
   return (
     <>
       <PageLayout
         title='Empresas y agencias'
-        description='Gestiona las empresas de transporte y sus agencias.'
+        description='Las empresas que operan rutas, sus agencias y la comisión que cobra cada una.'
         actions={<AgenciaPrimaryButtons />}
       >
         <DataTable
@@ -96,6 +96,8 @@ export function AgenciasPage() {
           pagination={tabla.pagination}
           onPaginationChange={tabla.onPaginationChange}
           caption='Listado de empresas de transporte y sus agencias'
+          emptyMessage='No hay empresas ni agencias que coincidan.'
+          emptyHint='Creá la primera con «Crear empresa»; después vas a poder colgarle agencias.'
           // Lo que se necesita para operar: nombre, estado, stock, comisión y
           // cargo. Los datos de la conexión al web service se ven al editar la
           // empresa, que es donde se cambian.

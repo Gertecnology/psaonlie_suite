@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
 import { DataTable, useTablaServidor } from '@/components/data-table'
+import { PageLayout } from '@/components/layout/page-layout'
 import UsersProvider from '../context/users-context'
 import { useUsers } from '../hooks/use-users'
 import { columns } from './users-columns'
@@ -50,8 +50,8 @@ export function UsersPage() {
   return (
     <UsersProvider>
       <PageLayout
-        title='Lista de usuarios'
-        description='Gestiona tus usuarios y sus roles aquí.'
+        title='Usuarios'
+        description='Quiénes operan el panel y qué puede hacer cada uno según su rol.'
         actions={<UsersPrimaryButtons />}
       >
         <DataTable
@@ -63,6 +63,7 @@ export function UsersPage() {
           onPaginationChange={tabla.onPaginationChange}
           caption='Listado de usuarios del panel y sus roles'
           emptyMessage='No se encontraron usuarios.'
+          emptyHint='Sumá el primero con «Agregar usuario»; va a recibir un correo para verificar su cuenta.'
           isLoading={isLoading}
           isFetching={isFetching}
           error={error}

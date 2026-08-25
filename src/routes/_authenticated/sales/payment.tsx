@@ -9,8 +9,8 @@ export const Route = createFileRoute('/_authenticated/sales/payment')({
 function RouteComponent() {
   return (
     <PageLayout
-      title="Procesar Pago"
-      description="Confirma tu reserva y procede con el pago."
+      title='Procesar Pago'
+      description='Cobrá y emití los boletos; el pasajero recibe todo por correo.'
       showSearch={false}
     >
       <PaymentPage />

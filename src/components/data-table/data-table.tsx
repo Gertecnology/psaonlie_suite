@@ -77,7 +77,7 @@ export interface DataTableProps<TData> {
   /** Rendered between the toolbar and the table, e.g. a bulk-action bar. */
   renderBulkActions?: (
     seleccionadas: TData[],
-    limpiarSeleccion: () => void,
+    limpiarSeleccion: () => void
   ) => React.ReactNode
 
   /**
@@ -122,6 +122,13 @@ export interface DataTableProps<TData> {
   emptyMessage?: string
 
   /**
+   * Segunda línea del estado vacío. El mensaje dice que no hay nada;
+   * el hint enseña qué hacer al respecto: crear el primer registro o
+   * limpiar el filtro que está escondiendo los datos.
+   */
+  emptyHint?: string
+
+  /**
    * Columns hidden until the user asks for them, by id.
    *
    * A list is read to answer a question, and nine columns of everything answer
@@ -152,15 +159,16 @@ export function DataTable<TData>({
   resetSelectionOn = [],
   caption,
   emptyMessage = 'No hay resultados.',
+  emptyHint,
   columnasOcultasPorDefecto,
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
-    () =>
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(() =>
       Object.fromEntries(
-        (columnasOcultasPorDefecto ?? []).map((id) => [id, false]),
-      ),
-  )
+        (columnasOcultasPorDefecto ?? []).map((id) => [id, false])
+      )
+    )
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   /**
@@ -175,7 +183,9 @@ export function DataTable<TData>({
   const columnasOrdenadas = React.useMemo(() => {
     if (!columns?.length) return columns
 
-    const indiceAcciones = columns.findIndex((columna) => columna.id === 'actions')
+    const indiceAcciones = columns.findIndex(
+      (columna) => columna.id === 'actions'
+    )
     if (indiceAcciones === -1 || indiceAcciones === columns.length - 1) {
       return columns
     }
@@ -237,7 +247,7 @@ export function DataTable<TData>({
         <div
           className={cn(
             'rounded-md border transition-opacity',
-            isFetching && !isLoading && 'opacity-60',
+            isFetching && !isLoading && 'opacity-60'
           )}
         >
           <Table>
@@ -274,7 +284,7 @@ export function DataTable<TData>({
                           ? null
                           : flexRender(
                               columna.columnDef.header,
-                              encabezado.getContext(),
+                              encabezado.getContext()
                             )}
                         {columna.columnDef.meta?.unidad && (
                           <span className='text-muted-foreground block text-xs font-normal'>
@@ -309,7 +319,7 @@ export function DataTable<TData>({
                       >
                         {flexRender(
                           celda.column.columnDef.cell,
-                          celda.getContext(),
+                          celda.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -322,6 +332,11 @@ export function DataTable<TData>({
                     className='text-muted-foreground h-24 text-center'
                   >
                     {emptyMessage}
+                    {emptyHint && (
+                      <span className='mt-1 block text-xs opacity-80'>
+                        {emptyHint}
+                      </span>
+                    )}
                   </TableCell>
                 </TableRow>
               )}

@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { PageLayout } from '@/components/layout/page-layout'
 import { DataTable, useTablaServidor } from '@/components/data-table'
-import { type ClienteConEstadisticas } from '../models/clients.model'
+import { PageLayout } from '@/components/layout/page-layout'
 import { ClientsProvider } from '../context/clients-context'
 import { useClientesList } from '../hooks/use-clients'
+import { type ClienteConEstadisticas } from '../models/clients.model'
 import { ClientDetailsScreen } from './client-details-screen'
 import { crearColumnasClientes } from './clients-columns'
 import { ClientsDialogs } from './clients-dialogs'
@@ -39,7 +39,7 @@ export function ClientsPage() {
 
   const columnas = React.useMemo(
     () => crearColumnasClientes({ onVerDetalles: verDetalles }),
-    [verDetalles],
+    [verDetalles]
   )
 
   const filas = React.useMemo(() => data?.data ?? [], [data?.data])
@@ -59,8 +59,8 @@ export function ClientsPage() {
   return (
     <ClientsProvider>
       <PageLayout
-        title='Lista de Clientes'
-        description='Gestiona tus clientes y sus estadísticas de ventas aquí.'
+        title='Clientes'
+        description='Las personas que compran pasajes, con su historial de compras.'
         actions={<ClientsPrimaryButtons />}
       >
         {/* Carga y error se dibujan dentro de la tabla, no en lugar de la
@@ -75,6 +75,7 @@ export function ClientsPage() {
           onPaginationChange={tabla.onPaginationChange}
           caption='Listado de clientes y sus estadísticas de compras'
           emptyMessage='No se encontraron clientes.'
+          emptyHint='Los clientes aparecen solos con cada venta; también podés cargarlos con «Nuevo Cliente».'
           isLoading={isLoading}
           isFetching={isFetching}
           error={error}

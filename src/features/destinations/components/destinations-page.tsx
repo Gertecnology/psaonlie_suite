@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { IconPlus } from '@tabler/icons-react'
-import { PageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { DataTable, useTablaServidor } from '@/components/data-table'
+import { PageLayout } from '@/components/layout'
 import { useDeleteDestination } from '../hooks/use-delete-destination'
 import { useGetDestinations } from '../hooks/use-get-destinations'
 import { useDestinationDeleteDialog } from '../store/use-destination-delete-dialog'
@@ -78,7 +78,7 @@ export function DestinationsPage() {
   return (
     <PageLayout
       title='Destinos'
-      description='Gestiona los destinos de transporte y sus paradas homologadas.'
+      description='Las ciudades donde se vende pasaje y las paradas homologadas de cada una.'
       showSearch
       actions={
         // Crear un destino es una página con dirección propia, no un cajón:
@@ -100,6 +100,7 @@ export function DestinationsPage() {
         onPaginationChange={tabla.onPaginationChange}
         caption='Listado de destinos y sus paradas homologadas'
         emptyMessage='No hay destinos que coincidan con la búsqueda.'
+        emptyHint='Creá el primero con «Crear destino» y asignale sus paradas homologadas.'
         isLoading={isLoading}
         isFetching={isFetching}
         error={error}

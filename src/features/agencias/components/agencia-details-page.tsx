@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { AlertCircle, ArrowLeft, Pencil } from 'lucide-react'
-import { PageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
+import { PageLayout } from '@/components/layout'
 import { useAgencia } from '../hooks/use-agencias'
 import { AgenciaDetailsHeader } from './agencia-details-header'
 import { AgenciaParadasTable } from './agencia-paradas-table'
@@ -25,7 +25,7 @@ export function AgenciaDetailsPage({ agenciaId }: AgenciaDetailsPageProps) {
   return (
     <PageLayout
       title={agencia?.nombre ?? 'Empresa'}
-      description='Datos de la empresa y sus paradas homologadas.'
+      description='La comisión, la conexión al web service y las paradas homologadas de la empresa.'
       showSearch={false}
       actions={
         <div className='flex items-center gap-2'>
