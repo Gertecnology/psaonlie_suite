@@ -25,7 +25,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGEN: ghcr.io/${{ github.repository }}
+  # En minusculas y literal, no `${{ github.repository }}`: la organizacion se
+  # escribe `Gertecnology` y GHCR rechaza cualquier tag con mayusculas
+  # ("repository name must be lowercase").
+  IMAGEN: ghcr.io/gertecnology/psaonlie_suite
   CONTENEDOR: pasaje-online-suite
   # nginx busca el panel en el 3002, y el contenedor sirve en el 3002.
   # El compose del servidor tenía "3000:3002" y el 3000 estaba ocupado por otro
