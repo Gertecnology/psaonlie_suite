@@ -1,5 +1,7 @@
 # Build stage
-FROM node:20-alpine AS builder
+# Node 22 y no 20: pnpm 11 usa `node:sqlite`, que recien existe desde Node 22.
+# Con la 20 el install muere con ERR_UNKNOWN_BUILTIN_MODULE.
+FROM node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -25,7 +27,7 @@ COPY .env .env
 RUN pnpm build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Set working directory
 WORKDIR /app
