@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { IconFileSpreadsheet } from '@tabler/icons-react'
-import { aFechaISOLocal, aParametrosApi, describirPeriodo } from '@/lib/periodo'
+import { IconBook, IconFileSpreadsheet } from '@tabler/icons-react'
+import { aFechaISOLocal, aParametrosApi } from '@/lib/periodo'
 import { Button } from '@/components/ui/button'
 import { PageLayout } from '@/components/layout/page-layout'
 import { ComposicionMetodosPago } from './components/composicion-metodos-pago'
@@ -9,10 +9,12 @@ import { EstadoError } from './components/estados'
 import { FiltrosPanel } from './components/filtros-panel'
 import { GraficoTendencia } from './components/grafico-tendencia'
 import { PanelAlertas } from './components/panel-alertas'
+import { PeriodoSinMovimiento } from './components/periodo-sin-movimiento'
 import { RankingEmpresas } from './components/ranking-empresas'
 import { RankingRutas } from './components/ranking-rutas'
 import { TablaVentas } from './components/tabla-ventas'
 import { TarjetaSeccion } from './components/tarjeta-seccion'
+import { TransferenciasEmpresas } from './components/transferencias-empresas'
 import { useComparativo } from './hooks/use-estadisticas'
 import { useFiltrosPanel } from './hooks/use-filtros-panel'
 import { useVentas } from './hooks/use-ventas'
@@ -51,6 +53,16 @@ export default function Dashboard() {
     agenciaId: filtros.agenciaId,
   }
 
+  // Un período sin ventas ni reservas no apila ceros: se dice una vez y la
+  // pantalla entera cede el lugar a las alertas, que son lo que importa en
+  // un día tranquilo.
+  const sinMovimiento =
+    !error &&
+    !cargando &&
+    !!actual?.generales &&
+    actual.generales.montoCompletado === 0 &&
+    actual.generales.montoPendiente === 0
+
   const { fechaDesde, fechaHasta } = aParametrosApi(filtros.periodo)
   const ultimasVentas = useVentas({
     fechaVentaDesde: fechaDesde,
@@ -64,7 +76,7 @@ export default function Dashboard() {
   return (
     <PageLayout
       title='Panel de control'
-      description={`Ventas, comisiones y alertas operativas · ${describirPeriodo(filtros.periodo)}`}
+      description='Ventas, comisiones y alertas operativas.'
       showSearch={false}
     >
       <FiltrosPanel filtros={filtros}>
@@ -83,6 +95,8 @@ export default function Dashboard() {
           titulo='No se pudieron cargar las estadísticas'
           error={error}
         />
+      ) : sinMovimiento ? (
+        <PeriodoSinMovimiento filtros={filtros} />
       ) : (
         <>
           <DesgloseDinero
@@ -90,6 +104,25 @@ export default function Dashboard() {
             generalesAnterior={anterior?.generales}
             cargando={cargando}
           />
+
+          <TarjetaSeccion
+            titulo='A transferir a las empresas'
+            descripcion='Lo que lo cobrado en el período le deja a cada empresa: el pasaje menos la comisión. Para el saldo acumulado, el kardex.'
+            acciones={
+              <Button asChild variant='ghost' size='sm'>
+                <Link to='/reports/kardex-saldos' search={busqueda}>
+                  <IconBook className='size-4' aria-hidden />
+                  Abrir kardex
+                </Link>
+              </Button>
+            }
+            refrescando={refrescando}
+          >
+            <TransferenciasEmpresas
+              empresas={actual?.porAgencia}
+              cargando={cargando}
+            />
+          </TarjetaSeccion>
 
           <div className='mb-6 grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'>
             <TarjetaSeccion
@@ -118,7 +151,7 @@ export default function Dashboard() {
             </TarjetaSeccion>
           </div>
 
-          <div className='mb-6 grid gap-6'>
+          <div className='mb-6 grid gap-6 2xl:grid-cols-2'>
             <TarjetaSeccion
               titulo='Por empresa'
               descripcion='Cuánto le queda a cada empresa y cuánto es comisión nuestra.'
@@ -144,7 +177,7 @@ export default function Dashboard() {
             descripcion='Las ocho más recientes del período.'
             acciones={
               <Button asChild variant='ghost' size='sm'>
-                <Link to='/reports' search={{ ...busqueda, informe: 'ventas' }}>
+                <Link to='/reports/estado-ventas' search={busqueda}>
                   Ver todas
                 </Link>
               </Button>

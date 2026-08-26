@@ -117,7 +117,7 @@ export const CLAVE_OTRAS = '__otras__'
  */
 export function armarFilasEmpresas(
   empresas: EstadisticasPorAgencia[],
-  maximo = MAXIMO_SERIES
+  maximo: number = MAXIMO_SERIES
 ): FilaRankingEmpresa[] {
   const ordenadas = empresas
     .map<FilaRankingEmpresa>((e) => ({
