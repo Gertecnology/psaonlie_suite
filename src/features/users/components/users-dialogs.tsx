@@ -1,50 +1,28 @@
 import { useUsers } from '../context/users-context'
-import { UsersActionDialog } from './users-action-dialog'
 import { UsersDeleteDialog } from './users-delete-dialog'
 
+/**
+ * What is left of the list's overlays once the form moved to its own page:
+ * the delete confirmation, which is a decision and not data to fill in.
+ */
 export function UsersDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useUsers()
+
+  if (!currentRow) return null
+
   return (
-    <>
-      <UsersActionDialog
-        key='user-add'
-        open={open === 'add'}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setOpen(null)
-          }
-        }}
-      />
+    <UsersDeleteDialog
+      key={`user-delete-${currentRow.id}`}
+      open={open === 'delete'}
+      onOpenChange={(isOpen) => {
+        if (isOpen) return
 
-      {currentRow && (
-        <>
-          <UsersActionDialog
-            key={`user-edit-${currentRow.id}`}
-            open={open === 'edit'}
-            onOpenChange={(isOpen) => {
-              if (!isOpen) {
-                setOpen(null)
-                setTimeout(() => {
-                  setCurrentRow(null)
-                }, 500)
-              }
-            }}
-            currentRow={currentRow}
-          />
-
-          <UsersDeleteDialog
-            key={`user-delete-${currentRow.id}`}
-            open={open === 'delete'}
-            onOpenChange={() => {
-              setOpen('delete')
-              setTimeout(() => {
-                setCurrentRow(null)
-              }, 500)
-            }}
-            currentRow={currentRow}
-          />
-        </>
-      )}
-    </>
+        setOpen(null)
+        // Se espera a que termine la animación de cierre: si la fila se borra
+        // antes, el diálogo se queda un instante sin email que mostrar.
+        setTimeout(() => setCurrentRow(null), 500)
+      }}
+      currentRow={currentRow}
+    />
   )
 }

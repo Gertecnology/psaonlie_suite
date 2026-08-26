@@ -1,265 +1,216 @@
-/* eslint-disable no-console */
 import { io, Socket } from 'socket.io-client'
-import { refreshToken } from '@/services/auth'
+import {
+  renovarSesion,
+  renovarSesionSiHaceFalta,
+  sesionAgotada,
+  reiniciarSesion,
+} from '@/services/sesion'
 
-const API_URL = "ws://168.231.100.191:4001/notifications"
+/**
+ * The single notifications socket.
+ *
+ * ## Why this was rewritten
+ *
+ * The previous version opened a new socket on every failure and never closed
+ * the old one, so the backend log filled with `jwt expired` from connections
+ * nobody could reach any more. Three things caused it, and each is answered
+ * below by a specific choice:
+ *
+ * 1. **The token was frozen at birth.** `auth: { token }` is read once, when
+ *    the socket is created. socket.io then reconnects forever on its own,
+ *    replaying that same string long after it expired. Passing `auth` as a
+ *    *function* makes socket.io ask for the token on every attempt, so a
+ *    reconnection always carries the current one.
+ *
+ * 2. **Every failure spawned a new socket.** `forceNew: true` plus a hand
+ *    written retry loop meant `this.socket` was overwritten while the previous
+ *    instance stayed alive and kept retrying, unreachable. There is now exactly
+ *    one socket for the lifetime of the session, and socket.io's own backoff
+ *    does the retrying.
+ *
+ * 3. **One failure triggered three retries.** `on('error')`, `onAny()` (which
+ *    matched any event whose name contained "error") and
+ *    `on('disconnect') -> handleReconnect()` each started an independent
+ *    refresh-and-reconnect chain. Only one path handles auth failure now, and
+ *    concurrent callers share a single in-flight refresh.
+ */
+
+/**
+ * The socket follows the API URL — same backend, `/notifications` namespace.
+ * `VITE_SOCKET_URL` overrides it.
+ */
+function resolverUrl(): string {
+  const explicita = import.meta.env.VITE_SOCKET_URL
+  if (explicita) return explicita
+  const api = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  return `${api.replace(/^http/, 'ws').replace(/\/+$/, '')}/notifications`
+}
+
+const URL_SOCKET = resolverUrl()
+
+
+type Escucha = (...args: unknown[]) => void
 
 class SocketService {
   private socket: Socket | null = null
-  private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 1000
-  private isConnecting = false
-  private connectionPromise: Promise<Socket> | null = null
-  private listeners: Map<string, (...args: unknown[]) => void> = new Map()
 
-  connect(accessToken: string): Promise<Socket> {
-    // Si ya hay una conexión activa, devolverla
-    if (this.socket?.connected) {
-      return Promise.resolve(this.socket)
+  /** Registered by the app, re-applied whenever the socket is (re)built. */
+  private escuchas = new Map<string, Set<Escucha>>()
+
+  // ── conexión ───────────────────────────────────────────────────────────
+
+  async connect(accessToken?: string): Promise<Socket> {
+    if (accessToken) {
+      // An explicit token means a new session: whatever failed before no
+      // longer applies.
+      reiniciarSesion()
     }
 
-    // Si hay una conexión en progreso, devolver la promesa existente
-    if (this.isConnecting && this.connectionPromise) {
-      return this.connectionPromise
+    await renovarSesionSiHaceFalta()
+
+    if (this.socket) {
+      // One socket per session. If the server dropped it, reopen that same
+      // one instead of building another.
+      if (!this.socket.connected) this.socket.connect()
+      return this.socket
     }
 
-    // Resetear intentos de reconexión al conectar manualmente
-    this.reconnectAttempts = 0
-    this.isConnecting = true
-    this.connectionPromise = new Promise((resolve, reject) => {
-      const initializeConnection = async () => {
-
-        // Verificar si el token está próximo a expirar antes de conectar
-        const tokenValid = await this.checkAndRefreshToken()
-        if (!tokenValid) {
-          console.error('No se pudo refrescar el token antes de conectar')
-          this.isConnecting = false
-          this.connectionPromise = null
-          reject(new Error('Token inválido'))
-          return
-        }
-
-        // Usar el token actualizado del localStorage
-        const currentToken = localStorage.getItem('accessToken') || accessToken
-
-        this.socket = io(API_URL, {
-          auth: {
-            token: currentToken
-          },
-          extraHeaders: {
-            Authorization: currentToken
-          },
-          withCredentials: true,
-          transports: ['websocket'],
-          timeout: 20000,
-          forceNew: true
-        })
-
-      this.socket.on('connect', () => {
-        this.reconnectAttempts = 0
-        this.isConnecting = false
-        
-        // Re-aplicar listeners guardados
-        this.reapplyListeners()
-        
-        resolve(this.socket!)
-      })
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Error de conexión Socket:', error)
-        this.isConnecting = false
-        this.connectionPromise = null
-        reject(error)
-      })
-
-      this.socket.on('disconnect', (reason) => {
-        console.log('Socket desconectado:', reason)
-        this.isConnecting = false
-        this.connectionPromise = null
-        
-        // Solo reconectar si no fue una desconexión intencional
-        if (reason !== 'io client disconnect' && reason !== 'io server disconnect') {
-          this.handleReconnect()
-        } else {
-          console.log('Desconexión intencional, no reconectando automáticamente')
-        }
-      })
-
-      this.socket.on('error', async (error) => {
-        console.error('Error Socket:', error)
-        
-        // Si el error es de JWT expirado, intentar refrescar el token
-        if (error && typeof error === 'object' && 'details' in error && error.details === 'jwt expired') {
-          const refreshed = await this.refreshTokenAndReconnect()
-          if (!refreshed) {
-            console.error('No se pudo refrescar el token, desconectando socket')
-            this.socket?.disconnect()
-          }
-        }
-      })
-
-      // También escuchar eventos de autenticación específicos
-      this.socket.on('auth_error', async (error) => {
-        console.error('Auth Error Socket:', error)
-        
-        if (error && typeof error === 'object' && 'details' in error && error.details === 'jwt expired') {
-          const refreshed = await this.refreshTokenAndReconnect()
-          if (!refreshed) {
-            console.error('No se pudo refrescar el token, desconectando socket')
-            this.socket?.disconnect()
-          }
-        }
-      })
-
-      // Escuchar cualquier evento que pueda contener errores de autenticación
-      this.socket.onAny((eventName, ...args) => {
-        if (eventName.includes('error') || eventName.includes('auth')) {
-          
-          // Buscar errores de JWT en cualquier argumento
-          for (const arg of args) {
-            if (arg && typeof arg === 'object' && 'details' in arg && arg.details === 'jwt expired') {
-              this.refreshTokenAndReconnect()
-              break
-            }
-          }
-        }
-      })
-      }
-      
-      // Ejecutar la inicialización
-      initializeConnection()
+    this.socket = io(URL_SOCKET, {
+      // A function, not an object: socket.io calls it on every attempt, so a
+      // reconnection two hours from now carries the token of two hours from
+      // now. This is the fix for the `jwt expired` flood.
+      auth: (cb) => cb({ token: localStorage.getItem('accessToken') ?? '' }),
+      transports: ['websocket'],
+      timeout: 20_000,
+      // socket.io's backoff, with a ceiling. The hand-written retry loop this
+      // replaces had none, and raced against this one.
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1_000,
+      reconnectionDelayMax: 30_000,
     })
 
-    return this.connectionPromise
+    this.socket.on('disconnect', (motivo) => {
+      // `io server disconnect` is the gateway hanging up on us, which is what
+      // it does when the token does not verify. socket.io deliberately does
+      // NOT retry that case — the server said no — so this is the one place
+      // that has to act, and it acts once.
+      if (motivo === 'io server disconnect') void this.reintentarTrasRechazo()
+    })
+
+    this.socket.on('connect_error', (error) => {
+      if (esFalloDeAutenticacion(error)) void this.reintentarTrasRechazo()
+    })
+
+    this.aplicarEscuchas()
+
+    return this.socket
   }
 
-  // Método para agregar listeners de forma persistente
-  addListener(event: string, callback: (...args: unknown[]) => void) {
-    this.listeners.set(event, callback)
-    
-    // Si el socket ya está conectado, aplicar inmediatamente
-    if (this.socket?.connected) {
-      this.socket.on(event, callback)
+  /**
+   * The gateway rejected us. Refresh the token and try that same socket again.
+   *
+   * There is no loop here: `renovar()` is deduplicated and, once it fails,
+   * `autenticacionAgotada` stops any further attempt.
+   */
+  private async reintentarTrasRechazo(): Promise<void> {
+    if (sesionAgotada() || !this.socket) return
+
+    const renovado = await renovarSesion()
+    if (!renovado) {
+      this.socket?.close()
+      return
     }
+    // `auth` is re-read on connect, so this carries the new token.
+    this.socket?.connect()
   }
 
-  // Método para remover listeners
-  removeListener(event: string, callback?: (...args: unknown[]) => void) {
-    this.listeners.delete(event)
-    
-    if (this.socket) {
-      if (callback) {
-        this.socket.off(event, callback)
-      } else {
-        this.socket.off(event)
-      }
-    }
+  disconnect() {
+    // `close()` and not `disconnect()`: it also stops socket.io's reconnection
+    // engine. `disconnect()` alone left the instance retrying in the
+    // background, which is how the orphans accumulated.
+    this.socket?.close()
+    this.socket = null
   }
 
-  // Re-aplicar todos los listeners guardados
-  private reapplyListeners() {
-    if (this.socket) {
-      this.listeners.forEach((callback, event) => {
-        this.socket!.on(event, callback)
-      })
-    }
-  }
+  async ensureConnection(): Promise<boolean> {
+    if (this.socket?.connected) return true
+    if (sesionAgotada()) return false
+    if (!localStorage.getItem('accessToken')) return false
 
-  // Método para refrescar el token y reconectar
-  private async refreshTokenAndReconnect() {
     try {
-      const storedRefreshToken = localStorage.getItem('refreshToken')
-      
-      if (!storedRefreshToken) {
-        console.error('No hay refresh token disponible')
-        return false
-      }
-
-      const data = await refreshToken(storedRefreshToken)
-      
-      // Actualizar tokens en localStorage
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      
-      
-      // Desconectar socket actual
-      if (this.socket) {
-        this.socket.disconnect()
-        this.socket = null
-      }
-      
-      // Reconectar con nuevo token
-      await this.connect(data.accessToken)
+      await this.connect()
       return true
-    } catch (error) {
-      console.error('Error al refrescar token:', error)
+    } catch {
       return false
     }
   }
 
-  private async handleReconnect() {
-    // No reconectar si ya estamos conectados
-    if (this.socket?.connected) {
+  /** Rebuild from scratch. For the "reconnect" button, not for error handling. */
+  async forceReconnect(): Promise<boolean> {
+    this.disconnect()
+    reiniciarSesion()
+    return this.ensureConnection()
+  }
+
+  // ── token ──────────────────────────────────────────────────────────────
+
+  /**
+   * Renew the access token. Public because a UI action may ask for it.
+   *
+   * It does not touch the socket: a live connection was authenticated at its
+   * handshake and stays valid: tearing it down to "apply" a new token is what
+   * the old `refreshTokenAndReconnect` did, and it dropped a working
+   * connection every two minutes.
+   */
+  async refreshToken(): Promise<boolean> {
+    return renovarSesion()
+  }
+
+  async refreshTokenIfNeeded(): Promise<boolean> {
+    return renovarSesionSiHaceFalta()
+  }
+
+  // ── escuchas ───────────────────────────────────────────────────────────
+
+  addListener(evento: string, callback: Escucha) {
+    // A Set, not one callback per event: the previous Map kept only the last
+    // registration, so a second subscriber silently replaced the first.
+    const registradas = this.escuchas.get(evento) ?? new Set<Escucha>()
+    registradas.add(callback)
+    this.escuchas.set(evento, registradas)
+    this.socket?.on(evento, callback)
+  }
+
+  removeListener(evento: string, callback?: Escucha) {
+    if (callback) {
+      this.escuchas.get(evento)?.delete(callback)
+      this.socket?.off(evento, callback)
       return
     }
+    this.escuchas.delete(evento)
+    this.socket?.off(evento)
+  }
 
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++
-      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
-      
-      console.log(`Programando reconexión en ${delay}ms (intento ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
-      
-      setTimeout(async () => {
-        // Verificar nuevamente antes de reconectar
-        if (this.socket?.connected) {
-          console.log('Socket conectado durante el delay, cancelando reconexión')
-          return
-        }
+  off(evento: string, callback?: Escucha) {
+    this.removeListener(evento, callback)
+  }
 
-        console.log(`Intentando reconectar Socket (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
-        
-        try {
-          // Intentar refrescar el token primero
-          const tokenRefreshed = await this.refreshTokenAndReconnect()
-          
-          if (!tokenRefreshed) {
-            // Si no se pudo refrescar, usar el token actual
-            const token = localStorage.getItem('accessToken')
-            if (token) {
-              console.log('Usando token actual para reconexión')
-              await this.connect(token)
-            } else {
-              console.error('No hay token disponible para reconectar')
-              // Resetear intentos para permitir más intentos cuando haya token
-              this.reconnectAttempts = 0
-            }
-          }
-        } catch (error) {
-          console.error('Error en reconexión:', error)
-          // Si falla, programar otro intento
-          if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.handleReconnect()
-          }
-        }
-      }, delay)
-    } else {
-      console.error('Máximo número de intentos de reconexión alcanzado, reintentando en 30 segundos...')
-      // Resetear intentos después de un tiempo para permitir reconexión futura
-      setTimeout(() => {
-        this.reconnectAttempts = 0
-        console.log('Reiniciando intentos de reconexión')
-      }, 30000)
+  onNewNotification(callback: (dato: unknown) => void) {
+    this.addListener('new-notification', callback as Escucha)
+  }
+
+  private aplicarEscuchas() {
+    if (!this.socket) return
+    for (const [evento, registradas] of this.escuchas) {
+      for (const callback of registradas) this.socket.on(evento, callback)
     }
   }
 
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect()
-      this.socket = null
-      this.reconnectAttempts = 0
-    }
+  // ── estado ─────────────────────────────────────────────────────────────
+
+  emit(evento: string, dato?: unknown) {
+    if (this.socket?.connected) this.socket.emit(evento, dato)
   }
 
   getSocket(): Socket | null {
@@ -267,169 +218,23 @@ class SocketService {
   }
 
   isConnected(): boolean {
-    return this.socket?.connected || false
+    return this.socket?.connected ?? false
   }
 
-  // Escuchar el evento específico que viste en Postman
-  onNewNotification(callback: (data: unknown) => void) {
-    if (this.socket) {
-      this.socket.on('new-notification', callback)
-    }
-  }
-
-  // Método para remover listeners específicos
-  off(event: string, callback?: (...args: unknown[]) => void) {
-    if (this.socket) {
-      this.socket.off(event, callback)
-    }
-  }
-
-  // Método público para refrescar el token
-  async refreshToken(): Promise<boolean> {
-    return await this.refreshTokenAndReconnect()
-  }
-
-  // Método para verificar si el token está próximo a expirar
-  private isTokenNearExpiry(): boolean {
-    const token = localStorage.getItem('accessToken')
-    if (!token) return true
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const expiry = payload.exp * 1000
-      const now = Date.now()
-      const timeLeft = expiry - now
-      
-      // Refrescar si quedan menos de 5 minutos
-      return timeLeft < 5 * 60 * 1000
-    } catch {
-      return true
-    }
-  }
-
-  // Método para verificar y refrescar token preventivamente
-  private async checkAndRefreshToken(): Promise<boolean> {
-    if (this.isTokenNearExpiry()) {
-      console.log('Token próximo a expirar, refrescando preventivamente...')
-      return await this.refreshTokenAndReconnect()
-    }
-    return true
-  }
-
-  // Método para emitir eventos al servidor
-  emit(event: string, data?: unknown) {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit(event, data)
-    }
-  }
-
-  // Método para mantener la conexión activa
-  keepAlive() {
-    if (this.socket && this.socket.connected) {
-      // Enviar un ping para mantener la conexión activa
-      this.socket.emit('ping')
-      console.log('Ping enviado para mantener conexión activa')
-    } else {
-      console.log('Socket no conectado, no se puede enviar ping')
-    }
-  }
-
-  // Método para verificar y reconectar si es necesario
-  async ensureConnection(): Promise<boolean> {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      console.log('No hay token disponible para conexión')
-      return false
-    }
-
-    if (this.socket?.connected) {
-      console.log('Socket ya está conectado')
-      return true
-    }
-
-    try {
-      console.log('Verificando conexión, reconectando si es necesario...')
-      await this.connect(token)
-      return true
-    } catch (error) {
-      console.error('Error al verificar/conectar socket:', error)
-      return false
-    }
-  }
-
-  // Método para verificar el estado de la conexión
   isConnectionHealthy(): boolean {
-    if (!this.socket) {
-      return false
-    }
-    
-    // Verificar si el socket está conectado y no hay errores recientes
-    return this.socket.connected && !this.socket.disconnected
+    return this.isConnected()
   }
+}
 
-  // Método para forzar reconexión
-  async forceReconnect(): Promise<boolean> {
-    console.log('Forzando reconexión del socket...')
-    
-    // Desconectar primero si hay una conexión existente
-    if (this.socket) {
-      this.socket.disconnect()
-      this.socket = null
-    }
-    
-    // Resetear estado
-    this.isConnecting = false
-    this.connectionPromise = null
-    this.reconnectAttempts = 0
-    
-    // Intentar conectar nuevamente
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      console.error('No hay token disponible para reconexión forzada')
-      return false
-    }
-    
-    try {
-      await this.connect(token)
-      return true
-    } catch (error) {
-      console.error('Error en reconexión forzada:', error)
-      return false
-    }
-  }
+/**
+ * socket.io reports a rejected handshake as a plain `Error`, so the reason
+ * only exists as text. `data` carries whatever the server attached.
+ */
+function esFalloDeAutenticacion(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const mensaje = 'message' in error ? String(error.message) : ''
+  const datos = 'data' in error ? JSON.stringify(error.data) : ''
+  return /jwt|token|auth|unauthorized/i.test(`${mensaje} ${datos}`)
 }
 
 export const socketService = new SocketService()
-
-// Hook simple para conexión
-export const useSocket = () => {
-  const connectSocket = async (accessToken: string) => {
-    try {
-      await socketService.connect(accessToken)
-      return true
-    } catch (error) {
-      console.error('Error al conectar Socket:', error)
-      return false
-    }
-  }
-
-  const disconnectSocket = () => {
-    socketService.disconnect()
-  }
-
-  return {
-    connectSocket,
-    disconnectSocket,
-    socket: socketService.getSocket(),
-    isConnected: socketService.isConnected(),
-    addListener: socketService.addListener.bind(socketService),
-    removeListener: socketService.removeListener.bind(socketService),
-    emit: socketService.emit.bind(socketService),
-    off: socketService.off.bind(socketService),
-    refreshToken: socketService.refreshToken.bind(socketService),
-    keepAlive: socketService.keepAlive.bind(socketService),
-    ensureConnection: socketService.ensureConnection.bind(socketService),
-    isConnectionHealthy: socketService.isConnectionHealthy.bind(socketService),
-    forceReconnect: socketService.forceReconnect.bind(socketService)
-  }
-}

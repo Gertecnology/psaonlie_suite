@@ -1,5 +1,6 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { type Row } from '@tanstack/react-table'
+import { Link } from '@tanstack/react-router'
 import { IconTrash } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,8 +11,8 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useDestinationDialog, useDestinationDeleteDialog } from '../store/use-destination-dialog'
 import { type Destination } from '../models/destination.model'
+import { useDestinationDeleteDialog } from '../store/use-destination-delete-dialog'
 
 interface DataTableRowActionsProps {
   row: Row<Destination>
@@ -20,7 +21,6 @@ interface DataTableRowActionsProps {
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const destination = row.original
 
-  const { openDialog: openEditDialog } = useDestinationDialog()
   const { openDialog: openDeleteDialog } = useDestinationDeleteDialog()
 
   return (
@@ -35,8 +35,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-[160px]'>
-        <DropdownMenuItem onClick={() => openEditDialog('edit', { ...destination, id: destination.id, paradasHomologadasIds: destination.paradasHomologadas?.map((p) => p.id) || [] })}>
-          Editar
+        {/* Un enlace y no un `onClick`: se puede abrir en otra pestaña, se
+            puede copiar, y el formulario tiene una dirección propia. */}
+        <DropdownMenuItem asChild>
+          <Link
+            to='/destinations/$id/editar'
+            params={{ id: destination.id }}
+          >
+            Editar
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => openDeleteDialog(destination.id)}>

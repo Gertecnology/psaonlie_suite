@@ -1,36 +1,20 @@
-// Components
-export { ReportsPage } from './components/reports-page'
-export { ExportFiltersComponent } from './components/export-filters'
-export { PreviewTable } from './components/preview-table'
-export { FiltersModal } from './components/filters-modal'
-export { VentasPreviewTable } from './components/ventas-preview-table'
-
-// Hooks
-export { useExportReports } from './hooks/use-export-reports'
-export { usePreviewReports } from './hooks/use-preview-reports'
-
-// Services
-export { exportVentas, downloadFile } from './services/reports.service'
-export { getPreviewData, getTotalCount } from './services/preview.service'
-
-// Models
-export type {
-  EstadoPago,
-  EstadoVenta,
-  EstadoAsientos,
-  MetodoPago,
-  FormatoExportacion,
-  SortBy,
-  SortOrder,
-  ExportFilters,
-} from './models/reports.model'
-
+/**
+ * Public surface of the reports section.
+ *
+ * The screens are not re-exported: every report is its own route, and each
+ * route file imports the one component it renders. A barrel would put all
+ * eleven back into a single module and undo the split — the whole reason the
+ * section stopped being one page is that opening any report loaded the code
+ * for every other.
+ */
 export {
-  ESTADO_PAGO_OPTIONS,
-  ESTADO_VENTA_OPTIONS,
-  ESTADO_ASIENTOS_OPTIONS,
-  METODO_PAGO_OPTIONS,
-  FORMATO_OPTIONS,
-  SORT_BY_OPTIONS,
-  SORT_ORDER_OPTIONS,
-} from './models/reports.model'
+  INFORMES,
+  esquemaFiltrosInforme,
+  estaGenerado,
+  informePorRuta,
+  rutaApi,
+  type DefinicionInforme,
+  type FiltrosInforme,
+  type IdInforme,
+  type PeriodoInforme,
+} from './models/informe.model'

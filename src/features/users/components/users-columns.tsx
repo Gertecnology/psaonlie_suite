@@ -9,8 +9,9 @@ import {
   verificationStatusColors,
 } from '../data/data'
 import { User } from '../models/user'
-import { DataTableColumnHeader } from './data-table-column-header'
+import { DataTableColumnHeader } from '@/components/data-table'
 import { DataTableRowActions } from './data-table-row-actions'
+import { formatearFechaCorta, formatearFechaHora } from '@/lib/formato'
 
 export const columns: ColumnDef<User>[] = [
   {
@@ -154,14 +155,9 @@ export const columns: ColumnDef<User>[] = [
       <DataTableColumnHeader column={column} title='Fecha de Creación' />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'))
       return (
         <div className='text-sm'>
-          {date.toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          })}
+          {formatearFechaCorta(row.getValue('createdAt'))}
         </div>
       )
     },
@@ -178,17 +174,8 @@ export const columns: ColumnDef<User>[] = [
         return <span className='text-muted-foreground'>Nunca</span>
       }
 
-      const date = new Date(lastLoginAt)
       return (
-        <div className='text-sm'>
-          {date.toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </div>
+        <div className='text-sm'>{formatearFechaHora(lastLoginAt)}</div>
       )
     },
     enableSorting: false,

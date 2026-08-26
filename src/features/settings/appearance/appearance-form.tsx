@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form'
 import { ChevronDownIcon } from '@radix-ui/react-icons'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { fonts } from '@/config/fonts'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { showSubmittedData } from '@/utils/show-submitted-data'
 import { useFont } from '@/context/font-context'
 import { useTheme } from '@/context/theme-context'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -21,21 +21,26 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 const appearanceFormSchema = z.object({
   theme: z.enum(['light', 'dark'], {
-    required_error: 'Please select a theme.',
+    required_error: 'Seleccioná un tema.',
   }),
   font: z.enum(fonts, {
-    invalid_type_error: 'Select a font',
-    required_error: 'Please select a font.',
+    invalid_type_error: 'Seleccioná una tipografía.',
+    required_error: 'Seleccioná una tipografía.',
   }),
 })
 
 type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
 
+const fontLabels: Record<AppearanceFormValues['font'], string> = {
+  inter: 'Inter',
+  manrope: 'Manrope',
+  system: 'Sistema',
+}
+
 export function AppearanceForm() {
   const { font, setFont } = useFont()
   const { theme, setTheme } = useTheme()
 
-  // This can come from your database or API.
   const defaultValues: Partial<AppearanceFormValues> = {
     theme: theme as 'light' | 'dark',
     font,
@@ -50,7 +55,7 @@ export function AppearanceForm() {
     if (data.font != font) setFont(data.font)
     if (data.theme != theme) setTheme(data.theme)
 
-    showSubmittedData(data)
+    toast.success('Preferencias actualizadas')
   }
 
   return (
@@ -61,20 +66,20 @@ export function AppearanceForm() {
           name='font'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Font</FormLabel>
+              <FormLabel>Tipografía</FormLabel>
               <div className='relative w-max'>
                 <FormControl>
                   <select
                     className={cn(
                       buttonVariants({ variant: 'outline' }),
-                      'w-[200px] appearance-none font-normal capitalize',
+                      'w-[200px] appearance-none font-normal',
                       'dark:bg-background dark:hover:bg-background'
                     )}
                     {...field}
                   >
                     {fonts.map((font) => (
                       <option key={font} value={font}>
-                        {font}
+                        {fontLabels[font]}
                       </option>
                     ))}
                   </select>
@@ -82,7 +87,7 @@ export function AppearanceForm() {
                 <ChevronDownIcon className='absolute top-2.5 right-3 h-4 w-4 opacity-50' />
               </div>
               <FormDescription className='font-manrope'>
-                Set the font you want to use in the dashboard.
+                Elegí la tipografía del panel.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -93,10 +98,8 @@ export function AppearanceForm() {
           name='theme'
           render={({ field }) => (
             <FormItem className='space-y-1'>
-              <FormLabel>Theme</FormLabel>
-              <FormDescription>
-                Select the theme for the dashboard.
-              </FormDescription>
+              <FormLabel>Tema</FormLabel>
+              <FormDescription>Elegí el tema del panel.</FormDescription>
               <FormMessage />
               <RadioGroup
                 onValueChange={field.onChange}
@@ -125,7 +128,7 @@ export function AppearanceForm() {
                       </div>
                     </div>
                     <span className='block w-full p-2 text-center font-normal'>
-                      Light
+                      Claro
                     </span>
                   </FormLabel>
                 </FormItem>
@@ -151,7 +154,7 @@ export function AppearanceForm() {
                       </div>
                     </div>
                     <span className='block w-full p-2 text-center font-normal'>
-                      Dark
+                      Oscuro
                     </span>
                   </FormLabel>
                 </FormItem>
@@ -160,7 +163,7 @@ export function AppearanceForm() {
           )}
         />
 
-        <Button type='submit'>Update preferences</Button>
+        <Button type='submit'>Actualizar preferencias</Button>
       </form>
     </Form>
   )

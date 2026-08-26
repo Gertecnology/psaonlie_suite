@@ -7,35 +7,23 @@ import {
   IconShoppingCart,
   IconCurrencyDollar,
   IconUsers,
-  IconBell,
+  IconPalette,
   IconFileReport,
   IconExternalLink,
+  IconBook,
 } from '@tabler/icons-react'
-import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
-
+import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
-  user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
+  // Un solo espacio de trabajo: el selector queda como identidad, no como
+  // conmutador. Los tres nombres de ejemplo que traía la plantilla
+  // ("Acme Inc", "Acme Corp.") se veían en producción.
   teams: [
     {
-      name: 'Shadcn Admin',
+      name: 'Pasaje Online',
       logo: Command,
-      plan: 'Vite + ShadcnUI',
-    },
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
+      plan: 'Panel administrativo',
     },
   ],
   navGroups: [
@@ -43,7 +31,7 @@ export const sidebarData: SidebarData = {
       title: 'Principal',
       items: [
         {
-          title: 'Dashboard',
+          title: 'Panel de control',
           url: '/',
           icon: IconLayoutDashboard,
         },
@@ -58,8 +46,8 @@ export const sidebarData: SidebarData = {
           icon: IconChecklist,
         },
         {
-          title: 'Empresas',
-          url: '/companies',
+          title: 'Empresas y agencias',
+          url: '/agencias',
           icon: IconBuilding,
         },
       ],
@@ -90,12 +78,36 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'Reportes',
+      title: 'Informes',
       items: [
         {
-          title: 'Reportes',
-          url: '/reports',
+          // Los informes cuelgan del menú, no de una página índice. Una lista
+          // de doce tarjetas con su descripción obligaba a leerla entera para
+          // llegar a la que se buscaba; acá se elige de un clic, y el que se
+          // usa todos los días queda a la vista.
+          title: 'Informes',
           icon: IconFileReport,
+          items: [
+            { title: 'Resumen financiero', url: '/reports/resumen-financiero' },
+            { title: 'Saldo por empresa', url: '/reports/por-agencia' },
+            { title: 'Estado de ventas', url: '/reports/estado-ventas' },
+            { title: 'Por método de pago', url: '/reports/por-metodo-pago' },
+            { title: 'Por ruta', url: '/reports/por-ruta' },
+            { title: 'Por servicio', url: '/reports/por-servicio' },
+            { title: 'Evolución', url: '/reports/serie-temporal' },
+            { title: 'Comparativo', url: '/reports/comparativo' },
+            { title: 'Conciliación', url: '/reports/conciliacion-bancard' },
+            { title: 'Cobradas sin boleto', url: '/reports/ventas-sin-boleto' },
+            { title: 'Anomalías', url: '/reports/anomalias' },
+          ],
+        },
+        {
+          // El kardex va aparte: sus cifras salen del libro de movimientos y
+          // no de `ventas`, así que mezclarlo con los informes sugeriría que
+          // son intercambiables.
+          title: 'Kardex',
+          icon: IconBook,
+          items: [{ title: 'Saldos', url: '/reports/kardex-saldos' }],
         },
       ],
     },
@@ -112,9 +124,9 @@ export const sidebarData: SidebarData = {
               icon: IconCurrencyDollar,
             },
             {
-              title: 'Notificaciones',
-              url: '/settings/notifications',
-              icon: IconBell,
+              title: 'Apariencia',
+              url: '/settings/appearance',
+              icon: IconPalette,
             },
             {
               title: 'Datos externos',
@@ -122,7 +134,6 @@ export const sidebarData: SidebarData = {
               icon: IconExternalLink,
             },
           ],
-
         },
       ],
     },

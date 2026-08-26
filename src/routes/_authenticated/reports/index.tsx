@@ -1,19 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
-import { ReportsPage } from '@/features/reports'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
+/**
+ * `/reports` has no screen of its own.
+ *
+ * It used to be an index of twelve cards, each with a question and a
+ * description — which meant reaching a report took reading a catalogue first.
+ * The reports hang off the sidebar now, so this is only the entry point
+ * somebody lands on from an old link.
+ */
 export const Route = createFileRoute('/_authenticated/reports/')({
-  component: RouteComponent,
+  beforeLoad: () => {
+    throw redirect({ to: '/reports/resumen-financiero' })
+  },
 })
-
-function RouteComponent() {
-  return (
-    <PageLayout
-      title="Reportes"
-      description="Genera y exporta reportes detallados de ventas con filtros personalizados."
-      showSearch={true}
-    >
-      <ReportsPage />
-    </PageLayout>
-  )
-}

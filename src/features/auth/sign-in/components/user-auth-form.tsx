@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
-import { useAuth } from '@/context/auth-context'
 
 type UserAuthFormProps = HTMLAttributes<HTMLFormElement>
 
@@ -77,13 +77,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           name='email'
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[#000066] font-semibold">Correo electrónico</FormLabel>
+              <FormLabel>Correo electrónico</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder='nombre@ejemplo.com' 
-                  {...field} 
-                  className="border-[#4747F8] focus:border-[#4747F8] focus:ring-[#4747F8] text-gray-900"
-                />
+                <Input placeholder='nombre@ejemplo.com' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -94,18 +90,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           name='password'
           render={({ field }) => (
             <FormItem className='relative'>
-              <FormLabel className="text-[#000066] font-semibold">Contraseña</FormLabel>
+              <FormLabel>Contraseña</FormLabel>
               <FormControl>
-                <PasswordInput 
-                  placeholder='********' 
-                  {...field} 
-                  className="border-[#4747F8] focus:border-[#4747F8] focus:ring-[#4747F8] text-gray-900"
-                />
+                <PasswordInput placeholder='********' {...field} />
               </FormControl>
               <FormMessage />
               <Link
                 to='/forgot-password'
-                className='text-[#4747F8] absolute -top-0.5 right-0 text-sm font-medium hover:opacity-75'
+                className='text-primary absolute -top-0.5 right-0 text-sm font-medium underline-offset-4 hover:underline'
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -113,10 +105,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           )}
         />
         {error && (
-          <div className="text-red-600 text-center text-sm font-medium mt-1 mb-2">{error}</div>
+          <div className='text-destructive mt-1 mb-2 text-center text-sm font-medium'>
+            {error}
+          </div>
         )}
-        <Button 
-          className='mt-2 bg-[#FE0202] hover:bg-red-600 text-white font-semibold' 
+        <Button
+          className='bg-primary text-primary-foreground hover:bg-primary/90 mt-2'
           disabled={isLoading}
         >
           {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}

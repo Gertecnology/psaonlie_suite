@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL
+import { apiFetchRaw } from '@/utils/api-client'
+
+const TIMEOUT_PAISES_MS = 45_000
 
 export interface PaisData {
   diffgr_id: string
@@ -19,21 +21,16 @@ export interface PaisEmpresa {
 
 export type PaisesResponse = Array<PaisEmpresa>
 
-export async function getPaises(empresaId?: string): Promise<PaisesResponse> {
-  const url = empresaId 
-    ? `${API_URL}/api/paises?empresaid=${empresaId}`
-    : `${API_URL}/api/paises`
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'accept': 'application/json',
-    },
+export async function getPaises(agenciaId?: string): Promise<PaisesResponse> {
+  const path = agenciaId
+    ? `/api/paises?empresaid=${encodeURIComponent(agenciaId)}`
+    : '/api/paises'
+
+  const paises = await apiFetchRaw<PaisesResponse>(path, {
+    headers: { accept: 'application/json' },
+    fallbackMessage: 'Error al obtener países',
+    timeoutMs: TIMEOUT_PAISES_MS,
   })
 
-  if (!response.ok) {
-    throw new Error(`Error al obtener países: ${response.status}`)
-  }
-
-  return response.json()
+  return paises ?? []
 }

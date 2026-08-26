@@ -1,14 +1,19 @@
 import { Plus } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import { useClientDialog } from '../store/use-client-dialog'
 
+/**
+ * Creating a client is a page with its own address, not a side drawer: it can
+ * be linked, it survives a reload, and the back button undoes the step instead
+ * of discarding the form.
+ */
 export function ClientsPrimaryButtons() {
-  const { openDialog } = useClientDialog()
-
   return (
-    <Button onClick={() => openDialog('create')}>
-      <Plus className='mr-2 h-4 w-4' />
-      Nuevo Cliente
+    <Button asChild>
+      <Link to='/clients/nuevo'>
+        <Plus className='mr-2 h-4 w-4' />
+        Nuevo Cliente
+      </Link>
     </Button>
   )
 }

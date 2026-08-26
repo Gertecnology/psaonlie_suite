@@ -1,75 +1,121 @@
-name: Deploy Stage
+name: Deploy stage
+
+# GitHub compila y publica la imagen; el servidor sólo la baja y la corre.
+#
+# El panel se sirve estático: el build de Vite hornea las variables `VITE_*`
+# en el bundle, así que pasarlas al contenedor con `-e` no haría nada. Hoy
+# salen del `.env` versionado, que el Dockerfile copia antes de compilar.
+#
+# Ese `.env` se mantiene a pedido. Cuando se decida sacarlo del repo, hay que
+# agregar un `ARG VITE_API_URL` al Dockerfile y pasarlo como build-arg desde
+# acá: mientras tanto, cambiarlo sólo del lado del workflow no tendría efecto.
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Rama a desplegar'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - main
+      tag_existente:
+        description: >-
+          SHA de una imagen ya publicada, para redesplegar sin compilar.
+          Vacío = compila la rama elegida arriba.
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-pasaje-suite-stage
+  cancel-in-progress: false
 
 env:
-  SERVER_IP: 167.114.208.128
-  PROJECT_PATH: /home/ubuntu/proyectos/psaonlie_suite
+  IMAGEN: ghcr.io/${{ github.repository }}
+  CONTENEDOR: pasaje-online-suite
+  # nginx busca el panel en el 3002, y el contenedor sirve en el 3002.
+  # El compose del servidor tenía "3000:3002" y el 3000 estaba ocupado por otro
+  # proyecto: por eso el sitio devolvía 502.
+  PUERTO_HOST: 3002
+  PUERTO_CONTENEDOR: 3002
+  URL_SALUD: https://suite-pasaje.gertecnology.com
 
 jobs:
-  deploy:
+  construir:
+    name: Construir y publicar
     runs-on: ubuntu-latest
+    if: inputs.tag_existente == ''
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Entrar a GHCR
+        uses: docker/login-action@v3
         with:
-          ref: ${{ github.event.inputs.branch }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Construir y publicar
+        uses: docker/build-push-action@v6
         with:
-          node-version: '20'
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGEN }}:${{ github.sha }}
+            ${{ env.IMAGEN }}:stage-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+  desplegar:
+    name: Desplegar
+    runs-on: ubuntu-latest
+    needs: [construir]
+    if: always() && (needs.construir.result == 'success' || inputs.tag_existente != '')
+    environment: stage
+    steps:
+      - name: Bajar la imagen y levantarla
+        uses: appleboy/ssh-action@v1
         with:
-          version: 8
+          host: ${{ secrets.SERVIDOR_HOST }}
+          username: ${{ secrets.SERVIDOR_USER }}
+          key: ${{ secrets.SERVIDOR_SSH_KEY }}
+          envs: IMAGEN,CONTENEDOR,PUERTO_HOST,PUERTO_CONTENEDOR,TAG,TOKEN,ACTOR
+          script: |
+            set -e
 
-      - name: Install dependencies
-        run: pnpm install
+            echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+            docker pull "$IMAGEN:$TAG"
 
-      - name: Build
-        run: pnpm build
-        env:
-          VITE_API_URL: https://api-pasaje.gertecnology.com
+            docker rm -f "$CONTENEDOR" 2>/dev/null || true
+            docker run -d \
+              --name "$CONTENEDOR" \
+              --restart unless-stopped \
+              -p "$PUERTO_HOST:$PUERTO_CONTENEDOR" \
+              "$IMAGEN:$TAG"
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_RYZEN }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to server
-        run: |
-          ssh -i ~/.ssh/id_rsa root@${{ env.SERVER_IP }} << 'ENDSSH'
-            cd ${{ env.PROJECT_PATH }}
-            git fetch origin
-            git checkout ${{ github.event.inputs.branch }}
-            git reset --hard origin/${{ github.event.inputs.branch }}
-          ENDSSH
-          
-          rsync -avz --delete             -e "ssh -i ~/.ssh/id_rsa"             dist/ root@${{ env.SERVER_IP }}:${{ env.PROJECT_PATH }}/dist/
-          
-          ssh -i ~/.ssh/id_rsa root@${{ env.SERVER_IP }} << 'ENDSSH'
-            cd ${{ env.PROJECT_PATH }}
-            docker compose down 2>/dev/null || true
-            docker compose build
-            docker compose up -d
             docker image prune -f
-          ENDSSH
+        env:
+          TAG: ${{ inputs.tag_existente || github.sha }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
 
-      - name: Verify deployment
+  verificar:
+    name: Verificar
+    runs-on: ubuntu-latest
+    needs: [desplegar]
+    steps:
+      - name: Esperar a que responda
         run: |
-          sleep 5
-          curl -s -o /dev/null -w "%{http_code}" https://suite-pasaje.gertecnology.com || echo "Waiting..."
+          for intento in $(seq 1 12); do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$URL_SALUD" || echo 000)
+            if [ "$codigo" = "200" ]; then
+              echo "Responde 200 en el intento $intento."
+              exit 0
+            fi
+            echo "Intento $intento: HTTP $codigo. Reintento en 10 s."
+            sleep 10
+          done
+
+          echo "No respondió 200 en 12 intentos. El despliegue queda marcado como fallido."
+          exit 1
+        env:
+          URL_SALUD: ${{ env.URL_SALUD }}

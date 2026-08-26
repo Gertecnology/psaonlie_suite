@@ -7,20 +7,32 @@ import type {
 
 const RoundTripContext = createContext<RoundTripContextType | undefined>(undefined)
 
-interface RoundTripProviderProps {
-  children: ReactNode
+const DATOS_VACIOS: RoundTripSearchData = {
+  ida: {
+    origen: null,
+    destino: null,
+    fecha: null
+  }
 }
 
-export function RoundTripProvider({ children }: RoundTripProviderProps) {
-  const [roundTripData, setRoundTripDataState] = useState<RoundTripSearchData>({
-    ida: {
-      origen: null,
-      destino: null,
-      fecha: null
-    }
-  })
-  
-  const [currentStep, setCurrentStep] = useState<RoundTripStep>('search')
+interface RoundTripProviderProps {
+  children: ReactNode
+  /** Estado inicial del flujo. Sirve para retomar una venta en curso. */
+  datosIniciales?: RoundTripSearchData
+  /** Paso inicial del flujo. */
+  pasoInicial?: RoundTripStep
+}
+
+export function RoundTripProvider({
+  children,
+  datosIniciales,
+  pasoInicial = 'search',
+}: RoundTripProviderProps) {
+  const [roundTripData, setRoundTripDataState] = useState<RoundTripSearchData>(
+    datosIniciales ?? DATOS_VACIOS,
+  )
+
+  const [currentStep, setCurrentStep] = useState<RoundTripStep>(pasoInicial)
 
   const setRoundTripData = (data: Partial<RoundTripSearchData>) => {
     setRoundTripDataState(prev => ({
@@ -33,13 +45,7 @@ export function RoundTripProvider({ children }: RoundTripProviderProps) {
   }
 
   const resetRoundTrip = () => {
-    setRoundTripDataState({
-      ida: {
-        origen: null,
-        destino: null,
-        fecha: null
-      }
-    })
+    setRoundTripDataState(DATOS_VACIOS)
     setCurrentStep('search')
   }
 

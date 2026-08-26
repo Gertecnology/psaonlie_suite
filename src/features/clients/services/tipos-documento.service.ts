@@ -1,3 +1,5 @@
+import { apiFetchRaw } from '@/utils/api-client'
+
 export interface TipoDocumento {
   id: string
   idExterno: number
@@ -7,14 +9,13 @@ export interface TipoDocumento {
   ordenVisualizacion: number
 }
 
-export async function getTiposDocumentoByEmpresa(empresaId: string): Promise<TipoDocumento[]> {
-  const API_URL = import.meta.env.VITE_API_URL
-  
-  const response = await fetch(`${API_URL}/api/clientes/empresas/${empresaId}/tipos-documento`)
-  
-  if (!response.ok) {
-    throw new Error('Error al obtener los tipos de documento')
-  }
+export async function getTiposDocumentoByEmpresa(
+  agenciaId: string,
+): Promise<TipoDocumento[]> {
+  const tipos = await apiFetchRaw<TipoDocumento[]>(
+    `/api/clientes/agencias/${encodeURIComponent(agenciaId)}/tipos-documento`,
+    { fallbackMessage: 'Error al obtener los tipos de documento' },
+  )
 
-  return response.json()
+  return tipos ?? []
 }

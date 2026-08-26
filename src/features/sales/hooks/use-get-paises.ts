@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { getPaises, type PaisData, type PaisesResponse } from '../services/paises.service'
 
-export function useGetPaises(empresaId?: string) {
+export function useGetPaises(agenciaId?: string) {
   return useQuery<PaisesResponse>({
-    queryKey: ['paises', empresaId],
-    queryFn: () => getPaises(empresaId),
+    queryKey: ['paises', agenciaId],
+    queryFn: () => getPaises(agenciaId),
     staleTime: 10 * 60 * 1000, // 10 minutos (datos relativamente estáticos)
     gcTime: 30 * 60 * 1000, // 30 minutos
     retry: 2,
@@ -12,8 +12,8 @@ export function useGetPaises(empresaId?: string) {
 }
 
 // Hook auxiliar para obtener solo los países exitosos de todas las empresas
-export function useGetPaisesDisponibles(empresaId?: string) {
-  const { data: paisesResponse, isLoading, error } = useGetPaises(empresaId)
+export function useGetPaisesDisponibles(agenciaId?: string) {
+  const { data: paisesResponse, isLoading, error } = useGetPaises(agenciaId)
   
   const paisesDisponibles: PaisData[] = []
   

@@ -63,5 +63,5 @@ export type {
   RoundTripSearchData,
   RoundTripStep,
   RoundTripContextType,
-  ClientWithSeat
+  PasajeroRegistrado
 } from './models/sales.model'

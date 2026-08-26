@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { verifyEmail } from '@/services/auth'
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -8,10 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import AuthLayout from '../auth-layout'
-import { verifyEmail } from '@/services/auth'
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
@@ -46,7 +46,11 @@ export default function VerifyEmail() {
           setIsSuccess(true)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al verificar el correo electrónico')
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Error al verificar el correo electrónico'
+        )
         setIsSuccess(false)
       } finally {
         setIsVerifying(false)
@@ -58,52 +62,54 @@ export default function VerifyEmail() {
 
   return (
     <AuthLayout>
-      <Card className='gap-4 border-[#4747F8] bg-white/95 shadow-2xl rounded-2xl'>
-        <CardHeader className="flex flex-col items-center justify-center text-center pb-2 pt-6">
-          <CardTitle className='text-2xl font-bold tracking-tight text-[#000066] mb-2'>
+      <Card className='gap-4'>
+        <CardHeader className='flex flex-col items-center justify-center pt-6 pb-2 text-center'>
+          <CardTitle className='mb-2 text-2xl font-bold tracking-tight'>
             Verificación de Correo
           </CardTitle>
-          <CardDescription className="text-gray-600 text-base mb-2">
+          <CardDescription className='mb-2 text-base'>
             {isVerifying && 'Verificando tu correo electrónico...'}
-            {!isVerifying && isSuccess && 'Tu correo electrónico ha sido verificado exitosamente'}
+            {!isVerifying &&
+              isSuccess &&
+              'Tu correo electrónico ha sido verificado exitosamente'}
             {!isVerifying && !isSuccess && error && 'Error en la verificación'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0 pb-6 flex flex-col items-center justify-center min-h-[150px]">
+        <CardContent className='flex min-h-[150px] flex-col items-center justify-center pt-0 pb-6'>
           {isVerifying && (
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-12 w-12 animate-spin text-[#4747F8]" />
-              <p className="text-gray-600">Por favor espera...</p>
+            <div className='flex flex-col items-center gap-4'>
+              <Loader2 className='text-muted-foreground h-12 w-12 animate-spin' />
+              <p className='text-muted-foreground'>Por favor espera...</p>
             </div>
           )}
 
           {!isVerifying && isSuccess && (
-            <div className="flex flex-col items-center gap-4">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-              <p className="text-gray-700 font-medium">
+            <div className='flex flex-col items-center gap-4'>
+              <CheckCircle2 className='text-estado-ok h-12 w-12' />
+              <p className='text-foreground font-medium'>
                 ¡Tu correo electrónico ha sido verificado correctamente!
               </p>
-              <p className="text-gray-600 text-sm">
+              <p className='text-muted-foreground text-sm'>
                 Serás redirigido al inicio de sesión en unos momentos...
               </p>
             </div>
           )}
 
           {!isVerifying && !isSuccess && error && (
-            <div className="flex flex-col items-center gap-4">
-              <XCircle className="h-12 w-12 text-red-500" />
-              <p className="text-gray-700 font-medium text-center">{error}</p>
-              <p className="text-gray-600 text-sm text-center">
+            <div className='flex flex-col items-center gap-4'>
+              <XCircle className='text-destructive h-12 w-12' />
+              <p className='text-foreground text-center font-medium'>{error}</p>
+              <p className='text-muted-foreground text-center text-sm'>
                 El token puede haber expirado o ser inválido.
               </p>
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
+        <CardFooter className='flex flex-col gap-2'>
           {!isVerifying && isSuccess && (
             <Button
               onClick={() => navigate({ to: '/sign-in' })}
-              className="w-full bg-[#4747F8] hover:bg-[#000066]"
+              className='bg-primary text-primary-foreground hover:bg-primary/90 w-full'
             >
               Ir al inicio de sesión
             </Button>
@@ -112,14 +118,14 @@ export default function VerifyEmail() {
             <>
               <Button
                 onClick={() => navigate({ to: '/sign-in' })}
-                className="w-full bg-[#4747F8] hover:bg-[#000066]"
+                className='bg-primary text-primary-foreground hover:bg-primary/90 w-full'
               >
                 Ir al inicio de sesión
               </Button>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => window.location.reload()}
-                className="w-full"
+                className='w-full'
               >
                 Intentar nuevamente
               </Button>
@@ -130,4 +136,3 @@ export default function VerifyEmail() {
     </AuthLayout>
   )
 }
-

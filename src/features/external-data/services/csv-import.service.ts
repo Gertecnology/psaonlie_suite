@@ -29,12 +29,13 @@ export class CsvImportService {
     formData.append('limpiarAntes', data.limpiarAntes.toString())
     formData.append('archivo', data.archivo)
 
+    // Enviar el FormData directamente. NO fijar Content-Type manualmente:
+    // el navegador lo agrega con el boundary correcto del multipart. Antes se
+    // enviaba JSON.stringify(data) con Content-Type multipart/form-data fijo,
+    // por lo que el archivo nunca llegaba al backend.
     const response = await fetch(`${API_URL}/api/importar-horarios-csv`, {
       method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      body: formData,
     })
 
     return response.json()

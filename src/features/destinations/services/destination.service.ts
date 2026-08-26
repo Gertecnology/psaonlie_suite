@@ -1,88 +1,107 @@
+import { apiFetch, apiFetchRaw } from '@/utils/api-client'
 import { Destination, DestinationFormValues, clientSchema } from '../models/destination.model'
 import { z } from 'zod'
 
-const API_URL = import.meta.env.VITE_API_URL
+/**
+ * Los endpoints de `/destinos` y `/agencias` responden con el envelope
+ * `{ success, statusCode, message, data }`, así que van con `apiFetch`.
+ * `/api/clientes` devuelve el objeto plano y va con `apiFetchRaw`.
+ *
+ * Todos adjuntan el token vía `apiFetch`: antes cada función leía el token a
+ * mano y el manejo de errores se apoyaba sólo en `response.ok`, que es `true`
+ * para las respuestas 200 con `success: false`.
+ */
 
-export async function getDestinations(params?: Record<string, string>): Promise<{ items: Destination[]; total: number; page: number; limit: number; totalPages: number }> {
-  const token = localStorage.getItem('token')
+export interface DestinationsPage {
+  items: Destination[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export async function getDestinations(
+  params?: Record<string, string>,
+): Promise<DestinationsPage> {
   const query = params ? '?' + new URLSearchParams(params).toString() : ''
-  const response = await fetch(`${API_URL}/destinos${query}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  return apiFetch<DestinationsPage>(`/destinos${query}`, {
+    fallbackMessage: 'Error al obtener destinos',
   })
-  if (!response.ok) throw new Error('Error al obtener destinos')
-  const result = await response.json()
-  return result.data
 }
 
 export async function getDestinationById(id: string): Promise<Destination> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/destinos/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+  return apiFetch<Destination>(`/destinos/${encodeURIComponent(id)}`, {
+    fallbackMessage: 'Error al obtener el destino',
   })
-  if (!response.ok) throw new Error('Error al obtener el destino')
-  const result = await response.json()
-  return result.data
 }
 
-export async function createDestination(data: DestinationFormValues): Promise<Destination> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/destinos`, {
+export async function createDestination(
+  data: DestinationFormValues,
+): Promise<Destination> {
+  return apiFetch<Destination>('/destinos', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
+    fallbackMessage: 'Error al crear destino',
   })
-  if (!response.ok) throw new Error('Error al crear destino')
-  return (await response.json()).data
 }
 
-export async function updateDestination(id: string, data: DestinationFormValues): Promise<Destination> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/destinos/${id}`, {
+export async function updateDestination(
+  id: string,
+  data: DestinationFormValues,
+): Promise<Destination> {
+  return apiFetch<Destination>(`/destinos/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
+    fallbackMessage: 'Error al actualizar destino',
   })
-  if (!response.ok) throw new Error('Error al actualizar destino')
-  return (await response.json()).data
 }
 
 export async function deleteDestination(id: string): Promise<void> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/destinos/${id}`, {
+  await apiFetch<void>(`/destinos/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    fallbackMessage: 'Error al eliminar destino',
   })
-  if (!response.ok) throw new Error('Error al eliminar destino')
+}
+
+export interface ParadaHomologadaOption {
+  id: string
+  descripcion: string
+  /** Empresa que reporta esta parada con ese nombre. */
+  empresaNombre?: string
+  /** Destino al que pertenece hoy, si tiene uno. */
+  destinoId?: string | null
+  destinoNombre?: string | null
 }
 
 // Servicio para obtener paradas homologadas para el selector múltiple
-export async function getAllParadasHomologadas(descripcion?: string) {
-  const token = localStorage.getItem('token')
+export async function getAllParadasHomologadas(
+  descripcion?: string,
+): Promise<ParadaHomologadaOption[]> {
   const params = new URLSearchParams()
   if (descripcion) params.append('descripcion', descripcion)
-  const url = `${API_URL}/empresas/paradas-homologadas/lista${params.toString() ? `?${params.toString()}` : ''}`
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  if (!response.ok) {
-    throw new Error('Error al obtener paradas homologadas')
-  }
-  const result = await response.json()
-  return result.data
+  const query = params.toString() ? `?${params.toString()}` : ''
+
+  const paradas = await apiFetch<ParadaHomologadaOption[]>(
+    `/agencias/paradas-homologadas/lista${query}`,
+    { fallbackMessage: 'Error al obtener paradas homologadas' },
+  )
+
+  return paradas ?? []
 }
 
 // Servicio para remover parada homologada
-export async function removeParadaHomologada(destinationId: string, paradaId: string): Promise<void> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/destinos/${destinationId}/paradas/${paradaId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!response.ok) throw new Error('Error al remover parada homologada')
+export async function removeParadaHomologada(
+  destinationId: string,
+  paradaId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/destinos/${encodeURIComponent(destinationId)}/paradas/${encodeURIComponent(paradaId)}`,
+    {
+      method: 'DELETE',
+      fallbackMessage: 'Error al remover parada homologada',
+    },
+  )
 }
-
 
 // Servicio para crear clientes de una empresa
 export async function createClient(data: z.infer<typeof clientSchema>): Promise<{
@@ -110,7 +129,7 @@ export async function createClient(data: z.infer<typeof clientSchema>): Promise<
       apellido: string
       nombre: string
     }
-    empresaId: string
+    agenciaId: string
     empresaNombre: string
     tipoDocumento: string
     numeroDocumento: string
@@ -122,16 +141,9 @@ export async function createClient(data: z.infer<typeof clientSchema>): Promise<
   }
   sincronizado: boolean
 }> {
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${API_URL}/api/clientes`, {
+  return apiFetchRaw('/api/clientes', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
+    fallbackMessage: 'Error al crear cliente',
   })
-  
-  if (!response.ok) {
-    throw new Error('Error al crear cliente')
-  }
-  
-  return await response.json()
 }

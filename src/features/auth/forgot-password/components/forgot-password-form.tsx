@@ -2,6 +2,7 @@ import { HTMLAttributes, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { forgotPassword } from '@/services/auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,7 +14,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { forgotPassword } from '@/services/auth'
 
 type ForgotFormProps = HTMLAttributes<HTMLFormElement>
 
@@ -56,20 +56,20 @@ export function ForgotPasswordForm({ className, ...props }: ForgotFormProps) {
 
   if (success) {
     return (
-      <div className="text-center space-y-4">
-        <div className="text-green-600 text-lg font-semibold">
+      <div className='space-y-4 text-center'>
+        <div className='text-estado-ok text-lg font-semibold'>
           ¡Correo enviado exitosamente!
         </div>
-        <p className="text-gray-600">
-          Hemos enviado un enlace de recuperación a tu correo electrónico. 
-          Por favor revisa tu bandeja de entrada.
+        <p className='text-muted-foreground'>
+          Hemos enviado un enlace de recuperación a tu correo electrónico. Por
+          favor revisa tu bandeja de entrada.
         </p>
-        <Button 
+        <Button
           onClick={() => {
             setSuccess(false)
             form.reset()
           }}
-          className="bg-[#4747F8] hover:bg-blue-700 text-white font-semibold"
+          className='bg-primary text-primary-foreground hover:bg-primary/90'
         >
           Enviar otro correo
         </Button>
@@ -89,23 +89,21 @@ export function ForgotPasswordForm({ className, ...props }: ForgotFormProps) {
           name='email'
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[#000066] font-semibold">Correo electrónico</FormLabel>
+              <FormLabel>Correo electrónico</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder='nombre@ejemplo.com' 
-                  {...field} 
-                  className="border-[#4747F8] focus:border-[#4747F8] focus:ring-[#4747F8] text-gray-900"
-                />
+                <Input placeholder='nombre@ejemplo.com' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         {error && (
-          <div className="text-red-600 text-center text-sm font-medium mt-1 mb-2">{error}</div>
+          <div className='text-destructive mt-1 mb-2 text-center text-sm font-medium'>
+            {error}
+          </div>
         )}
-        <Button 
-          className='mt-2 bg-[#FE0202] hover:bg-red-600 text-white font-semibold' 
+        <Button
+          className='bg-primary text-primary-foreground hover:bg-primary/90 mt-2'
           disabled={isLoading}
         >
           {isLoading ? 'Enviando...' : 'Continuar'}

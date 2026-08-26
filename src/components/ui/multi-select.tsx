@@ -1,14 +1,8 @@
-import * as React from "react";
-import { CheckIcon, XCircle, ChevronDown, XIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import * as React from 'react'
+import { CheckIcon, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Command,
   CommandEmpty,
@@ -17,196 +11,209 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 type Option = {
-  value: string;
-  label: string;
-  icon?: React.ElementType;
-};
+  value: string
+  label: string
+  icon?: React.ElementType
+  /**
+   * Secondary line shown only in the dropdown, never in the selected chips.
+   *
+   * It carries what the reader needs to choose but not to recognise afterwards
+   * — for a homologated stop, which company reports it and which destination
+   * currently owns it.
+   */
+  hint?: string
+}
 
-type MultiSelectProps = {
-  options: Option[];
-  onValueChange: (values: string[]) => void;
-  defaultValue?: string[];
-  placeholder?: string;
-  maxCount?: number;
-  className?: string;
-};
+/**
+ * The button's own props ride along so the field can be labelled.
+ *
+ * `FormControl` hands its child an `id` and the `aria-describedby` that points
+ * at the label, the description and the error message. The previous version
+ * declared a closed prop list, so all of that was dropped on the floor: the
+ * `<label>` pointed at an id nothing carried, and a screen reader announced the
+ * selector without its name or its validation error.
+ */
+interface MultiSelectProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<'button'>,
+    'value' | 'defaultValue' | 'onChange'
+  > {
+  options: Option[]
+  /**
+   * The current selection. This component is controlled on purpose.
+   *
+   * It used to keep its own copy in state, seeded from a `defaultValue` prop,
+   * and mirror the two with effects. Inside react-hook-form that meant the box
+   * ignored anything the form loaded after mount — an edit form filled from the
+   * server showed an empty selector — and the mirroring effect fired
+   * `onValueChange` on every mount, marking a pristine form as dirty.
+   */
+  value: string[]
+  onValueChange: (values: string[]) => void
+  placeholder?: string
+  /** How many chips to show before the rest collapse into a counter. */
+  maxCount?: number
+  disabled?: boolean
+  className?: string
+}
 
 export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
-  (
+  function MultiSelect(
     {
       options,
+      value,
       onValueChange,
-      defaultValue = [],
-      placeholder = "Selecciona opciones",
+      placeholder = 'Selecciona opciones',
       maxCount = 3,
+      disabled = false,
       className,
+      ...buttonProps
     },
-    ref
-  ) => {
-    const [selectedValues, setSelectedValues] = React.useState<string[]>(defaultValue);
-    const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-    const [input, setInput] = React.useState("");
+    ref,
+  ) {
+    const [isOpen, setIsOpen] = React.useState(false)
+    const [query, setQuery] = React.useState('')
 
-    // Sincronizar defaultValue con el estado interno solo cuando cambie realmente
-    React.useEffect(() => {
-      if (JSON.stringify(defaultValue) !== JSON.stringify(selectedValues)) {
-        setSelectedValues(defaultValue);
-      }
-    }, [defaultValue]);
+    const toggle = (optionValue: string) => {
+      onValueChange(
+        value.includes(optionValue)
+          ? value.filter((selected) => selected !== optionValue)
+          : [...value, optionValue],
+      )
+    }
 
-    // Memoizar onValueChange para evitar re-renders
-    const handleValueChange = React.useCallback((values: string[]) => {
-      onValueChange(values);
-    }, [onValueChange]);
-
-    // Solo llamar onValueChange cuando selectedValues cambie realmente
-    React.useEffect(() => {
-      handleValueChange(selectedValues);
-    }, [selectedValues, handleValueChange]);
-
-    const toggleOption = React.useCallback((value: string) => {
-      setSelectedValues((prev) => {
-        const newValues = prev.includes(value) 
-          ? prev.filter((v) => v !== value) 
-          : [...prev, value];
-        return newValues;
-      });
-    }, []);
-
-    const handleClear = React.useCallback(() => setSelectedValues([]), []);
-
-    const filteredOptions = React.useMemo(() => {
-      return options.filter(
-        (opt) =>
-          !selectedValues.includes(opt.value) &&
-          opt.label.toLowerCase().includes(input.toLowerCase())
-      );
-    }, [options, selectedValues, input]);
+    /**
+     * Selected options stay in the list instead of being filtered out of it.
+     *
+     * They used to disappear once picked, so the checkbox next to them could
+     * never be ticked and the only way to undo a choice was a tiny `svg` with
+     * an `onClick` — unreachable with the keyboard. Toggling from the list
+     * works with Enter, so the icon is gone.
+     */
+    const visibleOptions = React.useMemo(() => {
+      const termino = query.trim().toLowerCase()
+      if (!termino) return options
+      return options.filter((option) =>
+        `${option.label} ${option.hint ?? ''}`.toLowerCase().includes(termino),
+      )
+    }, [options, query])
 
     return (
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
+            {...buttonProps}
             ref={ref}
-            type="button"
+            type='button'
+            variant='outline'
+            role='combobox'
+            aria-expanded={isOpen}
+            disabled={disabled}
             className={cn(
-              "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
-              className
+              'flex h-auto min-h-10 w-full items-center justify-between gap-2 px-3 py-2 text-left font-normal',
+              className,
             )}
-            onClick={() => setIsPopoverOpen((v) => !v)}
           >
-            {selectedValues.length > 0 ? (
-              <div className="flex justify-between items-center w-full">
-                <div className="flex flex-wrap items-center">
-                  {selectedValues.slice(0, maxCount).map((value) => {
-                    const option = options.find((o) => o.value === value);
-                    const IconComponent = option?.icon;
-                    return (
-                      <Badge key={value} className="mr-1 mb-1">
-                        {IconComponent && <IconComponent className="h-4 w-4 mr-2" />}
-                        {option?.label}
-                        <XCircle
-                          className="ml-2 h-4 w-4 cursor-pointer"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            toggleOption(value);
-                          }}
-                        />
-                      </Badge>
-                    );
-                  })}
-                  {selectedValues.length > maxCount && (
-                    <Badge className="bg-transparent text-foreground border-foreground/10 hover:bg-transparent">
-                      {`+ ${selectedValues.length - maxCount} más`}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <XIcon
-                    className="h-4 mx-2 cursor-pointer text-muted-foreground"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleClear();
-                    }}
-                  />
-                  <Separator orientation="vertical" className="flex min-h-6 h-full" />
-                  <ChevronDown className="h-4 mx-2 cursor-pointer text-muted-foreground" />
-                </div>
-              </div>
+            {value.length > 0 ? (
+              <span className='flex flex-wrap items-center gap-1'>
+                {value.slice(0, maxCount).map((selected) => (
+                  <Badge key={selected} variant='secondary'>
+                    {options.find((option) => option.value === selected)
+                      ?.label ?? selected}
+                  </Badge>
+                ))}
+                {value.length > maxCount && (
+                  <Badge variant='outline'>
+                    +{value.length - maxCount} más
+                  </Badge>
+                )}
+              </span>
             ) : (
-              <div className="flex items-center justify-between w-full mx-auto">
-                <span className="text-sm text-muted-foreground mx-3">
-                  {placeholder}
-                </span>
-                <ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
-              </div>
+              <span className='text-muted-foreground'>{placeholder}</span>
             )}
+            <ChevronDown className='h-4 w-4 shrink-0 opacity-50' />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Command>
+        <PopoverContent
+          className='w-[--radix-popover-trigger-width] p-0'
+          align='start'
+        >
+          {/* La búsqueda la resuelve `visibleOptions`; sin esto cmdk filtraría
+              otra vez por su cuenta y las dos reglas se pisarían. */}
+          <Command shouldFilter={false}>
             <CommandInput
-              placeholder="Buscar..."
-              value={input}
-              onValueChange={setInput}
+              placeholder='Buscar...'
+              value={query}
+              onValueChange={setQuery}
             />
             <CommandList>
               <CommandEmpty>No hay resultados.</CommandEmpty>
               <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const isSelected = selectedValues.includes(option.value);
+                {visibleOptions.map((option) => {
+                  const isSelected = value.includes(option.value)
                   return (
                     <CommandItem
                       key={option.value}
-                      onSelect={() => toggleOption(option.value)}
-                      className="cursor-pointer"
+                      value={option.value}
+                      onSelect={() => toggle(option.value)}
+                      className='cursor-pointer'
                     >
-                      <div
+                      <span
+                        aria-hidden='true'
                         className={cn(
-                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
                           isSelected
-                            ? "bg-primary text-primary-foreground"
-                            : "opacity-50 [&_svg]:invisible"
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-input',
                         )}
                       >
-                        <CheckIcon className="h-4 w-4" />
-                      </div>
+                        <CheckIcon
+                          className={cn('h-3.5 w-3.5', !isSelected && 'invisible')}
+                        />
+                      </span>
                       {option.icon && (
-                        <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <option.icon className='text-muted-foreground mr-2 h-4 w-4' />
                       )}
-                      <span>{option.label}</span>
+                      <span className='flex min-w-0 flex-col'>
+                        <span className='truncate'>{option.label}</span>
+                        {option.hint && (
+                          <span className='text-muted-foreground truncate text-xs'>
+                            {option.hint}
+                          </span>
+                        )}
+                      </span>
+                      <span className='sr-only'>
+                        {isSelected ? '(seleccionado)' : ''}
+                      </span>
                     </CommandItem>
-                  );
+                  )
                 })}
               </CommandGroup>
-              <CommandSeparator />
-              <CommandGroup>
-                <div className="flex items-center justify-between">
-                  {selectedValues.length > 0 && (
+              {value.length > 0 && (
+                <>
+                  <CommandSeparator />
+                  <CommandGroup>
                     <CommandItem
-                      onSelect={handleClear}
-                      className="flex-1 justify-center cursor-pointer"
+                      onSelect={() => onValueChange([])}
+                      className='cursor-pointer justify-center'
                     >
-                      Limpiar
+                      Limpiar selección
                     </CommandItem>
-                  )}
-                  <CommandItem
-                    onSelect={() => setIsPopoverOpen(false)}
-                    className="flex-1 justify-center cursor-pointer max-w-full"
-                  >
-                    Cerrar
-                  </CommandItem>
-                </div>
-              </CommandGroup>
+                  </CommandGroup>
+                </>
+              )}
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
-    );
-  }
-);
-
-MultiSelect.displayName = "MultiSelect"; 
+    )
+  },
+)

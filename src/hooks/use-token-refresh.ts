@@ -1,119 +1,56 @@
-/* eslint-disable no-console */
-import { useEffect, useRef, useCallback } from 'react'
-import { refreshToken, RefreshTokenResponse } from '@/services/auth'
+import { useCallback, useEffect } from 'react'
+import { type RefreshTokenResponse } from '@/services/auth'
+import {
+  renovarSesion,
+  renovarSesionSiHaceFalta,
+  sesionAgotada,
+} from '@/services/sesion'
 
-interface UseTokenRefreshOptions {
-  refreshInterval?: number // en milisegundos, por defecto 14 minutos
-  onRefreshSuccess?: (data: RefreshTokenResponse) => void
+interface OpcionesRefresco {
+  /** How often to check whether the token needs renewing. */
+  intervaloMs?: number
+  onRefreshSuccess?: (datos: RefreshTokenResponse) => void
   onRefreshError?: (error: Error) => void
 }
 
-export const useTokenRefresh = (options: UseTokenRefreshOptions = {}) => {
-  const {
-    refreshInterval = 14 * 60 * 1000, // 14 minutos por defecto
-    onRefreshSuccess,
-    onRefreshError,
-  } = options
+/**
+ * Keeps the session alive while the app is open.
+ *
+ * Two things changed here. It used to renew on a fixed 14-minute timer,
+ * unconditionally — which renews a token that may have 50 minutes left, and
+ * misses one issued with a shorter life. Now it checks every minute and only
+ * renews when the token is close to expiring, so the schedule follows the
+ * token instead of a number someone picked once.
+ *
+ * And the renewal itself moved to `services/sesion`, because it was not the
+ * only caller: the notifications context ran its own two-minute timer and the
+ * socket renewed on a rejected handshake, each with a private "already
+ * refreshing" flag. Since `/refresh-token` rotates the refresh token, two
+ * concurrent renewals leave the spent one in storage and the session dies on
+ * the next attempt. One in-flight promise, shared, closes that.
+ */
+export const useTokenRefresh = (opciones: OpcionesRefresco = {}) => {
+  const { intervaloMs = 60_000, onRefreshSuccess, onRefreshError } = opciones
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const isRefreshingRef = useRef(false)
-
-  const updateTokens = useCallback((data: RefreshTokenResponse) => {
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
-    localStorage.setItem('user', JSON.stringify(data.user))
-  }, [])
-
-  const performRefresh = useCallback(async () => {
-    const storedRefreshToken = localStorage.getItem('refreshToken')
-    
-    if (!storedRefreshToken || isRefreshingRef.current) {
-      return
-    }
-
-    try {
-      isRefreshingRef.current = true
-      const data = await refreshToken(storedRefreshToken)
-      
-      updateTokens(data)
-      onRefreshSuccess?.(data)
-      
-      console.log('Token renovado exitosamente')
-    } catch (error) {
-      console.error('Error al renovar token:', error)
-      
-      // Si el refresh token es inválido, limpiar todo y redirigir al login
-      if (error instanceof Error && error.message.includes('Refresh token inválido')) {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        
-        // Opcional: redirigir al login
-        window.location.href = '/sign-in'
-      }
-      
-      onRefreshError?.(error as Error)
-    } finally {
-      isRefreshingRef.current = false
-    }
-  }, [updateTokens, onRefreshSuccess, onRefreshError])
-
-  const startRefreshInterval = useCallback(() => {
-    // Limpiar intervalo anterior si existe
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-
-    // Verificar que tenemos un refresh token
-    const storedRefreshToken = localStorage.getItem('refreshToken')
-    if (!storedRefreshToken) {
-      return
-    }
-
-    // Configurar nuevo intervalo
-    intervalRef.current = setInterval(performRefresh, refreshInterval)
-    
-    console.log(`Refresh token configurado para renovar cada ${refreshInterval / 60000} minutos`)
-  }, [performRefresh, refreshInterval])
-
-  const stopRefreshInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-      console.log('Refresh token interval detenido')
-    }
-  }, [])
-
-  const manualRefresh = useCallback(() => {
-    return performRefresh()
-  }, [performRefresh])
-
-  // Iniciar el intervalo cuando el hook se monta
   useEffect(() => {
-    startRefreshInterval()
+    const revisar = async () => {
+      if (sesionAgotada()) return
+      if (!localStorage.getItem('refreshToken')) return
 
-    // Limpiar intervalo cuando el componente se desmonta
-    return () => {
-      stopRefreshInterval()
-    }
-  }, [startRefreshInterval, stopRefreshInterval])
-
-  // Reiniciar el intervalo cuando cambie el refresh token
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'refreshToken' && e.newValue) {
-        startRefreshInterval()
+      const renovada = await renovarSesionSiHaceFalta(onRefreshSuccess)
+      if (!renovada) {
+        onRefreshError?.(new Error('No se pudo renovar la sesión'))
       }
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [startRefreshInterval])
+    const intervalo = setInterval(() => void revisar(), intervaloMs)
+    return () => clearInterval(intervalo)
+  }, [intervaloMs, onRefreshSuccess, onRefreshError])
 
-  return {
-    manualRefresh,
-    startRefreshInterval,
-    stopRefreshInterval,
-    isRefreshing: isRefreshingRef.current,
-  }
+  const manualRefresh = useCallback(
+    () => renovarSesion(onRefreshSuccess),
+    [onRefreshSuccess]
+  )
+
+  return { manualRefresh }
 }

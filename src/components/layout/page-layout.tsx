@@ -1,10 +1,10 @@
 import React from 'react'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
+import { HeaderNotifications } from '@/components/notifications/header-notifications'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { HeaderNotifications } from '@/components/notifications/header-notifications'
 
 interface PageLayoutProps {
   /** Título principal de la página */
@@ -60,16 +60,15 @@ export function PageLayout({
         {/* Encabezado de la página con título, descripción y acciones */}
         <div className='mb-2 flex flex-wrap items-center justify-between space-y-2 gap-x-4'>
           <div>
-            <h2 className='text-2xl font-bold tracking-tight'>{title}</h2>
+            {/* h1: es el encabezado principal del documento. Antes era un
+                h2, así que ninguna pantalla tenía nivel 1 y la navegación
+                por encabezados de un lector de pantalla arrancaba torcida. */}
+            <h1 className='text-2xl font-bold tracking-tight'>{title}</h1>
             {description && (
               <p className='text-muted-foreground'>{description}</p>
             )}
           </div>
-          {actions && (
-            <div className='flex-shrink-0'>
-              {actions}
-            </div>
-          )}
+          {actions && <div className='flex-shrink-0'>{actions}</div>}
         </div>
 
         {/* Contenido de la página con padding y scroll responsivo */}

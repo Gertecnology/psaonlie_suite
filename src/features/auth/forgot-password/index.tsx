@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import AuthLayout from '../auth-layout'
 import { ForgotPasswordForm } from './components/forgot-password-form'
 
@@ -20,7 +20,8 @@ export default function ForgotPassword() {
             Recuperar contraseña
           </CardTitle>
           <CardDescription>
-            Ingresa tu correo electrónico registrado y te enviaremos un enlace para restablecer tu contraseña.
+            Ingresa tu correo electrónico registrado y te enviaremos un enlace
+            para restablecer tu contraseña.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -28,10 +29,7 @@ export default function ForgotPassword() {
         </CardContent>
         <CardFooter>
           <Link to='/sign-in' className='w-full'>
-            <Button 
-              variant='outline' 
-              className='w-full border-[#4747F8] text-[#4747F8] hover:bg-[#4747F8] hover:text-white'
-            >
+            <Button variant='outline' className='w-full'>
               Volver al inicio de sesión
             </Button>
           </Link>

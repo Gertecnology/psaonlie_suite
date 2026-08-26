@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useRoundTrip } from '../context/round-trip-context'
+import { formatearGuaranies } from '../utils/money'
 import type { EmpresaServicios, Servicio, ParadaHomologada, ServiceCharge } from '../models/sales.model'
 
 interface ServiciosListProps {
@@ -12,7 +13,7 @@ interface ServiciosListProps {
   className?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }
 
 const getCalidadColor = (calidad: string) => {
@@ -45,19 +46,11 @@ const getCalidadLabel = (calidad: string) => {
   }
 }
 
-const formatPrice = (price: string) => {
-  const numPrice = parseFloat(price)
-  return new Intl.NumberFormat('es-PY', {
-    style: 'currency',
-    currency: 'PYG',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(numPrice)
-}
+const formatPrice = (price: string) => formatearGuaranies(price)
 
 function ServicioCard({ 
   servicio, 
-  empresaId: _empresaId, 
+  agenciaId: _agenciaId, 
   empresaNombre,
   empresaLogo: _empresaLogo,
   serviceCharge: _serviceCharge,
@@ -66,13 +59,13 @@ function ServicioCard({
   onServiceSelect
 }: { 
   servicio: Servicio
-  empresaId: string
+  agenciaId: string
   empresaNombre: string
   empresaLogo?: string
   serviceCharge?: ServiceCharge
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }) {
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
 
@@ -81,17 +74,26 @@ function ServicioCard({
 
     if (onServiceSelect) {
       // Si hay callback personalizado, usarlo
-      onServiceSelect(servicio, _empresaId, _serviceCharge)
+      onServiceSelect(servicio, _agenciaId, _serviceCharge)
     } else {
-      // Comportamiento por defecto para ida
+      // Comportamiento por defecto para ida.
+      //
+      // El contexto hace merge, así que hay que limpiar explícitamente el
+      // bloqueo anterior: si no, elegir otro servicio dejaba pegado el
+      // `codigoReferencia` del servicio viejo y la venta se confirmaba contra
+      // un bloqueo que no correspondía.
       setRoundTripData({
         ida: {
           origen: roundTripData.ida.origen,
           destino: roundTripData.ida.destino,
           fecha: roundTripData.ida.fecha,
           servicio: servicio,
-          empresaId: _empresaId, // Guardar el UUID de la empresa
-          serviceCharge: _serviceCharge // Guardar el cargo por servicio
+          agenciaId: _agenciaId, // Guardar el UUID de la empresa
+          serviceCharge: _serviceCharge, // Guardar el cargo por servicio
+          asientos: undefined,
+          codigoReferencia: undefined,
+          bloqueoExpiraEn: undefined,
+          ventaConfirmada: undefined,
         }
       })
 
@@ -178,16 +180,16 @@ function ServicioCard({
   )
 }
 
-function EmpresaSection({ 
-  empresa, 
-  origen, 
+function EmpresaSection({
+  empresa,
+  origen,
   destino,
   onServiceSelect
-}: { 
+}: {
   empresa: EmpresaServicios
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, empresaId: string) => void
+  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
 }) {
   return (
     <div className="space-y-4">
@@ -200,19 +202,21 @@ function EmpresaSection({
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {empresa.data.map((servicio) => (
-                  <ServicioCard 
-                    key={servicio.Id} 
-                    servicio={servicio} 
-                    empresaId={empresa.id}
-                    empresaNombre={empresa.empresa}
-                    empresaLogo={empresa.imageUrl}
-                    serviceCharge={empresa.serviceCharge}
-                    origen={origen}
-                    destino={destino}
-                    onServiceSelect={onServiceSelect}
-                  />
-                ))}
+        {/* El logo de la empresa llega en `url`; con el nombre viejo
+            (`imageUrl`) nunca se mostraba ninguno. */}
+        {empresa.data.map((servicio) => (
+          <ServicioCard
+            key={servicio.Id}
+            servicio={servicio}
+            agenciaId={empresa.id}
+            empresaNombre={empresa.empresa}
+            empresaLogo={empresa.url}
+            serviceCharge={empresa.serviceCharge}
+            origen={origen}
+            destino={destino}
+            onServiceSelect={onServiceSelect}
+          />
+        ))}
       </div>
     </div>
   )

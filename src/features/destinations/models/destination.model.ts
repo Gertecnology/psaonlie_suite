@@ -15,7 +15,9 @@ export const destinationSchema = z.object({
 
 export const destinationFormSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
-  paradasHomologadasIds: z.array(z.string()).min(1, 'Selecciona al menos una parada.'),
+  // Sin mínimo: un destino existe antes de que se le homologue una parada, y
+  // exigir una impedía incluso corregirle el nombre a los que no tienen.
+  paradasHomologadasIds: z.array(z.string()),
 })
 
 export const clientSchema = z.object({
@@ -23,7 +25,7 @@ export const clientSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apellido: z.string().min(1, 'El apellido es requerido.'),
   telefono: z.string().min(1, 'El teléfono es requerido.'),
-  empresaId: z.string().min(1, 'La empresa es requerida.'),
+  agenciaId: z.string().min(1, 'La empresa es requerida.'),
   empresaNombre: z.string().min(1, 'La empresa es requerida.'),
   tipoDocumento: z.string().min(1, 'El tipo de documento es requerido.'),
   numeroDocumento: z.string().min(1, 'El número de documento es requerido.'),

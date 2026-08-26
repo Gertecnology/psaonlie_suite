@@ -5,8 +5,6 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  CreditCard,
-  DollarSign,
   Download,
   FileText,
   Globe,
@@ -38,6 +36,8 @@ import {
 } from '../../dashboard/services/invoice.service'
 import { ClienteConEstadisticas } from '../models/clients.model'
 import { ClientStats } from './client-stats'
+import { IconoMetodoPago } from '@/components/icono-metodo-pago'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface ClientDetailsScreenProps {
   client: ClienteConEstadisticas
@@ -69,13 +69,6 @@ export function ClientDetailsScreen({
 
   const ventas = ventasData?.data || []
   const totalPages = ventasData?.totalPages || 0
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-    }).format(amount)
-  }
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: es })
@@ -148,21 +141,6 @@ export function ClientDetailsScreen({
         {estado}
       </Badge>
     )
-  }
-
-  const getMetodoPagoIcon = (metodo: string) => {
-    switch (metodo) {
-      case 'BANCARD':
-        return <CreditCard className='h-4 w-4' />
-      case 'WHATSAPP':
-        return <DollarSign className='h-4 w-4' />
-      case 'TRANSFERENCIA':
-        return <DollarSign className='h-4 w-4' />
-      case 'EFECTIVO':
-        return <DollarSign className='h-4 w-4' />
-      default:
-        return <DollarSign className='h-4 w-4' />
-    }
   }
 
   return (
@@ -486,11 +464,11 @@ export function ClientDetailsScreen({
                             </div>
                           </TableCell>
                           <TableCell className='font-medium'>
-                            {formatCurrency(venta.importeTotal)}
+                            {formatearGuaranies(venta.importeTotal)}
                           </TableCell>
                           <TableCell>
                             <div className='flex items-center gap-1'>
-                              {getMetodoPagoIcon(venta.metodoPago)}
+                              <IconoMetodoPago metodo={venta.metodoPago} />
                               <span className='text-sm'>
                                 {venta.metodoPago}
                               </span>

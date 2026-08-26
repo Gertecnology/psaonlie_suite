@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Eye, Calendar, MapPin, CreditCard, DollarSign } from 'lucide-react'
+import { Eye, Calendar, MapPin } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { useVentasList } from '../../dashboard/hooks/use-ventas-list'
 import { ClienteConEstadisticas } from '../models/clients.model'
+import { IconoMetodoPago } from '@/components/icono-metodo-pago'
+import { formatearGuaranies } from '@/lib/formato'
 
 interface ClientPurchasesModalProps {
   open: boolean
@@ -48,13 +50,6 @@ export function ClientPurchasesModal({ open, onOpenChange, client }: ClientPurch
 
   const ventas = ventasData?.data || []
   const totalPages = ventasData?.totalPages || 0
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-PY', {
-      style: 'currency',
-      currency: 'PYG',
-    }).format(amount)
-  }
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: es })
@@ -93,21 +88,6 @@ export function ClientPurchasesModal({ open, onOpenChange, client }: ClientPurch
         {estado}
       </Badge>
     )
-  }
-
-  const getMetodoPagoIcon = (metodo: string) => {
-    switch (metodo) {
-      case 'BANCARD':
-        return <CreditCard className="h-4 w-4" />
-      case 'WHATSAPP':
-        return <DollarSign className="h-4 w-4" />
-      case 'TRANSFERENCIA':
-        return <DollarSign className="h-4 w-4" />
-      case 'EFECTIVO':
-        return <DollarSign className="h-4 w-4" />
-      default:
-        return <DollarSign className="h-4 w-4" />
-    }
   }
 
   if (error) {
@@ -221,11 +201,11 @@ export function ClientPurchasesModal({ open, onOpenChange, client }: ClientPurch
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrency(venta.importeTotal)}
+                      {formatearGuaranies(venta.importeTotal)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {getMetodoPagoIcon(venta.metodoPago)}
+                        <IconoMetodoPago metodo={venta.metodoPago} />
                         <span className="text-sm">{venta.metodoPago}</span>
                       </div>
                     </TableCell>

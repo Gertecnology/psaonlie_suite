@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { resetPassword } from '@/services/auth'
+import { CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,8 +16,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { PasswordInput } from '@/components/password-input'
-import { resetPassword } from '@/services/auth'
-import { CheckCircle2, XCircle } from 'lucide-react'
 
 type ResetPasswordFormProps = HTMLAttributes<HTMLFormElement>
 
@@ -38,7 +38,10 @@ const formSchema = z
     path: ['confirmPassword'],
   })
 
-export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProps) {
+export function ResetPasswordForm({
+  className,
+  ...props
+}: ResetPasswordFormProps) {
   const navigate = useNavigate()
   const search = useSearch({ from: '/auth/reset-password' })
   const [isLoading, setIsLoading] = useState(false)
@@ -94,19 +97,19 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-4 py-4">
-        <CheckCircle2 className="h-12 w-12 text-green-500" />
-        <div className="text-center space-y-2">
-          <div className="text-green-600 text-lg font-semibold">
+      <div className='flex flex-col items-center gap-4 py-4'>
+        <CheckCircle2 className='text-estado-ok h-12 w-12' />
+        <div className='space-y-2 text-center'>
+          <div className='text-estado-ok text-lg font-semibold'>
             ¡Contraseña actualizada exitosamente!
           </div>
-          <p className="text-gray-600 text-sm">
+          <p className='text-muted-foreground text-sm'>
             Serás redirigido al inicio de sesión en unos momentos...
           </p>
         </div>
         <Button
           onClick={() => navigate({ to: '/sign-in' })}
-          className="w-full bg-[#4747F8] hover:bg-[#000066]"
+          className='bg-primary text-primary-foreground hover:bg-primary/90 w-full'
         >
           Ir al inicio de sesión
         </Button>
@@ -122,17 +125,18 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
         {...props}
       >
         {!token && error && (
-          <div className="flex flex-col items-center gap-4 py-4">
-            <XCircle className="h-12 w-12 text-red-500" />
-            <div className="text-center space-y-2">
-              <p className="text-red-600 font-medium">{error}</p>
-              <p className="text-gray-600 text-sm">
-                El enlace de restablecimiento puede haber expirado o ser inválido.
+          <div className='flex flex-col items-center gap-4 py-4'>
+            <XCircle className='text-destructive h-12 w-12' />
+            <div className='space-y-2 text-center'>
+              <p className='text-destructive font-medium'>{error}</p>
+              <p className='text-muted-foreground text-sm'>
+                El enlace de restablecimiento puede haber expirado o ser
+                inválido.
               </p>
             </div>
             <Button
               onClick={() => navigate({ to: '/sign-in' })}
-              className="w-full bg-[#4747F8] hover:bg-[#000066]"
+              className='bg-primary text-primary-foreground hover:bg-primary/90 w-full'
             >
               Volver al inicio de sesión
             </Button>
@@ -146,12 +150,11 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
               name='newPassword'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#000066] font-semibold">Nueva Contraseña</FormLabel>
+                  <FormLabel>Nueva Contraseña</FormLabel>
                   <FormControl>
-                    <PasswordInput 
-                      placeholder='Ingresa tu nueva contraseña' 
-                      {...field} 
-                      className="border-[#4747F8] focus:border-[#4747F8] focus:ring-[#4747F8] text-gray-900"
+                    <PasswordInput
+                      placeholder='Ingresa tu nueva contraseña'
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -163,12 +166,11 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
               name='confirmPassword'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#000066] font-semibold">Confirmar Contraseña</FormLabel>
+                  <FormLabel>Confirmar Contraseña</FormLabel>
                   <FormControl>
-                    <PasswordInput 
-                      placeholder='Confirma tu nueva contraseña' 
-                      {...field} 
-                      className="border-[#4747F8] focus:border-[#4747F8] focus:ring-[#4747F8] text-gray-900"
+                    <PasswordInput
+                      placeholder='Confirma tu nueva contraseña'
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -176,10 +178,12 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
               )}
             />
             {error && (
-              <div className="text-red-600 text-center text-sm font-medium mt-1 mb-2">{error}</div>
+              <div className='text-destructive mt-1 mb-2 text-center text-sm font-medium'>
+                {error}
+              </div>
             )}
-            <Button 
-              className='mt-2 bg-[#FE0202] hover:bg-red-600 text-white font-semibold' 
+            <Button
+              className='bg-primary text-primary-foreground hover:bg-primary/90 mt-2'
               disabled={isLoading || !token}
             >
               {isLoading ? 'Restableciendo...' : 'Restablecer Contraseña'}
@@ -190,4 +194,3 @@ export function ResetPasswordForm({ className, ...props }: ResetPasswordFormProp
     </Form>
   )
 }
-

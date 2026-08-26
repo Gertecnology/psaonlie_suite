@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { usersService } from '../services/users.service'
 import { 
   User, 
@@ -40,11 +41,23 @@ export const useUser = (id: string) => {
 // Hook para crear un usuario
 export const useCreateUser = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (userData: CreateUserRequest) => usersService.createUser(userData),
+    // Los avisos viven en la mutación y no en el formulario, como en el resto
+    // del panel: el error se muestra igual venga de donde venga la llamada.
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Usuario creado', {
+        description:
+          'El usuario ha sido creado. Tiene que verificar su email para entrar.',
+      })
+    },
+    onError: (error) => {
+      toast.error('Error al crear', {
+        description:
+          error.message || 'Ha ocurrido un error al crear el usuario.',
+      })
     },
   })
 }
@@ -52,13 +65,22 @@ export const useCreateUser = () => {
 // Hook para actualizar un usuario
 export const useUpdateUser = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, userData }: { id: string; userData: UpdateUserRequest }) => 
+    mutationFn: ({ id, userData }: { id: string; userData: UpdateUserRequest }) =>
       usersService.updateUser(id, userData),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', variables.id] })
+      toast.success('Usuario actualizado', {
+        description: 'Los cambios se guardaron correctamente.',
+      })
+    },
+    onError: (error) => {
+      toast.error('Error al actualizar', {
+        description:
+          error.message || 'Ha ocurrido un error al actualizar el usuario.',
+      })
     },
   })
 }
@@ -92,13 +114,22 @@ export const useToggleUserStatus = () => {
 // Hook para resetear la contraseña de un usuario
 export const useResetUserPassword = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) => 
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
       usersService.resetUserPassword(id, newPassword),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', variables.id] })
+      toast.success('Contraseña restablecida', {
+        description: 'La contraseña nueva ya está activa.',
+      })
+    },
+    onError: (error) => {
+      toast.error('Error al restablecer', {
+        description:
+          error.message || 'Ha ocurrido un error al restablecer la contraseña.',
+      })
     },
   })
 }

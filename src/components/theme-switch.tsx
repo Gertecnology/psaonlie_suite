@@ -14,9 +14,11 @@ export function ThemeSwitch() {
   const { theme, setTheme } = useTheme()
 
   /* Update theme-color meta tag
-   * when theme is updated */
+   * when theme is updated.
+   * Los valores son los de `--background` en src/index.css:
+   * claro oklch(1 0 0) = #fff, oscuro oklch(0.129 0.042 264.695) = #020618. */
   useEffect(() => {
-    const themeColor = theme === 'dark' ? '#020817' : '#fff'
+    const themeColor = theme === 'dark' ? '#020618' : '#fff'
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) metaThemeColor.setAttribute('content', themeColor)
   }, [theme])
@@ -27,7 +29,7 @@ export function ThemeSwitch() {
         <Button variant='ghost' size='icon' className='scale-95 rounded-full'>
           <IconSun className='size-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
           <IconMoon className='absolute size-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
-          <span className='sr-only'>Toggle theme</span>
+          <span className='sr-only'>Cambiar tema</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>

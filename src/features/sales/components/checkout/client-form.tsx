@@ -23,6 +23,7 @@ import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
 import { useTiposDocumentoByEmpresa } from '@/features/clients/hooks/use-tipos-documento'
 import { useGetPaisesDisponibles } from '../../hooks/use-get-paises'
 import { CreateClientFormValues } from '@/features/clients/models/clients.model'
+import { toast } from 'sonner'
 
 const formSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -42,22 +43,26 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 interface ClientFormProps {
-  empresaId: string
+  agenciaId: string
   empresaNombre?: string
-  onClientCreated?: (clientData: CreateClientFormValues) => void
+  /**
+   * Se llama con el id que devolvió el backend. El checkout necesita ese id
+   * para armar la venta: sin él tenía que volver a crear el mismo cliente.
+   */
+  onClientCreated?: (clienteId: string, clientData: CreateClientFormValues) => void
   isClientCreated?: boolean
   seatNumber?: number
   passengerNumber?: number
 }
 
-export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClientCreated, seatNumber, passengerNumber }: ClientFormProps) {
+export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClientCreated, seatNumber, passengerNumber }: ClientFormProps) {
   const createClient = useCreateClient()
-  
+
   // Obtener tipos de documento para la empresa
-  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(empresaId)
+  const { data: tiposDocumento, isLoading: isLoadingTiposDocumento } = useTiposDocumentoByEmpresa(agenciaId)
   
   // Obtener países disponibles del API
-  const { data: paisesDisponibles, isLoading: isLoadingPaises } = useGetPaisesDisponibles(empresaId)
+  const { data: paisesDisponibles, isLoading: isLoadingPaises } = useGetPaisesDisponibles(agenciaId)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,36 +83,48 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
   })
 
   const onSubmit = (data: FormValues) => {
+    // Guarda contra doble envío: si ya hay un alta en vuelo, o el pasajero ya
+    // quedó registrado, no se manda otra vez.
+    if (createClient.isPending || isClientCreated) return
+
     const clientData: CreateClientFormValues = {
       ...data,
-      empresaId: empresaId,
+      agenciaId: agenciaId,
     }
 
     createClient.mutate(clientData, {
-      onSuccess: () => {
-        form.reset()
-        if (onClientCreated) {
-          onClientCreated(clientData)
-        }
-        import('sonner').then(({ toast }) => {
-          toast.success('Cliente creado', {
-            description: 'El cliente se ha creado correctamente.',
-            duration: 3000,
+      onSuccess: (respuesta) => {
+        const clienteId = respuesta?.cliente?.id
+
+        // Sin id no hay forma de asociar el pasajero al asiento en la venta.
+        // Reportarlo como éxito dejaría el checkout bloqueado sin explicación.
+        if (!clienteId) {
+          toast.error('No se pudo registrar el pasajero', {
+            description:
+              'El servidor no devolvió el identificador del cliente. Volvé a intentarlo.',
+            duration: 5000,
           })
+          return
+        }
+
+        form.reset()
+        onClientCreated?.(clienteId, clientData)
+
+        toast.success('Pasajero registrado', {
+          description: `${clientData.nombre} ${clientData.apellido} quedó registrado.`,
+          duration: 3000,
         })
       },
       onError: (error: unknown) => {
-        import('sonner').then(({ toast }) => {
-          let message = 'Ha ocurrido un error al crear el cliente.'
-          if (error instanceof Error) {
-            message = error.message
-          } else if (typeof error === 'string') {
-            message = error
-          }
-          toast.error('Error al crear', {
-            description: message,
-            duration: 3000,
-          })
+        let message = 'Ha ocurrido un error al crear el cliente.'
+        if (error instanceof Error) {
+          message = error.message
+        } else if (typeof error === 'string') {
+          message = error
+        }
+        toast.error('Error al registrar el pasajero', {
+          description: message,
+          duration: 6000,
         })
       },
     })
@@ -448,15 +465,15 @@ export function ClientForm({ empresaId, empresaNombre, onClientCreated, isClient
               {isClientCreated ? (
                 <div className="flex items-center gap-2 text-green-600">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Cliente registrado</span>
+                  <span className="text-sm font-medium">Pasajero registrado</span>
                 </div>
               ) : (
-                <Button 
+                <Button
                   type="submit"
                   disabled={createClient.isPending}
                   size="sm"
                 >
-                  {createClient.isPending ? 'Creando...' : 'Crear Cliente'}
+                  {createClient.isPending ? 'Registrando...' : 'Registrar pasajero'}
                 </Button>
               )}
             </div>

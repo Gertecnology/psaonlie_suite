@@ -1,22 +1,27 @@
-/* eslint-disable no-console */
-import { bloquearAsientos } from '../services/sales.service'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { BloquearAsientosRequest, BloquearAsientosResponse } from '../models/sales.model'
+import { bloquearAsientos } from '../services/sales.service'
+import type {
+  BloquearAsientosRequest,
+  BloquearAsientosResponse,
+} from '../models/sales.model'
 
+/**
+ * Bloquea asientos contra la empresa.
+ *
+ * El hook no interpreta el resultado: `bloquearAsientos` ya lanza cuando el
+ * bloqueo falló o quedó incompleto. Antes este `onSuccess` logueaba "Asientos
+ * bloqueados exitosamente" para cualquier respuesta 201, incluidas las que
+ * traían `exitoso: false` — de ahí salían las ventas pagadas sin boleto.
+ */
 export function useBloquearAsientos() {
   const queryClient = useQueryClient()
 
   return useMutation<BloquearAsientosResponse, Error, BloquearAsientosRequest>({
     mutationFn: bloquearAsientos,
-    onSuccess: (data) => {
-      // Invalidar la consulta de asientos para refrescar la disponibilidad
+    // Un bloqueo cambia la disponibilidad real del servicio, tanto si sale
+    // bien como si sale mal: refrescamos la taquilla en los dos casos.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['asientos'] })
-      
-      // Opcional: mostrar notificación de éxito
-      console.log('Asientos bloqueados exitosamente:', data)
-    },
-    onError: (error) => {
-      console.error('Error al bloquear asientos:', error)
     },
   })
 }

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { getClientesList, getClienteById } from '../services/clients.service'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { getClientesList, getClientePorEmail } from '../services/clients.service'
 import { ClientesSearchParams } from '../models/clients.model'
 
 export function useClientesList(params: ClientesSearchParams) {
@@ -10,14 +10,22 @@ export function useClientesList(params: ClientesSearchParams) {
     gcTime: 10 * 60 * 1000, // 10 minutos
     retry: 2,
     refetchOnWindowFocus: false,
+    // Sin esto, cada tecla del buscador vacía la tabla y la deja en esqueleto.
+    // Con la página anterior en pantalla, la tabla sólo se atenúa mientras
+    // llega la nueva.
+    placeholderData: keepPreviousData,
   })
 }
 
-export function useClienteById(id: string) {
+/**
+ * El backend identifica al cliente por email (`GET /api/clientes/:email`),
+ * no por id.
+ */
+export function useClientePorEmail(email: string) {
   return useQuery({
-    queryKey: ['cliente', id],
-    queryFn: () => getClienteById(id),
-    enabled: !!id,
+    queryKey: ['cliente', email],
+    queryFn: () => getClientePorEmail(email),
+    enabled: !!email,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: 2,

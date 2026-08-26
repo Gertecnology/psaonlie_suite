@@ -9,8 +9,8 @@ export const Route = createFileRoute('/_authenticated/sales/seats')({
 function RouteComponent() {
   return (
     <PageLayout
-      title="Selección de Asientos"
-      description="Selecciona tu asiento preferido para el viaje."
+      title='Selección de Asientos'
+      description='El plano del servicio en tiempo real: tocá un asiento libre para elegirlo.'
       showSearch={false}
     >
       <SeatSelectionPage />
