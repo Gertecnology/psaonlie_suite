@@ -1,9 +1,11 @@
-# Dependencies allowed to run install lifecycle scripts.
-# pnpm blocks these by default as a supply-chain safeguard; without the
-# approval `pnpm dev` aborts before starting (runDepsStatusCheck).
-# All four ship native binaries required by the build toolchain.
+# pnpm 11 no ejecuta el script de post-install de ninguna dependencia salvo las
+# listadas aca, y sale con codigo 1 cuando encuentra alguna bloqueada. Estas
+# tres bajan un binario nativo en ese script: sin permiso el build de Vite se
+# queda sin compilador.
+#
+# Va en este archivo y no en `package.json`: pnpm 11 dejo de leer el campo
+# `pnpm` de package.json ("The 'pnpm' field in package.json is no longer read").
 allowBuilds:
-  '@clerk/shared': true
   '@swc/core': true
   '@tailwindcss/oxide': true
   esbuild: true

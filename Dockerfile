@@ -5,10 +5,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install pnpm
-RUN npm install -g pnpm
+# La version sale de `packageManager` en package.json: sin fijarla, cada build
+# usaba la ultima publicada y el resultado cambiaba sin que nadie lo decidiera.
+RUN corepack enable && corepack prepare --activate
 
 # Install all dependencies (including devDependencies)
 RUN pnpm install --frozen-lockfile
