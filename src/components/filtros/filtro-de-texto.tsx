@@ -4,15 +4,14 @@ import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { CampoDeFiltro } from './campo-de-filtro'
 
 interface FiltroDeTextoProps {
   id: string
+  /** Va como `aria-label`: el control no lleva etiqueta dibujada. */
   etiqueta: string
   placeholder?: string
   valor: string
   onCambiar: (valor: string) => void
-  /** Milisegundos de espera antes de avisar. */
   espera?: number
   className?: string
 }
@@ -21,15 +20,14 @@ interface FiltroDeTextoProps {
  * Un filtro de texto que avisa cuando la persona dejó de escribir.
  *
  * El estado de lo tecleado vive acá adentro y se emite con retardo: sin eso se
- * consulta al servidor en cada tecla, y cada consulta de un listado trae una
- * página y sus totales.
+ * consulta al servidor en cada tecla, y cada consulta trae una página y sus
+ * totales.
  *
  * Lo escrito y lo emitido son dos cosas distintas, y por eso hay un `ref`. Si
  * el padre limpia los filtros, el valor de afuera cambia sin que nadie haya
- * tecleado: hay que reflejarlo en la caja. Pero mientras se escribe, el valor
- * de afuera va siempre un retardo atrás del local, y copiarlo de vuelta
- * borraría las últimas letras. El `ref` distingue los dos casos: sólo se
- * sincroniza cuando lo de afuera no es lo último que emitimos.
+ * tecleado y hay que reflejarlo en la caja. Pero mientras se escribe, el de
+ * afuera va siempre un retardo atrás del local, y copiarlo de vuelta borraría
+ * las últimas letras. El `ref` distingue los dos casos.
  */
 export function FiltroDeTexto({
   id,
@@ -62,13 +60,14 @@ export function FiltroDeTexto({
   }, [valor])
 
   return (
-    <CampoDeFiltro etiqueta={etiqueta} htmlFor={id} className={className}>
+    <div className={className}>
       <div className='relative'>
         <Search className='text-muted-foreground pointer-events-none absolute left-2.5 top-2.5 h-4 w-4' />
         <Input
           id={id}
-          className='pl-8 pr-8'
-          placeholder={placeholder}
+          aria-label={etiqueta}
+          className='h-9 pl-8 pr-8'
+          placeholder={placeholder ?? etiqueta}
           value={escrito}
           onChange={(evento) => setEscrito(evento.target.value)}
         />
@@ -85,6 +84,6 @@ export function FiltroDeTexto({
           </Button>
         )}
       </div>
-    </CampoDeFiltro>
+    </div>
   )
 }
