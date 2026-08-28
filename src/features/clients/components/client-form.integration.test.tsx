@@ -68,6 +68,8 @@ const CLIENTE = {
   nombre: 'Ana',
   apellido: 'Gómez',
   nombreCompleto: 'Ana Gómez',
+  tipoDocumento: 'CI',
+  numeroDocumento: '4123456',
   fechaNacimiento: '1990-04-12T00:00:00.000Z',
   sexo: 'F',
   nacionalidad: 'Paraguaya',
@@ -157,14 +159,17 @@ describe('la ficha del cliente (integración)', () => {
     ).toBeInTheDocument()
   })
 
-  it('muestra lo que lleva comprado junto a sus datos', async () => {
+  /**
+   * El documento se define al dar de alta y la API de actualización no lo
+   * acepta, pero es parte de quién es la persona.
+   */
+  it('muestra el documento sin dejar cambiarlo', async () => {
     montar('ana@correo.com')
 
-    await screen.findByRole('heading', { name: 'Ana Gómez' })
-
-    expect(await screen.findByText('12')).toBeInTheDocument()
-    expect(screen.getByText(/1\.250\.000/)).toBeInTheDocument()
-    expect(screen.getByText('75% del total')).toBeInTheDocument()
+    expect(await screen.findByText('CI 4123456')).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Número de documento')
+    ).not.toBeInTheDocument()
   })
 
   /** Ver los datos y corregirlos es el mismo gesto: una sola pantalla. */
@@ -205,11 +210,11 @@ describe('la ficha del cliente (integración)', () => {
     ).toHaveAttribute('data-state', 'checked')
   })
 
-  it('deja el email de sólo lectura, porque identifica al cliente', async () => {
+  it('deja el correo de sólo lectura, porque identifica al cliente', async () => {
     montar('ana@correo.com')
 
-    const email = await screen.findByLabelText('Email')
-    expect(email).toHaveAttribute('readonly')
+    const correo = await screen.findByLabelText('Correo')
+    expect(correo).toHaveAttribute('readonly')
   })
 
   it('monta la libreta de facturación y las compras debajo', async () => {

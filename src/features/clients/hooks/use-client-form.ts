@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { z } from 'zod'
 import { useAgenciasList } from '../../dashboard/hooks/use-agencias-list'
 import { useCreateClient, useUpdateClient } from './use-client-mutations'
 import { useClientePorEmail } from './use-clients'
@@ -107,7 +107,7 @@ export function useClientForm(email?: string) {
             })
           }
         }
-      }),
+      })
     ),
     defaultValues: EMPTY,
   })
@@ -193,7 +193,7 @@ export function useClientForm(email?: string) {
           },
           onError: (error: Error) =>
             toast.error(`Error al actualizar el cliente: ${error.message}`),
-        },
+        }
       )
       return
     }
@@ -213,6 +213,8 @@ export function useClientForm(email?: string) {
     save,
     saving: create.isPending || update.isPending,
     isEdit,
+    /** El registro guardado. La ficha lo necesita por su id y su documento. */
+    client,
     companies: companiesQuery.data?.data ?? [],
     loadingCompanies: companiesQuery.isLoading,
     documentTypes: documentTypesQuery.data,

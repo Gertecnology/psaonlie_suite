@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Link2Off } from 'lucide-react'
-import { formatearFechaCorta, formatearGuaranies } from '@/lib/formato'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,11 +30,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { PageLayout } from '@/components/layout'
 import { useClientForm } from '../hooks/use-client-form'
-import { useClienteConEstadisticas } from '../hooks/use-clients'
 import { ClientDetalleTabs } from './client-detalle-tabs'
 import { EmpresaSearch } from './empresa-search'
 
-/** Alto compartido por las dos tarjetas del formulario, de donde sale la simetría. */
+/** Alto compartido por las dos tarjetas de arriba, de donde sale la simetría. */
 const ALTO_DE_LA_FILA = 'lg:min-h-[520px]'
 
 const ID_DEL_FORM = 'cliente-form'
@@ -84,88 +82,18 @@ interface ClientFormProps {
   email?: string
 }
 
-interface ResumenProps {
-  compras: number
-  pagadas: number
-  montoPagado: number
-  ultimaCompra?: string
-  cargando: boolean
-}
-
-/**
- * Lo que el cliente lleva comprado, sobre el formulario.
- *
- * Va arriba y no en una pestaña porque es el contexto con el que se leen sus
- * datos: quien abre la ficha de alguien que compró treinta veces la corrige
- * con otro cuidado que la de alguien que nunca compró.
- */
-function ResumenDeCompras({
-  compras,
-  pagadas,
-  montoPagado,
-  ultimaCompra,
-  cargando,
-}: ResumenProps) {
-  if (cargando) {
-    return (
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {[0, 1, 2, 3].map((posicion) => (
-          <Skeleton key={posicion} className='h-[86px] w-full' />
-        ))}
-      </div>
-    )
-  }
-
-  const celdas = [
-    { titulo: 'Compras', valor: String(compras), pie: 'En total' },
-    {
-      titulo: 'Pagadas',
-      valor: String(pagadas),
-      pie:
-        compras > 0
-          ? `${Math.round((pagadas / compras) * 100)}% del total`
-          : 'Sin compras',
-    },
-    {
-      titulo: 'Monto pagado',
-      valor: formatearGuaranies(montoPagado),
-      pie: 'Acumulado',
-    },
-    {
-      titulo: 'Última compra',
-      valor: ultimaCompra ? formatearFechaCorta(ultimaCompra) : '—',
-      pie: ultimaCompra ? 'Fecha de la venta' : 'Todavía no compró',
-    },
-  ]
-
-  return (
-    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-      {celdas.map((celda) => (
-        <Card key={celda.titulo}>
-          <CardContent className='pt-6'>
-            <p className='text-muted-foreground text-sm font-medium'>
-              {celda.titulo}
-            </p>
-            <p className='mt-1 text-2xl font-bold tabular-nums'>
-              {celda.valor}
-            </p>
-            <p className='text-muted-foreground mt-1 text-xs'>{celda.pie}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
-
 /**
  * La ficha de un cliente: sus datos, su libreta de facturación y sus compras.
  *
- * Antes eran dos pantallas distintas — un formulario en `/clients/:email` y una
- * pantalla de detalle que se abría desde el menú de la fila — que mostraban al
- * mismo cliente y no se podía pasar de una a la otra. Ver un dato y corregirlo
- * son el mismo gesto, así que son la misma pantalla.
+ * Antes eran dos pantallas distintas —un formulario en `/clients/:email/editar`
+ * y una pantalla de detalle que se abría desde el menú de la fila— que
+ * mostraban al mismo cliente y no se podía pasar de una a la otra. Ver un dato
+ * y corregirlo son el mismo gesto, así que son la misma pantalla.
  *
- * Toda la lógica del formulario vive en `use-client-form`; esto sólo dibuja.
+ * Las dos tarjetas de arriba separan las dos preguntas que la pantalla
+ * contesta: quién es, que es lo que se imprime, y qué le pide la transportista
+ * para emitir. Toda la lógica del formulario vive en `use-client-form`; esto
+ * sólo dibuja.
  */
 export function ClientForm({ email }: ClientFormProps) {
   const {
@@ -173,6 +101,7 @@ export function ClientForm({ email }: ClientFormProps) {
     save,
     saving,
     isEdit,
+    client,
     companies,
     loadingCompanies,
     documentTypes,
@@ -184,19 +113,17 @@ export function ClientForm({ email }: ClientFormProps) {
     hasUnsavedChanges,
   } = useClientForm(email)
 
-  // Los totales de compras no vienen con el cliente: sólo existen en el
-  // listado. La ficha no depende de ellos para funcionar, así que su carga y su
-  // error se quedan dentro del resumen.
-  const conEstadisticas = useClienteConEstadisticas(isEdit ? (email ?? '') : '')
-  const estadisticas = conEstadisticas.data?.estadisticasVentas
-  const clienteId = conEstadisticas.data?.cliente.id
-
-  const nombreGuardado = conEstadisticas.data?.cliente.nombreCompleto
-  const titulo = isEdit ? (nombreGuardado ?? 'Cliente') : 'Nuevo cliente'
+  const titulo = isEdit
+    ? (client?.nombreCompleto ?? 'Cliente')
+    : 'Nuevo cliente'
 
   // Hasta que no haya empresa no se sabe qué documentos acepta, así que los
   // campos del alta esperan. En edición no aplica: el cliente ya tiene empresa.
   const esperandoEmpresa = !isEdit && !agenciaId
+
+  const documentoGuardado = [client?.tipoDocumento, client?.numeroDocumento]
+    .filter(Boolean)
+    .join(' ')
 
   // Un cierre accidental con el formulario a medias pierde todo lo cargado.
   React.useEffect(() => {
@@ -210,16 +137,9 @@ export function ClientForm({ email }: ClientFormProps) {
   if (loading) {
     return (
       <PageLayout title='Cargando cliente…' showSearch={false}>
-        <div className='space-y-5'>
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            {[0, 1, 2, 3].map((posicion) => (
-              <Skeleton key={posicion} className='h-[86px] w-full' />
-            ))}
-          </div>
-          <div className='grid gap-5 lg:grid-cols-2'>
-            <Skeleton className='h-[520px] w-full' />
-            <Skeleton className='h-[520px] w-full' />
-          </div>
+        <div className='grid gap-5 lg:grid-cols-2'>
+          <Skeleton className='h-[520px] w-full' />
+          <Skeleton className='h-[520px] w-full' />
         </div>
       </PageLayout>
     )
@@ -247,7 +167,7 @@ export function ClientForm({ email }: ClientFormProps) {
       title={titulo}
       description={
         isEdit
-          ? 'Sus datos, a quién factura y qué compró. La empresa y el documento se definieron al darlo de alta.'
+          ? 'Editando un cliente que ya existe.'
           : 'El alta se sincroniza con el web service de la empresa, así que puede tardar.'
       }
       showSearch={false}
@@ -287,16 +207,6 @@ export function ClientForm({ email }: ClientFormProps) {
       }
     >
       <div className='space-y-5'>
-        {isEdit && (
-          <ResumenDeCompras
-            compras={estadisticas?.totalVentas ?? 0}
-            pagadas={estadisticas?.ventasPagadas ?? 0}
-            montoPagado={estadisticas?.montoTotalPagado ?? 0}
-            ultimaCompra={estadisticas?.ultimaVenta}
-            cargando={conEstadisticas.isLoading}
-          />
-        )}
-
         <Form {...form}>
           {/* El submit vive en el <form>, así que Enter guarda desde cualquier
               campo. */}
@@ -399,8 +309,7 @@ export function ClientForm({ email }: ClientFormProps) {
                 <CardHeader>
                   <CardTitle>Quién es</CardTitle>
                   <CardDescription>
-                    Cómo se llama y por dónde se lo ubica. Es lo que sale
-                    impreso en el pasaje.
+                    Lo que va en el pasaje y en la factura.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className='flex-1 space-y-5'>
@@ -447,27 +356,26 @@ export function ClientForm({ email }: ClientFormProps) {
                     name='email'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Correo</FormLabel>
                         <FormControl>
                           {/* En edición es de sólo lectura: es la clave con la
                               que la API identifica al cliente, así que cambiarlo
-                              acá no lo renombraría, guardaría contra el email
+                              acá no lo renombraría, guardaría contra el correo
                               viejo. */}
                           <Input
                             {...field}
                             type='email'
-                            placeholder='Ingresá el email'
+                            placeholder='Ingresá el correo'
                             readOnly={isEdit}
                             disabled={esperandoEmpresa}
                             className={isEdit ? 'bg-muted' : undefined}
                           />
                         </FormControl>
-                        {isEdit && (
-                          <FormDescription>
-                            El email identifica al cliente y no se puede
-                            cambiar.
-                          </FormDescription>
-                        )}
+                        <FormDescription>
+                          {isEdit
+                            ? 'Con esto se le manda el pasaje, y es lo que lo identifica: no se puede cambiar.'
+                            : 'Con esto se le manda el pasaje.'}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -492,6 +400,33 @@ export function ClientForm({ email }: ClientFormProps) {
                     )}
                   />
 
+                  {/* El documento se definió al dar de alta y la API de
+                      actualización no lo acepta, pero es parte de quién es la
+                      persona: se muestra, no se edita. */}
+                  {isEdit && (
+                    <div className='space-y-2'>
+                      <p className='text-sm leading-none font-medium'>
+                        Documento
+                      </p>
+                      <div className='bg-muted text-muted-foreground rounded-md border px-3 py-2 text-sm'>
+                        {documentoGuardado || 'Sin documento cargado'}
+                      </div>
+                      <p className='text-muted-foreground text-sm'>
+                        Se definió al darlo de alta y no se cambia desde acá.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className={`flex flex-col ${ALTO_DE_LA_FILA}`}>
+                <CardHeader>
+                  <CardTitle>Datos del pasajero</CardTitle>
+                  <CardDescription>
+                    Los pide la transportista al emitir el pasaje.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='flex flex-1 flex-col space-y-5'>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
                     <FormField
                       control={form.control}
@@ -537,18 +472,7 @@ export function ClientForm({ email }: ClientFormProps) {
                       )}
                     />
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card className={`flex flex-col ${ALTO_DE_LA_FILA}`}>
-                <CardHeader>
-                  <CardTitle>De dónde es y a qué se dedica</CardTitle>
-                  <CardDescription>
-                    Datos con los que se arman los informes de viajeros y las
-                    estadísticas por origen.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className='flex-1 space-y-5'>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
                     <FormField
                       control={form.control}
@@ -644,8 +568,7 @@ export function ClientForm({ email }: ClientFormProps) {
                               donde se anota lo que no entra en ningún otro. */}
                           <Textarea
                             {...field}
-                            rows={4}
-                            placeholder='Lo que haya que recordar de este cliente'
+                            placeholder='Opcional'
                             disabled={esperandoEmpresa}
                             className='min-h-[96px] flex-1 resize-none'
                           />
@@ -662,32 +585,9 @@ export function ClientForm({ email }: ClientFormProps) {
 
         {/* Sólo cuando el cliente existe: sin id no hay libreta que pedir ni
             compras que listar. */}
-        {isEdit && (
+        {isEdit && client && (
           <Card className='overflow-hidden py-0'>
-            {clienteId ? (
-              <ClientDetalleTabs clienteId={clienteId} />
-            ) : (
-              <div className='text-muted-foreground flex flex-col items-center gap-2 px-6 py-12 text-center text-sm'>
-                {conEstadisticas.isLoading ? (
-                  <Skeleton className='h-5 w-64' />
-                ) : (
-                  <>
-                    <Link2Off className='h-5 w-5' />
-                    <p>
-                      No se pudieron cargar la facturación ni las compras: el
-                      listado no devolvió a este cliente.
-                    </p>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => void conEstadisticas.refetch()}
-                    >
-                      Reintentar
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
+            <ClientDetalleTabs clienteId={client.id} />
           </Card>
         )}
       </div>

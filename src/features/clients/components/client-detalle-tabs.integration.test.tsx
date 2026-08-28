@@ -145,20 +145,56 @@ describe('las pestañas de la ficha del cliente (integración)', () => {
     expect(await screen.findByText(/SUSPENDIDO — revisar/)).toBeInTheDocument()
   })
 
+  /** Predeterminar y quitar viven en el menú de la fila. */
+  const abrirElMenuDe = async (
+    usuario: ReturnType<typeof userEvent.setup>,
+    razonSocial: string
+  ) => {
+    const fila = screen.getByText(razonSocial).closest('tr')
+    await usuario.click(
+      within(fila!).getByRole('button', { name: /Más acciones/ })
+    )
+    return screen.getByRole('menu')
+  }
+
   it('no ofrece predeterminar al que ya lo es', async () => {
     responderSegunLaUrl()
-    montar()
+    const { usuario } = montar()
 
     await screen.findByText('Gertecnology S.A.')
 
-    const predeterminado = screen.getByText('Gertecnology S.A.').closest('tr')
+    const menuDelPredeterminado = await abrirElMenuDe(
+      usuario,
+      'Gertecnology S.A.'
+    )
     expect(
-      within(predeterminado!).queryByRole('button', { name: /Predeterminar/ })
+      within(menuDelPredeterminado).queryByRole('menuitem', {
+        name: /Predeterminar/,
+      })
     ).not.toBeInTheDocument()
+    await usuario.keyboard('{Escape}')
 
-    const otro = screen.getByText('Sebastián Castro').closest('tr')
+    const menuDelOtro = await abrirElMenuDe(usuario, 'Sebastián Castro')
     expect(
-      within(otro!).getByRole('button', { name: /Predeterminar/ })
+      within(menuDelOtro).getByRole('menuitem', { name: /Predeterminar/ })
+    ).toBeInTheDocument()
+  })
+
+  it('ofrece agregar un titular', async () => {
+    responderSegunLaUrl()
+    montar()
+
+    expect(
+      await screen.findByRole('button', { name: /Agregar titular/ })
+    ).toBeInTheDocument()
+  })
+
+  it('cuenta los titulares y cuál viene elegido', async () => {
+    responderSegunLaUrl()
+    montar()
+
+    expect(
+      await screen.findByText('2 titulares · 1 predeterminado')
     ).toBeInTheDocument()
   })
 
@@ -167,10 +203,10 @@ describe('las pestañas de la ficha del cliente (integración)', () => {
     const { usuario } = montar()
 
     await screen.findByText('Sebastián Castro')
-    const fila = screen.getByText('Sebastián Castro').closest('tr')
 
+    const menu = await abrirElMenuDe(usuario, 'Sebastián Castro')
     await usuario.click(
-      within(fila!).getByRole('button', { name: /Predeterminar/ })
+      within(menu).getByRole('menuitem', { name: /Predeterminar/ })
     )
 
     await waitFor(() =>
@@ -187,9 +223,9 @@ describe('las pestañas de la ficha del cliente (integración)', () => {
     const { usuario } = montar()
 
     await screen.findByText('Sebastián Castro')
-    const fila = screen.getByText('Sebastián Castro').closest('tr')
 
-    await usuario.click(within(fila!).getByRole('button', { name: /Quitar/ }))
+    const menu = await abrirElMenuDe(usuario, 'Sebastián Castro')
+    await usuario.click(within(menu).getByRole('menuitem', { name: /Quitar/ }))
 
     expect(
       await screen.findByText(/¿Quitar a Sebastián Castro de la libreta\?/)

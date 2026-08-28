@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
+  guardarTitular,
   marcarPredeterminado,
   obtenerLibreta,
   quitarTitular,
+  type TitularAGuardar,
 } from '../services/facturacion.service'
 
 const clave = (clienteId: string | undefined) => [
@@ -18,6 +20,31 @@ export function useLibretaFacturacion(clienteId: string | undefined) {
     queryFn: () => obtenerLibreta(clienteId!),
     enabled: !!clienteId,
     staleTime: 60 * 1000,
+  })
+}
+
+/**
+ * Guarda un titular, nuevo o corregido.
+ *
+ * No distingue alta de edición porque el backend tampoco: busca por documento y
+ * actualiza el que encuentre.
+ */
+export function useGuardarTitular(clienteId: string | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (datos: TitularAGuardar) => guardarTitular(clienteId!, datos),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clave(clienteId) })
+      toast.success('Titular guardado', {
+        description: 'Ya se le va a ofrecer al comprar.',
+      })
+    },
+    onError: (error) => {
+      toast.error('No se pudo guardar el titular', {
+        description: error.message,
+      })
+    },
   })
 }
 
