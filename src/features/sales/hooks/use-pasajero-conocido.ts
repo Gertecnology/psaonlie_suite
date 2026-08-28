@@ -11,6 +11,7 @@ const ESPERA_MS = 550
 /** Lo que devuelve el backend cuando reconoce el documento. */
 interface PasajeroConocido {
   encontrado: boolean
+  tipoDocumento?: string
   nombre?: string
   apellido?: string
   email?: string
@@ -24,6 +25,7 @@ interface PasajeroConocido {
 
 /** Los campos del formulario que se pueden precargar. */
 export interface CamposPrecargables {
+  tipoDocumento?: string
   nombre?: string
   apellido?: string
   email?: string
@@ -50,7 +52,11 @@ export function usePasajeroConocido({
   numeroDocumento,
   onEncontrado,
 }: {
-  tipoDocumento: string
+  /**
+   * Opcional. Sólo viaja para desempatar si dos personas comparten el número:
+   * a alguien lo identifica su número, y el tipo es un dato de esa persona.
+   */
+  tipoDocumento?: string
   numeroDocumento: string
   /**
    * Recibe sólo los campos que vinieron con valor. Quien lo reciba decide si
@@ -70,7 +76,10 @@ export function usePasajeroConocido({
     const numero = numeroDocumento?.trim() ?? ''
     const tipo = tipoDocumento?.trim() ?? ''
 
-    if (!tipo || numero.length < LARGO_MINIMO) return
+    // Alcanza con el número. Antes se exigía el tipo, y quien escribía su
+    // cédula sin elegirlo primero no obtenía nada: el vendedor terminaba
+    // preguntando todo igual.
+    if (numero.length < LARGO_MINIMO) return
 
     const clave = `${tipo}|${numero}`
     if (yaBuscados.current.has(clave)) return
@@ -79,10 +88,10 @@ export function usePasajeroConocido({
       ultimoPedido.current = clave
       setBuscando(true)
 
-      const query = new URLSearchParams({
-        tipoDocumento: tipo,
-        numeroDocumento: numero,
-      })
+      const query = new URLSearchParams({ numeroDocumento: numero })
+      if (tipo) {
+        query.set('tipoDocumento', tipo)
+      }
 
       apiFetch<PasajeroConocido>(
         `/api/clientes/pasajero-por-documento?${query.toString()}`,
@@ -97,6 +106,9 @@ export function usePasajeroConocido({
           if (!conocido?.encontrado) return
 
           onEncontrado({
+            // El tipo también se precarga: es un dato de la persona, no algo
+            // que el vendedor tenga que averiguar.
+            tipoDocumento: conocido.tipoDocumento,
             nombre: conocido.nombre,
             apellido: conocido.apellido,
             email: conocido.email,
