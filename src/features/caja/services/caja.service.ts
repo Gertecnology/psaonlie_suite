@@ -95,6 +95,46 @@ export function enviarDocumentos(
   )
 }
 
+/**
+ * Brings one document down so the screen can show it.
+ *
+ * It cannot be an `<a href>` nor an `<iframe src>` pointing at the endpoint:
+ * neither sends the token, so both come back 401. The file is fetched with the
+ * credentials and handed to the browser as an object URL.
+ *
+ * Whoever calls this owns the URL and must revoke it — an object URL is held by
+ * the document until it is released, and a seller who opens twenty sales in a
+ * shift would keep twenty PDFs in memory.
+ */
+export async function verDocumento(
+  documentoId: string,
+): Promise<{ url: string; nombreArchivo?: string }> {
+  const { blob, nombreArchivo } = await apiDownload(
+    `${VENTAS}/documentos/${encodeURIComponent(documentoId)}`,
+    { fallbackMessage: 'No se pudo abrir el documento.' },
+  )
+
+  return { url: URL.createObjectURL(blob), nombreArchivo }
+}
+
+/**
+ * Same document, saved to disk instead of shown.
+ *
+ * It downloads again rather than reusing the preview's URL, because a document
+ * can be saved without ever having been opened.
+ */
+export async function descargarDocumento(
+  documentoId: string,
+  nombreSugerido: string,
+): Promise<void> {
+  const { blob, nombreArchivo } = await apiDownload(
+    `${VENTAS}/documentos/${encodeURIComponent(documentoId)}`,
+    { fallbackMessage: 'No se pudo descargar el documento.' },
+  )
+
+  descargarBlob(blob, nombreArchivo ?? nombreSugerido)
+}
+
 /** Cómo se imprime la factura. */
 export type TipoImpresion = 'NORMAL' | 'TERMICA'
 
