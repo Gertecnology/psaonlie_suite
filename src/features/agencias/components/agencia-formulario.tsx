@@ -42,7 +42,15 @@ interface AgenciaFormularioProps {
  * All the logic lives in `use-formulario-agencia`; this file only renders.
  */
 export function AgenciaFormulario({ agenciaId }: AgenciaFormularioProps) {
-  const ALTO_DE_LA_FILA = 'lg:h-[520px]'
+  /**
+   * Alto compartido por las dos tarjetas de arriba.
+   *
+   * `min-h` y no `h`: con alto fijo, la columna izquierda —que tiene un campo
+   * más que la derecha— desbordaba la tarjeta y su último control se montaba
+   * sobre el listado de abajo. Como el grid estira ambas al alto de la más
+   * alta, la simetría se mantiene igual y ninguna corta su contenido.
+   */
+  const ALTO_DE_LA_FILA = 'lg:min-h-[520px]'
   const ID_DEL_FORM = 'empresa-form'
 
   const {
