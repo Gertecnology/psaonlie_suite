@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
 import { useTiposDocumentoByEmpresa } from '@/features/clients/hooks/use-tipos-documento'
+import { usePasajeroConocido } from '../../hooks/use-pasajero-conocido'
 import { useGetPaisesDisponibles } from '../../hooks/use-get-paises'
 import { CreateClientFormValues } from '@/features/clients/models/clients.model'
 import { toast } from 'sonner'
@@ -79,6 +80,29 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
       telefono: '',
       ocupacion: '',
       observaciones: '',
+    },
+  })
+
+  // Precarga desde el documento: quien vuelve a comprar no tiene que dictarle
+  // todo al vendedor otra vez. En el mostrador cada dato que no hay que
+  // preguntar es una persona menos en la fila.
+  //
+  // Sólo se completan los campos vacíos: pisar lo escrito haría imposible
+  // corregir un dato viejo, porque la respuesta devolvería el anterior.
+  const { buscando: buscandoPasajero } = usePasajeroConocido({
+    tipoDocumento: form.watch('tipoDocumento'),
+    numeroDocumento: form.watch('numeroDocumento'),
+    onEncontrado: (campos) => {
+      for (const [campo, valor] of Object.entries(campos)) {
+        if (!valor) continue
+
+        const actual = form.getValues(campo as keyof FormValues)
+        if (actual) continue
+
+        form.setValue(campo as keyof FormValues, valor as never, {
+          shouldValidate: true,
+        })
+      }
     },
   })
 
@@ -243,12 +267,20 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
                     <FormItem className="space-y-1">
                       <FormLabel className="text-sm">N° de documento <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Número" 
+                        <Input
+                          {...field}
+                          placeholder="Número"
                           className="h-8"
+                          autoComplete="off"
                         />
                       </FormControl>
+                      {/* Sin este aviso el formulario se completa solo un
+                          segundo después de tipear, sin explicación. */}
+                      {buscandoPasajero && (
+                        <p role="status" className="text-muted-foreground text-xs">
+                          Buscando datos anteriores…
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

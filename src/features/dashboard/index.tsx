@@ -184,11 +184,13 @@ export default function Dashboard() {
           </div>
 
           {/*
-            La caja aparece sólo si alguien vendió por mostrador. En un negocio
-            que todavía vende únicamente por la web, una sección vacía que dice
-            "nadie vendió" es ruido permanente.
+            La caja se muestra siempre.
+            
+            Estaba condicionada a que hubiera ventas de mostrador, y con la
+            sección ausente no había forma de distinguir «todavía nadie vendió»
+            de «esto está roto». Vacía dice lo primero, que es información.
           */}
-          {!!vendedores.data?.data?.length && (
+          {
             <div className='mb-6'>
               <TarjetaSeccion
                 titulo='La caja'
@@ -196,12 +198,12 @@ export default function Dashboard() {
                 refrescando={vendedores.isFetching}
               >
                 <RankingVendedores
-                  vendedores={vendedores.data.data}
+                  vendedores={vendedores.data?.data}
                   cargando={vendedores.isLoading}
                 />
               </TarjetaSeccion>
             </div>
-          )}
+          }
 
           <TarjetaSeccion
             titulo='Últimas ventas'

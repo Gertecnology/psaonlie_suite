@@ -39,6 +39,7 @@ import { Route as AuthenticatedSalesCheckoutRouteImport } from './routes/_authen
 import { Route as AuthenticatedReportsVentasSinBoletoRouteImport } from './routes/_authenticated/reports/ventas-sin-boleto'
 import { Route as AuthenticatedReportsSerieTemporalRouteImport } from './routes/_authenticated/reports/serie-temporal'
 import { Route as AuthenticatedReportsResumenFinancieroRouteImport } from './routes/_authenticated/reports/resumen-financiero'
+import { Route as AuthenticatedReportsPorVendedorRouteImport } from './routes/_authenticated/reports/por-vendedor'
 import { Route as AuthenticatedReportsPorServicioRouteImport } from './routes/_authenticated/reports/por-servicio'
 import { Route as AuthenticatedReportsPorRutaRouteImport } from './routes/_authenticated/reports/por-ruta'
 import { Route as AuthenticatedReportsPorMetodoPagoRouteImport } from './routes/_authenticated/reports/por-metodo-pago'
@@ -224,6 +225,12 @@ const AuthenticatedReportsResumenFinancieroRoute =
     path: '/reports/resumen-financiero',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReportsPorVendedorRoute =
+  AuthenticatedReportsPorVendedorRouteImport.update({
+    id: '/reports/por-vendedor',
+    path: '/reports/por-vendedor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsPorServicioRoute =
   AuthenticatedReportsPorServicioRouteImport.update({
     id: '/reports/por-servicio',
@@ -381,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
   '/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
+  '/reports/por-vendedor': typeof AuthenticatedReportsPorVendedorRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
   '/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
@@ -433,6 +441,7 @@ export interface FileRoutesByTo {
   '/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
   '/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
+  '/reports/por-vendedor': typeof AuthenticatedReportsPorVendedorRoute
   '/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
   '/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
@@ -488,6 +497,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/por-metodo-pago': typeof AuthenticatedReportsPorMetodoPagoRoute
   '/_authenticated/reports/por-ruta': typeof AuthenticatedReportsPorRutaRoute
   '/_authenticated/reports/por-servicio': typeof AuthenticatedReportsPorServicioRoute
+  '/_authenticated/reports/por-vendedor': typeof AuthenticatedReportsPorVendedorRoute
   '/_authenticated/reports/resumen-financiero': typeof AuthenticatedReportsResumenFinancieroRoute
   '/_authenticated/reports/serie-temporal': typeof AuthenticatedReportsSerieTemporalRoute
   '/_authenticated/reports/ventas-sin-boleto': typeof AuthenticatedReportsVentasSinBoletoRoute
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/reports/por-metodo-pago'
     | '/reports/por-ruta'
     | '/reports/por-servicio'
+    | '/reports/por-vendedor'
     | '/reports/resumen-financiero'
     | '/reports/serie-temporal'
     | '/reports/ventas-sin-boleto'
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/reports/por-metodo-pago'
     | '/reports/por-ruta'
     | '/reports/por-servicio'
+    | '/reports/por-vendedor'
     | '/reports/resumen-financiero'
     | '/reports/serie-temporal'
     | '/reports/ventas-sin-boleto'
@@ -649,6 +661,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/por-metodo-pago'
     | '/_authenticated/reports/por-ruta'
     | '/_authenticated/reports/por-servicio'
+    | '/_authenticated/reports/por-vendedor'
     | '/_authenticated/reports/resumen-financiero'
     | '/_authenticated/reports/serie-temporal'
     | '/_authenticated/reports/ventas-sin-boleto'
@@ -905,6 +918,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsResumenFinancieroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports/por-vendedor': {
+      id: '/_authenticated/reports/por-vendedor'
+      path: '/reports/por-vendedor'
+      fullPath: '/reports/por-vendedor'
+      preLoaderRoute: typeof AuthenticatedReportsPorVendedorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/por-servicio': {
       id: '/_authenticated/reports/por-servicio'
       path: '/reports/por-servicio'
@@ -1099,6 +1119,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsPorMetodoPagoRoute: typeof AuthenticatedReportsPorMetodoPagoRoute
   AuthenticatedReportsPorRutaRoute: typeof AuthenticatedReportsPorRutaRoute
   AuthenticatedReportsPorServicioRoute: typeof AuthenticatedReportsPorServicioRoute
+  AuthenticatedReportsPorVendedorRoute: typeof AuthenticatedReportsPorVendedorRoute
   AuthenticatedReportsResumenFinancieroRoute: typeof AuthenticatedReportsResumenFinancieroRoute
   AuthenticatedReportsSerieTemporalRoute: typeof AuthenticatedReportsSerieTemporalRoute
   AuthenticatedReportsVentasSinBoletoRoute: typeof AuthenticatedReportsVentasSinBoletoRoute
@@ -1141,6 +1162,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedReportsPorMetodoPagoRoute,
   AuthenticatedReportsPorRutaRoute: AuthenticatedReportsPorRutaRoute,
   AuthenticatedReportsPorServicioRoute: AuthenticatedReportsPorServicioRoute,
+  AuthenticatedReportsPorVendedorRoute: AuthenticatedReportsPorVendedorRoute,
   AuthenticatedReportsResumenFinancieroRoute:
     AuthenticatedReportsResumenFinancieroRoute,
   AuthenticatedReportsSerieTemporalRoute:

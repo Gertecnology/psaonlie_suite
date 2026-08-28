@@ -67,6 +67,7 @@ export interface PeriodoInforme {
 export type IdInforme =
   | 'resumen-financiero'
   | 'por-agencia'
+  | 'por-vendedor'
   | 'estado-ventas'
   | 'por-metodo-pago'
   | 'por-ruta'
@@ -125,6 +126,16 @@ export const INFORMES: readonly DefinicionInforme[] = [
     descripcion:
       'Lo que hay que transferirle a cada empresa, con la comisión vigente y las ventas cobradas sin boleto.',
     responde: '¿Cuánto le transfiero a cada una?',
+    paginado: true,
+  },
+  {
+    id: 'por-vendedor',
+    ruta: 'por-vendedor',
+    titulo: 'Comisiones por vendedor',
+    descripcion:
+      'Lo que vendió cada persona en la caja, lo que se le reconoció, lo que ' +
+      'se le revirtió por devoluciones y lo que se le debe hoy.',
+    responde: '¿Cuánto le tengo que pagar a cada vendedor?',
     paginado: true,
   },
   {

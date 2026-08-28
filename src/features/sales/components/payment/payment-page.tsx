@@ -16,6 +16,7 @@ import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/servic
 import type { Asiento, ServiceCharge } from '../../models/sales.model'
 import { toast } from 'sonner'
 import { OPCIONES_METODO_PAGO } from '@/lib/metodo-pago'
+import { BancardCheckout } from './bancard-checkout'
 
 interface PaymentSearch {
   empresa: string
@@ -87,6 +88,11 @@ export function PaymentPage() {
 
   const [datos, setDatos] = useState<ReturnType<typeof leerParametros> | null>(null)
   const [metodoPago, setMetodoPago] = useState('')
+
+  // Con tarjeta no se registra el cobro a mano: lo confirma el callback de
+  // Bancard. El vendedor abre el formulario y el cliente escribe ahí.
+  const conTarjeta = metodoPago === 'BANCARD'
+  const [bancardAbierto, setBancardAbierto] = useState(false)
   const [observaciones, setObservaciones] = useState('')
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
@@ -347,7 +353,24 @@ export function PaymentPage() {
                 />
               </div>
 
-              {!isPaid ? (
+              {!isPaid && conTarjeta && !bancardAbierto && (
+                <Button
+                  onClick={() => setBancardAbierto(true)}
+                  className="w-full"
+                  size="sm"
+                >
+                  Abrir el pago con tarjeta
+                </Button>
+              )}
+
+              {!isPaid && conTarjeta && bancardAbierto && (
+                <BancardCheckout
+                  ventaId={search.ventaId}
+                  onError={(mensaje) => setErrorPago(mensaje)}
+                />
+              )}
+
+              {!isPaid && !conTarjeta ? (
                 <Button
                   onClick={handleConfirmPayment}
                   className="w-full"
@@ -356,7 +379,9 @@ export function PaymentPage() {
                 >
                   {cobrando ? 'Registrando cobro...' : 'Confirmar cobro'}
                 </Button>
-              ) : (
+              ) : null}
+
+              {isPaid && (
                 <>
                   <Separator />
                   <p className="text-sm font-medium text-green-700">
