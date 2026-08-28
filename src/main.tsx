@@ -10,28 +10,27 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
 import { handleServerError } from '@/utils/handle-server-error'
+import { convieneReintentar } from '@/utils/reintentar'
+import { AuthProvider } from './context/auth-context'
 import { FontProvider } from './context/font-context'
+import { NotificationsProvider } from './context/notifications-context'
 import { ThemeProvider } from './context/theme-context'
 import './index.css'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
-import { AuthProvider } from './context/auth-context'
-import { NotificationsProvider } from './context/notifications-context'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // Reintentar sirve contra una red que falló, no contra una respuesta que
+      // dice que no. La regla vive en `utils/reintentar`.
       retry: (failureCount, error) => {
         // eslint-disable-next-line no-console
         if (import.meta.env.DEV) console.log({ failureCount, error })
 
-        if (failureCount >= 0 && import.meta.env.DEV) return false
-        if (failureCount > 3 && import.meta.env.PROD) return false
+        if (import.meta.env.DEV) return false
 
-        return !(
-          error instanceof AxiosError &&
-          [401, 403].includes(error.response?.status ?? 0)
-        )
+        return convieneReintentar(failureCount, error)
       },
       refetchOnWindowFocus: import.meta.env.PROD,
       staleTime: 10 * 1000, // 10s
@@ -51,14 +50,15 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       // Check if it's an authentication error (from our custom error messages)
-      if (error instanceof Error && (
-        error.message.includes('Sesión expirada') || 
-        error.message.includes('Session expired')
-      )) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('Sesión expirada') ||
+          error.message.includes('Session expired'))
+      ) {
         // Don't show toast or navigate here - let AuthErrorHandler handle it
         return
       }
-      
+
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
           toast.error('Session expired!')
