@@ -1,8 +1,8 @@
 import * as React from 'react'
+import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
-import { z } from 'zod'
 import { type CreateServiceChargeFormValues } from '../models/service-charge.model'
 import { useCreateServiceCharge } from './use-create-service-charge'
 import { useGetServiceCharge } from './use-get-service-charge'
@@ -29,7 +29,10 @@ const schema = z
     descripcion: z.string(),
     porcentaje: z.string(),
     tipoAplicacion: z.enum(['PORCENTUAL', 'FIJO']),
-    montoFijo: z.number().min(0, 'El monto fijo no puede ser negativo.').optional(),
+    montoFijo: z
+      .number()
+      .min(0, 'El monto fijo no puede ser negativo.')
+      .optional(),
     montoMinimo: z
       .number()
       .min(0, 'El monto mínimo no puede ser negativo.')
@@ -91,7 +94,11 @@ const schema = z
 
     // Las dos fechas viajan como `yyyy-MM-dd`, así que comparar los textos
     // alcanza y evita construir dos `Date` con la zona horaria del navegador.
-    if (values.fechaInicio && values.fechaFin && values.fechaFin < values.fechaInicio) {
+    if (
+      values.fechaInicio &&
+      values.fechaFin &&
+      values.fechaFin < values.fechaInicio
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'La fecha de fin no puede ser anterior a la de inicio.',
@@ -137,7 +144,9 @@ function toCalendarDate(value: string | null | undefined): string {
  * in place — invisible in the form, still stored, and still there to be applied
  * by whoever reads the record next.
  */
-function payload(values: ServiceChargeFormFields): CreateServiceChargeFormValues {
+function payload(
+  values: ServiceChargeFormFields
+): CreateServiceChargeFormValues {
   const esPorcentual = values.tipoAplicacion === 'PORCENTUAL'
 
   return {
@@ -214,7 +223,7 @@ export function useServiceChargeForm(serviceChargeId?: string) {
     if (isEdit && serviceChargeId) {
       update.mutate(
         { id: serviceChargeId, data: payload(values) },
-        { onSuccess: backToList },
+        { onSuccess: backToList }
       )
       return
     }
@@ -232,5 +241,17 @@ export function useServiceChargeForm(serviceChargeId?: string) {
     error: serviceChargeQuery.error,
     backToList,
     hasUnsavedChanges: form.formState.isDirty,
+    /**
+     * El nombre tal como está guardado. Titula la página: usar el del
+     * formulario haría que el encabezado se reescriba letra por letra.
+     */
+    nombreGuardado: serviceChargeQuery.data?.nombre ?? null,
+    /**
+     * Las empresas que aplican este cargo.
+     *
+     * Hoy se asignan desde un menú de la fila del listado y no se ven en
+     * ningún lado: no hay forma de saber a quiénes les pega un cargo.
+     */
+    empresas: serviceChargeQuery.data?.empresas ?? [],
   }
 }
