@@ -1,9 +1,15 @@
 import * as React from 'react'
-import { ArrowLeft, ImagePlus } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
+import { ArrowLeft, ImagePlus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -14,17 +20,23 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { PageLayout } from '@/components/layout/page-layout'
 import { useFormularioAgencia } from '../hooks/use-formulario-agencia'
 import { EmpresaAgenciasTable } from './empresa-agencias-table'
+
+/**
+ * Alto compartido por las dos tarjetas de arriba, de donde sale la simetría.
+ *
+ * `min-h` y no `h`: con alto fijo, la columna que tenga un campo más desborda
+ * la tarjeta y su último control se monta sobre lo que sigue. Como el grid
+ * estira las dos al alto de la más alta, la simetría se mantiene igual y
+ * ninguna corta su contenido.
+ */
+const ALTO_DE_LA_FILA = 'lg:min-h-[520px]'
+
+const ID_DEL_FORM = 'empresa-form'
 
 interface AgenciaFormularioProps {
   /** Absent when creating. */
@@ -42,17 +54,6 @@ interface AgenciaFormularioProps {
  * All the logic lives in `use-formulario-agencia`; this file only renders.
  */
 export function AgenciaFormulario({ agenciaId }: AgenciaFormularioProps) {
-  /**
-   * Alto compartido por las dos tarjetas de arriba.
-   *
-   * `min-h` y no `h`: con alto fijo, la columna izquierda —que tiene un campo
-   * más que la derecha— desbordaba la tarjeta y su último control se montaba
-   * sobre el listado de abajo. Como el grid estira ambas al alto de la más
-   * alta, la simetría se mantiene igual y ninguna corta su contenido.
-   */
-  const ALTO_DE_LA_FILA = 'lg:min-h-[520px]'
-  const ID_DEL_FORM = 'empresa-form'
-
   const {
     form,
     guardar,
@@ -161,12 +162,12 @@ export function AgenciaFormulario({ agenciaId }: AgenciaFormularioProps) {
     >
       <Form {...form}>
         <form id={ID_DEL_FORM} onSubmit={guardar} className='space-y-5'>
-          <div
-            className={
-              esHija ? 'max-w-2xl' : `grid gap-5 lg:grid-cols-2`
-            }
-          >
-            <Card className={esHija ? undefined : `flex flex-col ${ALTO_DE_LA_FILA}`}>
+          <div className={esHija ? 'max-w-2xl' : `grid gap-5 lg:grid-cols-2`}>
+            <Card
+              className={
+                esHija ? undefined : `flex flex-col ${ALTO_DE_LA_FILA}`
+              }
+            >
               <CardHeader>
                 <CardTitle>Datos de la empresa</CardTitle>
                 <CardDescription>
@@ -275,7 +276,7 @@ export function AgenciaFormulario({ agenciaId }: AgenciaFormularioProps) {
                             field.onChange(
                               evento.target.value === ''
                                 ? undefined
-                                : Number(evento.target.value),
+                                : Number(evento.target.value)
                             )
                           }
                         />
@@ -370,7 +371,9 @@ export function AgenciaFormulario({ agenciaId }: AgenciaFormularioProps) {
                               value={field.value ?? ''}
                             />
                           </FormControl>
-                          <FormDescription>Mínimo 6 caracteres.</FormDescription>
+                          <FormDescription>
+                            Mínimo 6 caracteres.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
