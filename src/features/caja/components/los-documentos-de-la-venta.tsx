@@ -206,7 +206,11 @@ export function LosDocumentosDeLaVenta({
               <div
                 key={documento.id}
                 data-abierto={esElAbierto}
-                className='data-[abierto=true]:border-primary data-[abierto=true]:bg-primary/5 flex items-center gap-1 rounded-md border pr-1.5'
+                // `min-w-0` es lo que impide que la fila se desborde de su
+                // columna: un hijo de grid mide `auto` por omisión, así que un
+                // título largo estira la fila y empuja el botón de descargar
+                // fuera del recuadro. El borde termina y el ícono queda afuera.
+                className='data-[abierto=true]:border-primary data-[abierto=true]:bg-primary/5 flex min-w-0 items-center gap-1 rounded-md border pr-1.5'
               >
                 {/*
                   La fila entera abre el documento. Un botón «Ver» al costado
