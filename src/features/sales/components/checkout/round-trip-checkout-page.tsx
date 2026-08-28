@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ClientForm } from './client-form'
+import { FacturacionCard, type DatosDeFacturacion } from './facturacion-card'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { useRoundTrip } from '../../context/round-trip-context'
@@ -18,6 +19,19 @@ import {
 import { sumarPreciosAsientos } from '../../utils/money'
 import type { PasajeroRegistrado } from '../../models/sales.model'
 import type { CreateClientFormValues } from '@/features/clients/models/clients.model'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import {
+  OPCIONES_METODO_PAGO,
+  seCobraEnElActo,
+  type MetodoPago,
+} from '@/lib/metodo-pago'
 import { toast } from 'sonner'
 
 interface RoundTripCheckoutPageProps {
@@ -28,6 +42,46 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
   const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
+
+  // Con qué se va a cobrar. Faltaba en esta pantalla: los dos tramos se
+  // registraban con `'EFECTIVO'` fijo aunque se cobrara con tarjeta, y con eso
+  // la caja, los movimientos y los informes decían algo que no había pasado.
+  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
+
+  // A nombre de quién sale la factura. También faltaba: toda venta de ida y
+  // vuelta salía a consumidor final, y quien pedía factura con su RUC se iba
+  // sin ella.
+  const [facturacion, setFacturacion] = useState<DatosDeFacturacion>({
+    documento: '',
+    razonSocial: '',
+  })
+
+  const faltaFacturacion =
+    !facturacion.documento.trim() || !facturacion.razonSocial.trim()
+
+  /**
+   * Lo que se manda igual en los dos tramos.
+   *
+   * Es una compra sola partida en dos ventas —así lo exige la transportista—,
+   * pero el cliente paga una vez y factura una vez. Cobrar la ida con un
+   * método y la vuelta con otro no existe en el mostrador.
+   */
+  const comoSeCobra = () => ({
+    metodoPago: metodoPago as MetodoPago,
+    // En efectivo la plata ya está sobre el mostrador. Los demás quedan
+    // pendientes y se confirman en el paso de cobro.
+    estadoPago: (seCobraEnElActo(metodoPago) ? 'PAGADO' : 'PENDIENTE') as
+      | 'PAGADO'
+      | 'PENDIENTE',
+    // Se congela en la venta: lo que se facturó no cambia si el cliente
+    // después edita sus datos.
+    facturacion: {
+      documento: facturacion.documento.trim(),
+      razonSocial: facturacion.razonSocial.trim(),
+      email: facturacion.email?.trim() || undefined,
+      direccion: facturacion.direccion?.trim() || undefined,
+    },
+  })
 
   const confirmarVentaMutation = useConfirmarVenta()
   const liberarBloqueoMutation = useLiberarBloqueo()
@@ -164,8 +218,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
         calidad: roundTripData.ida.servicio.Calidad,
         origenId: roundTripData.ida.origen!.id,
         destinoId: roundTripData.ida.destino!.id,
-        metodoPago: 'EFECTIVO',
-        estadoPago: 'PENDIENTE',
+        ...comoSeCobra(),
         // Sólo el importe de los pasajes: el cargo por servicio y la comisión
         // los calcula el backend a partir de este valor.
         importeTotal: sumarPreciosAsientos(asientosIda),
@@ -186,8 +239,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
           calidad: roundTripData.vuelta.servicio.Calidad,
           origenId: roundTripData.vuelta.origen!.id,
           destinoId: roundTripData.vuelta.destino!.id,
-          metodoPago: 'EFECTIVO',
-          estadoPago: 'PENDIENTE',
+          ...comoSeCobra(),
           importeTotal: sumarPreciosAsientos(asientosVuelta),
           asiento: asientosVuelta.map((asiento, index) => ({
             Nroasiento: asiento.numero,
@@ -460,12 +512,48 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
             </Alert>
           )}
 
+          <FacturacionCard
+            valor={facturacion}
+            onChange={setFacturacion}
+            deshabilitado={confirmando || ventaYaConfirmada}
+          />
+
+          <div className="grid gap-2">
+            <Label htmlFor="metodo-de-pago">Cómo va a pagar</Label>
+            <Select
+              value={metodoPago}
+              onValueChange={(valor) => setMetodoPago(valor as MetodoPago)}
+              disabled={confirmando || ventaYaConfirmada}
+            >
+              <SelectTrigger id="metodo-de-pago" aria-label="Método de pago">
+                <SelectValue placeholder="Elegí el método de pago" />
+              </SelectTrigger>
+              <SelectContent>
+                {OPCIONES_METODO_PAGO.map((metodo) => (
+                  <SelectItem key={metodo.value} value={metodo.value}>
+                    {metodo.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              Ida y vuelta se cobran juntas: es una sola compra partida en dos
+              ventas porque así lo exige la empresa.
+            </p>
+          </div>
+
           {/* Action Button */}
           <Button
             onClick={handleProceedToPayment}
             className="w-full"
             size="lg"
-            disabled={faltanPasajeros || confirmando || ventaYaConfirmada}
+            disabled={
+              faltanPasajeros ||
+              confirmando ||
+              ventaYaConfirmada ||
+              !metodoPago ||
+              faltaFacturacion
+            }
           >
             <CreditCard className="h-4 w-4 mr-2" />
             {confirmando
@@ -474,7 +562,13 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
                 ? 'Venta ya confirmada'
                 : faltanPasajeros
                   ? `Faltan los datos de ${passengerForms.length - pasajeros.length} pasajero(s)`
-                  : 'Confirmar venta y continuar al cobro'
+                  : faltaFacturacion
+                    ? 'Faltan los datos de facturación'
+                    : !metodoPago
+                      ? 'Elegí con qué va a pagar'
+                      : seCobraEnElActo(metodoPago)
+                        ? 'Cobrar en efectivo y emitir los boletos'
+                        : 'Confirmar venta y continuar al cobro'
             }
           </Button>
         </div>

@@ -76,6 +76,25 @@ async function registrarPasajero(usuario: ReturnType<typeof userEvent.setup>) {
   return screen.findByText(/Pasajero registrado/i)
 }
 
+/**
+ * Completa lo que hace falta para confirmar: a nombre de quién se factura y con
+ * qué se cobra. Faltaba en esta pantalla, y sin eso los dos tramos se
+ * registraban con `'EFECTIVO'` fijo.
+ */
+async function completarElCobro(
+  usuario: ReturnType<typeof userEvent.setup>,
+  metodo = 'Efectivo',
+) {
+  await usuario.type(screen.getByLabelText(/RUC o documento/i), '4969917-2')
+  await usuario.type(
+    screen.getByLabelText(/Razón social o nombre/i),
+    'Sebastian Castro',
+  )
+
+  await usuario.click(screen.getByLabelText('Método de pago'))
+  await usuario.click(await screen.findByRole('option', { name: metodo }))
+}
+
 async function elegirOpcion(
   usuario: ReturnType<typeof userEvent.setup>,
   indice: number,
@@ -130,9 +149,10 @@ describe('RoundTripCheckoutPage', () => {
     })
 
     await registrarPasajero(usuario)
+    await completarElCobro(usuario)
 
     await usuario.click(
-      screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
+      screen.getByRole('button', { name: /Cobrar en efectivo/i }),
     )
 
     await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
@@ -168,9 +188,10 @@ describe('RoundTripCheckoutPage', () => {
     })
 
     await registrarPasajero(usuario)
+    await completarElCobro(usuario)
 
     const boton = screen.getByRole('button', {
-      name: /Confirmar venta y continuar/i,
+      name: /Cobrar en efectivo/i,
     })
     await Promise.all([usuario.click(boton), usuario.click(boton)])
 
@@ -217,8 +238,9 @@ describe('RoundTripCheckoutPage', () => {
     })
 
     await registrarPasajero(usuario)
+    await completarElCobro(usuario)
     await usuario.click(
-      screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
+      screen.getByRole('button', { name: /Cobrar en efectivo/i }),
     )
 
     expect(
@@ -228,5 +250,146 @@ describe('RoundTripCheckoutPage', () => {
     // El pasajero sigue registrado: se puede corregir y reintentar.
     expect(screen.getByText(/Pasajero registrado/i)).toBeInTheDocument()
     expect(api.llamadasA('confirmar-nueva')).toBe(1)
+  })
+
+  describe('ida y vuelta se cobra como corresponde', () => {
+    // Esta pantalla no tenía ni facturación ni elección de método de pago: los
+    // dos tramos se registraban con `'EFECTIVO'` fijo aunque se cobrara con
+    // tarjeta. La caja, los movimientos y los informes decían algo que no había
+    // pasado. La pantalla de viaje simple sí lo tenía; ésta quedó sin tocar.
+
+    it('no deja confirmar sin los datos de facturación', async () => {
+      mockearApi(rutasBase())
+      const usuario = userEvent.setup()
+
+      renderVenta(<RoundTripCheckoutPage />, {
+        datosIniciales: datosConAsientosBloqueados(),
+        pasoInicial: 'checkout',
+      })
+
+      await registrarPasajero(usuario)
+
+      expect(
+        screen.getByRole('button', { name: /Faltan los datos de facturación/i }),
+      ).toBeDisabled()
+    })
+
+    it('no deja confirmar sin elegir con qué paga', async () => {
+      mockearApi(rutasBase())
+      const usuario = userEvent.setup()
+
+      renderVenta(<RoundTripCheckoutPage />, {
+        datosIniciales: datosConAsientosBloqueados(),
+        pasoInicial: 'checkout',
+      })
+
+      await registrarPasajero(usuario)
+      await usuario.type(screen.getByLabelText(/RUC o documento/i), '4969917-2')
+      await usuario.type(
+        screen.getByLabelText(/Razón social o nombre/i),
+        'Sebastian Castro',
+      )
+
+      expect(
+        screen.getByRole('button', { name: /Elegí con qué va a pagar/i }),
+      ).toBeDisabled()
+    })
+
+    it('manda el método elegido, no EFECTIVO', async () => {
+      const api = mockearApi([
+        ...rutasBase(),
+        { url: 'confirmar-nueva', status: 201, body: VENTA_CONFIRMADA_OK },
+      ])
+      const usuario = userEvent.setup()
+
+      renderVenta(<RoundTripCheckoutPage />, {
+        datosIniciales: datosConAsientosBloqueados(),
+        pasoInicial: 'checkout',
+      })
+
+      await registrarPasajero(usuario)
+      await completarElCobro(usuario, 'Bancard')
+
+      await usuario.click(
+        screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
+      )
+
+      await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
+
+      const [enviado] = api.cuerposDe('confirmar-nueva') as [{ ventas: Array<Record<string, unknown>> }]
+
+      for (const venta of enviado.ventas) {
+        expect(venta.metodoPago).toBe('BANCARD')
+        // Con tarjeta la plata todavía no está: la confirma el callback.
+        expect(venta.estadoPago).toBe('PENDIENTE')
+      }
+    })
+
+    it('en efectivo la venta nace pagada', async () => {
+      // El vendedor aprieta confirmar con los billetes en la mano, y la API
+      // rechaza PENDIENTE porque nadie manda después un callback diciendo
+      // «ya te pagó en efectivo».
+      const api = mockearApi([
+        ...rutasBase(),
+        { url: 'confirmar-nueva', status: 201, body: VENTA_CONFIRMADA_OK },
+      ])
+      const usuario = userEvent.setup()
+
+      renderVenta(<RoundTripCheckoutPage />, {
+        datosIniciales: datosConAsientosBloqueados(),
+        pasoInicial: 'checkout',
+      })
+
+      await registrarPasajero(usuario)
+      await completarElCobro(usuario)
+
+      await usuario.click(
+        screen.getByRole('button', { name: /Cobrar en efectivo/i }),
+      )
+
+      await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
+
+      const [enviado] = api.cuerposDe('confirmar-nueva') as [{ ventas: Array<Record<string, unknown>> }]
+
+      for (const venta of enviado.ventas) {
+        expect(venta.metodoPago).toBe('EFECTIVO')
+        expect(venta.estadoPago).toBe('PAGADO')
+      }
+    })
+
+    it('los dos tramos van con la misma facturación', async () => {
+      // Es una compra sola partida en dos ventas porque así lo exige la
+      // empresa. El cliente paga una vez y factura una vez.
+      const api = mockearApi([
+        ...rutasBase(),
+        { url: 'confirmar-nueva', status: 201, body: VENTA_CONFIRMADA_OK },
+      ])
+      const usuario = userEvent.setup()
+
+      renderVenta(<RoundTripCheckoutPage />, {
+        datosIniciales: datosConAsientosBloqueados(),
+        pasoInicial: 'checkout',
+      })
+
+      await registrarPasajero(usuario)
+      await completarElCobro(usuario)
+
+      await usuario.click(
+        screen.getByRole('button', { name: /Cobrar en efectivo/i }),
+      )
+
+      await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
+
+      const [enviado] = api.cuerposDe('confirmar-nueva') as [{ ventas: Array<Record<string, unknown>> }]
+
+      for (const venta of enviado.ventas) {
+        expect(venta.facturacion).toEqual({
+          documento: '4969917-2',
+          razonSocial: 'Sebastian Castro',
+          email: undefined,
+          direccion: undefined,
+        })
+      }
+    })
   })
 })
