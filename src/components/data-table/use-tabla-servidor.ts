@@ -136,15 +136,21 @@ export function useTablaServidor(
           ? actualizador(pagination)
           : actualizador
 
-      escribirUrl({
+      escribirUrl(
+        {
+          pagina:
+            siguiente.pageIndex === 0 ? undefined : siguiente.pageIndex + 1,
+          tamano:
+            siguiente.pageSize === TAMANO_POR_DEFECTO
+              ? undefined
+              : siguiente.pageSize,
+        },
         // Cambiar de página SÍ es una entrada de historial: el botón "atrás"
-        // tiene que volver a la página anterior, no salir de la lista.
-        pagina: siguiente.pageIndex === 0 ? undefined : siguiente.pageIndex + 1,
-        tamano:
-          siguiente.pageSize === TAMANO_POR_DEFECTO
-            ? undefined
-            : siguiente.pageSize,
-      })
+        // tiene que volver a la página anterior, no salir de la lista. El
+        // comentario decía esto pero la llamada omitía el argumento, así que
+        // caía en el `replace = true` por defecto y hacía lo contrario.
+        false,
+      )
     },
     [pagination, escribirUrl],
   )
