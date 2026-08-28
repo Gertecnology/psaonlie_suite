@@ -60,8 +60,8 @@ export function InformeComparativo() {
       }
       isLoading={isLoading}
       error={error}
-      onEmitir={generar}
-      puedeEmitir={puedeGenerar}
+      onBuscar={generar}
+      puedeBuscar={puedeGenerar}
       controles={
         <FiltrosInformeControles
           borrador={borrador}

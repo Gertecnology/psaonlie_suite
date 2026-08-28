@@ -118,12 +118,12 @@ export default function Dashboard() {
 
           <TarjetaSeccion
             titulo='A transferir a las empresas'
-            descripcion='Lo que lo cobrado en el período le deja a cada empresa: el pasaje menos la comisión. Para el saldo acumulado, el kardex.'
+            descripcion='Lo que lo cobrado en el período le deja a cada empresa: el pasaje menos la comisión. Para el saldo acumulado, el libro de movimientos.'
             acciones={
               <Button asChild variant='ghost' size='sm'>
-                <Link to='/reports/kardex-saldos' search={busqueda}>
+                <Link to='/reports/movimientos' search={busqueda}>
                   <IconBook className='size-4' aria-hidden />
-                  Abrir kardex
+                  Abrir movimientos
                 </Link>
               </Button>
             }
