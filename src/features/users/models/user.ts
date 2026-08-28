@@ -20,6 +20,8 @@ export interface User {
   isActive: boolean
   isVerified: boolean
   lastLoginAt: string | null
+  /** Qué porcentaje de la venta le queda. Sólo cobra quien vende. */
+  porcentajeComisionVenta: number
   roles: Role[]
 }
 
@@ -40,6 +42,8 @@ export interface CreateUserRequest {
   lastName?: string
   roleIds?: string[]
   profileImage?: File
+  /** Sólo se manda para quien vende: el resto no cobra comisión. */
+  porcentajeComisionVenta?: number
 }
 
 export interface UpdateUserRequest {
@@ -48,6 +52,8 @@ export interface UpdateUserRequest {
   roleIds?: string[]
   isActive?: boolean
   isVerified?: boolean
+  /** Sólo se manda para quien vende: el resto no cobra comisión. */
+  porcentajeComisionVenta?: number
 }
 
 export interface UsersQueryParams {

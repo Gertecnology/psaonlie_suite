@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UserForm } from './user-form'
 
@@ -68,9 +69,14 @@ describe('el formulario de usuario (integración)', () => {
     )
   }
 
+  const ROLES = [
+    { id: 'rol-admin', name: 'admin' },
+    { id: 'rol-vendedor', name: 'vendedor' },
+  ]
+
   beforeEach(() => {
     traerUsuario.mockReset()
-    traerRoles.mockReturnValue({ data: [], isLoading: false })
+    traerRoles.mockReturnValue({ data: ROLES, isLoading: false })
   })
 
   it('avisa cuando el servidor rechaza la consulta', () => {
@@ -131,5 +137,123 @@ describe('el formulario de usuario (integración)', () => {
 
     expect(screen.getByLabelText('Correo')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * Cuánto le queda al vendedor de cada venta.
+ *
+ * El campo estaba en la base y la venta ya lo leía, pero no había dónde
+ * cargarlo: los cuatro vendedores estaban en cero, vendiendo sin cobrar nada.
+ */
+describe('la comisión en la ficha del usuario', () => {
+  const ROLES = [
+    { id: 'rol-admin', name: 'admin' },
+    { id: 'rol-vendedor', name: 'vendedor' },
+  ]
+
+  const montar = (userId?: string) => {
+    const cliente = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    })
+
+    return {
+      usuario: userEvent.setup(),
+      ...render(
+        <QueryClientProvider client={cliente}>
+          <UserForm userId={userId} />
+        </QueryClientProvider>
+      ),
+    }
+  }
+
+  const conRol = (nombre: string, porcentaje = 0) => ({
+    data: {
+      id: 'u-1',
+      email: 'ana@gertecnology.com',
+      firstName: 'Ana',
+      lastName: 'Gómez',
+      isActive: true,
+      isVerified: false,
+      porcentajeComisionVenta: porcentaje,
+      roles: ROLES.filter((rol) => rol.name === nombre),
+    },
+    isLoading: false,
+    error: null,
+  })
+
+  beforeEach(() => {
+    traerUsuario.mockReset()
+    traerRoles.mockReturnValue({ data: ROLES, isLoading: false })
+  })
+
+  it('muestra la comisión de un vendedor, con lo que tiene cargado', () => {
+    traerUsuario.mockReturnValue(conRol('vendedor', 5.5))
+
+    montar('u-1')
+
+    expect(screen.getByLabelText('Comisión por venta')).toHaveValue('5.5')
+  })
+
+  /** Un administrador no vende, así que el campo no tiene nada que hacer ahí. */
+  it('no la muestra para un rol que no vende', () => {
+    traerUsuario.mockReturnValue(conRol('admin'))
+
+    montar('u-1')
+
+    expect(
+      screen.queryByLabelText('Comisión por venta')
+    ).not.toBeInTheDocument()
+  })
+
+  it('aparece al elegir el rol de vendedor', async () => {
+    traerUsuario.mockReturnValue(conRol('admin'))
+
+    const { usuario } = montar('u-1')
+
+    expect(
+      screen.queryByLabelText('Comisión por venta')
+    ).not.toBeInTheDocument()
+
+    await usuario.click(screen.getByLabelText('Rol'))
+    await usuario.click(await screen.findByRole('option', { name: 'vendedor' }))
+
+    expect(
+      await screen.findByLabelText('Comisión por venta')
+    ).toBeInTheDocument()
+  })
+
+  it('avisa cuando el porcentaje no entra en el rango', async () => {
+    traerUsuario.mockReturnValue(conRol('vendedor', 5))
+
+    const { usuario } = montar('u-1')
+
+    const campo = screen.getByLabelText('Comisión por venta')
+    await usuario.clear(campo)
+    await usuario.type(campo, '101')
+    fireEvent.submit(campo.closest('form')!)
+
+    expect(
+      await screen.findByText('El porcentaje no puede pasar de 100.')
+    ).toBeInTheDocument()
+  })
+
+  /** La columna es `numeric(5,2)`: un tercer decimal se perdería en silencio. */
+  it('no acepta un tercer decimal', async () => {
+    traerUsuario.mockReturnValue(conRol('vendedor', 5))
+
+    const { usuario } = montar('u-1')
+
+    const campo = screen.getByLabelText('Comisión por venta')
+    await usuario.clear(campo)
+    await usuario.type(campo, '5.555')
+    fireEvent.submit(campo.closest('form')!)
+
+    expect(
+      await screen.findByText('El porcentaje admite hasta dos decimales.')
+    ).toBeInTheDocument()
   })
 })

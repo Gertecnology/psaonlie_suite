@@ -1,23 +1,22 @@
 /* eslint-disable no-console */
-import { 
-  User, 
-  Role,
-  UsersResponse, 
-  CreateUserRequest, 
-  UpdateUserRequest, 
-  UsersQueryParams 
-} from '../models/user'
 import { BaseApiService } from '@/services/base-api.service'
+import {
+  User,
+  Role,
+  UsersResponse,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UsersQueryParams,
+} from '../models/user'
 
 class UsersService extends BaseApiService {
-
   async getUsers(params: UsersQueryParams = {}): Promise<UsersResponse> {
     const searchParams = new URLSearchParams()
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
-          value.forEach(item => searchParams.append(key, item))
+          value.forEach((item) => searchParams.append(key, item))
         } else {
           searchParams.append(key, String(value))
         }
@@ -25,8 +24,10 @@ class UsersService extends BaseApiService {
     })
 
     const queryString = searchParams.toString()
-    const endpoint = queryString ? `/api/usuarios?${queryString}` : '/api/usuarios'
-    
+    const endpoint = queryString
+      ? `/api/usuarios?${queryString}`
+      : '/api/usuarios'
+
     return this.request<UsersResponse>(endpoint)
   }
 
@@ -36,52 +37,69 @@ class UsersService extends BaseApiService {
 
   async createUser(userData: CreateUserRequest): Promise<User> {
     const formData = new FormData()
-    
+
     // Campos obligatorios
     formData.append('email', userData.email)
     formData.append('password', userData.password)
-    
+
     // Campos opcionales
     if (userData.firstName) {
       formData.append('firstName', userData.firstName)
     }
-    
+
     if (userData.lastName) {
       formData.append('lastName', userData.lastName)
     }
-    
+
     // Roles - enviar solo si existen
     if (userData.roleIds && userData.roleIds.length > 0) {
-      userData.roleIds.forEach(roleId => {
+      userData.roleIds.forEach((roleId) => {
         formData.append('roleIds', roleId)
       })
     }
-    
+
+    // Un cero explícito también viaja: significa que vende y no cobra
+    // comisión, que no es lo mismo que no haber elegido nada.
+    if (userData.porcentajeComisionVenta !== undefined) {
+      formData.append(
+        'porcentajeComisionVenta',
+        String(userData.porcentajeComisionVenta)
+      )
+    }
+
     // Imagen de perfil - enviar solo si existe
     if (userData.profileImage) {
       formData.append('profileImage', userData.profileImage)
     }
 
-    const response = await this.requestWithFormData<{message: string, user: User}>('/api/usuarios', formData, 'POST')
+    const response = await this.requestWithFormData<{
+      message: string
+      user: User
+    }>('/api/usuarios', formData, 'POST')
     return response.user
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
     // Según la API, solo se pueden actualizar estos campos específicos
     const updateData: Record<string, unknown> = {}
-    
+
     if (userData.firstName) {
       updateData.firstName = userData.firstName
     }
-    
+
     if (userData.lastName) {
       updateData.lastName = userData.lastName
     }
-    
+
+    // `!== undefined` y no un truthy: el cero es un porcentaje elegido.
+    if (userData.porcentajeComisionVenta !== undefined) {
+      updateData.porcentajeComisionVenta = userData.porcentajeComisionVenta
+    }
+
     if (userData.roleIds && userData.roleIds.length > 0) {
       updateData.roleIds = userData.roleIds
     }
-    
+
     if (userData.isActive !== undefined) {
       updateData.isActive = userData.isActive
     }
@@ -96,11 +114,17 @@ class UsersService extends BaseApiService {
     })
   }
 
-  async resetUserPassword(id: string, newPassword: string): Promise<{message: string}> {
-    return this.request<{message: string}>(`/api/usuarios/${id}/reset-password`, {
-      method: 'POST',
-      body: JSON.stringify({ newPassword }),
-    })
+  async resetUserPassword(
+    id: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    return this.request<{ message: string }>(
+      `/api/usuarios/${id}/reset-password`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ newPassword }),
+      }
+    )
   }
 
   async deleteUser(id: string): Promise<void> {
