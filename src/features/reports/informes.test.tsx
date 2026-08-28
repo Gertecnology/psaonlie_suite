@@ -20,7 +20,7 @@ import { InformeVentasSinBoleto } from './components/informes/ventas-sin-boleto'
  * this test too, since the app cannot be run against the backend.
  *
  * On top of it comes the rule the whole migration exists for — **nothing is
- * fetched until Emitir is pressed** — and one assertion per screen on the
+ * fetched until Buscar is pressed** — and one assertion per screen on the
  * figure that screen is read for. The fixtures mirror the DTOs field by field,
  * so a payload that changes shape fails here rather than on someone's monitor.
  */
@@ -208,7 +208,7 @@ const PANTALLAS: Array<[string, FunctionComponent]> = [
   ['anomalias', InformeAnomalias],
 ]
 
-/** What a shared link carries: the period plus the Emitir mark. */
+/** What a shared link carries: the period plus the Buscar mark. */
 const GENERADO = '?generado=true&desde=2026-08-01&hasta=2026-08-31'
 
 function montar(Pantalla: FunctionComponent, busqueda = '') {
@@ -264,7 +264,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('nada se carga hasta apretar Emitir', () => {
+describe('nada se carga hasta apretar Buscar', () => {
   it.each(PANTALLAS)(
     'el informe "%s" se abre sin consultar nada',
     async (_ruta, Pantalla) => {
@@ -272,7 +272,7 @@ describe('nada se carga hasta apretar Emitir', () => {
 
       // El botón es la única señal de que la pantalla montó y está esperando.
       expect(
-        await screen.findByRole('button', { name: 'Emitir' }),
+        await screen.findByRole('button', { name: 'Buscar' }),
       ).toBeInTheDocument()
       // La regla no es "se ve vacío": es que no salió ninguna consulta. Un
       // informe que pide los datos y los esconde igual castiga a la base.

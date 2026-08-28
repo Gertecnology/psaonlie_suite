@@ -1,5 +1,5 @@
 import * as React from 'react'
-import logoPasajeOnline from '@/assets/logo-pasaje-online.png'
+import { LogoPasajeOnline } from '@/assets/logo-pasaje-online'
 import { formatearFecha } from '@/lib/formato'
 import { useAuth } from '@/context/auth-context'
 import {
@@ -47,10 +47,15 @@ export function HojaInforme({
   return (
     <div className='informe-hoja bg-background border-border border shadow-sm'>
       <header className='flex items-start justify-between gap-8 px-7 pt-5 pb-3.5'>
-        <div className='flex items-start gap-3'>
-          <span className='flex size-[34px] shrink-0 items-center justify-center bg-[#1e2a5a]'>
-            <img src={logoPasajeOnline} alt='' className='w-[23px]' />
-          </span>
+        <div className='flex items-start gap-3.5'>
+          {/* El logotipo de la casa, en el azul de la marca. El SVG del
+              sidebar tiene los trazos en blanco porque el sidebar es oscuro;
+              sobre la hoja desaparecería. Va sin recuadro: la marca ya tiene
+              su forma. */}
+          <LogoPasajeOnline
+            aria-hidden
+            className='mt-0.5 h-8 w-auto shrink-0 text-[#4747f8]'
+          />
           <div className='flex flex-col gap-px'>
             <span className='text-sm font-bold tracking-wide text-[#1e2a5a]'>
               {EMISOR.razonSocial}

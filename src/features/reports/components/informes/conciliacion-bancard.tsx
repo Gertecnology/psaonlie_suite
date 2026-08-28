@@ -54,8 +54,8 @@ export function InformeConciliacionBancard() {
       periodo={data?.periodo}
       isLoading={isLoading}
       error={error}
-      onEmitir={generar}
-      puedeEmitir={puedeGenerar}
+      onBuscar={generar}
+      puedeBuscar={puedeGenerar}
       controles={
         <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
       }
