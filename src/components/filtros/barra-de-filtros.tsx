@@ -12,6 +12,12 @@ export interface FiltroAplicado {
   etiqueta: string
   /** Lo elegido, ya legible: «Expresso Paraguay», no un uuid. */
   valor: string
+  /**
+   * Un filtro que la pantalla pone sola y no se puede sacar de a uno, como el
+   * período con el que abre. Se muestra igual —para que nadie lea los totales
+   * creyendo que son de toda la historia— pero sin la cruz.
+   */
+  fijo?: boolean
 }
 
 interface BarraDeFiltrosProps {
@@ -29,17 +35,20 @@ interface BarraDeFiltrosProps {
 /**
  * El encabezado de filtros de un listado.
  *
- * Dos partes: los controles arriba, y abajo lo que quedó aplicado.
+ * Los controles van en **una sola línea**, con el ancho que necesita cada uno
+ * y no repartidos en columnas iguales: la búsqueda se estira, un desplegable
+ * de dos opciones no tiene por qué medir lo mismo. En pantallas angostas la
+ * fila se dobla sola.
  *
- * Esa segunda fila no es decoración. Con seis filtros posibles, varios de
- * ellos plegados o fuera de la vista, la única forma de saber por qué la tabla
- * muestra tres filas es que la pantalla lo diga. Un listado filtrado que se ve
- * igual que uno completo hace que alguien lea un total y crea que es el total.
+ * Debajo, lo que quedó aplicado. Esa fila no es decoración: con ocho filtros
+ * posibles, la única forma de saber por qué la tabla muestra tres filas es que
+ * la pantalla lo diga. Un listado filtrado que se ve igual que uno completo
+ * hace que alguien lea un total y crea que es el total.
  *
- * El aviso de «actualizando» aparece cuando la consulta ya salió pero todavía
- * se muestran los datos anteriores. Sin él, cambiar un filtro no produce
- * ninguna señal hasta que llega la respuesta, y la pantalla parece ignorar el
- * clic.
+ * «Limpiar filtros» se dibuja siempre que haya algo aplicado, **incluido lo
+ * que la pantalla puso sola**. Un botón que aparece y desaparece obliga a
+ * buscarlo, y el caso en que más falta hace —entrar y encontrar un período ya
+ * acotado— es justamente aquel en que nadie tocó nada todavía.
  */
 export function BarraDeFiltros({
   children,
@@ -50,67 +59,71 @@ export function BarraDeFiltros({
   total,
   className,
 }: BarraDeFiltrosProps) {
+  const hayQueLimpiar = aplicados.some((filtro) => !filtro.fijo)
+
   return (
-    <div className={cn('grid gap-3', className)}>
-      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-        {children}
-      </div>
+    <div className={cn('grid gap-2', className)}>
+      <div className='flex flex-wrap items-center gap-2'>{children}</div>
 
-      {(aplicados.length > 0 || actualizando) && (
-        <div className='flex flex-wrap items-center gap-2'>
-          {actualizando && (
-            <span
-              className='text-muted-foreground flex items-center gap-1.5 text-xs'
-              // Un cambio de filtro no mueve el foco, así que sin esto quien
-              // usa lector de pantalla no se entera de que la tabla cambió.
-              role='status'
-            >
-              <Loader2 className='h-3 w-3 animate-spin' />
-              Actualizando…
-            </span>
-          )}
-
+      {aplicados.length > 0 && (
+        <div className='flex flex-wrap items-center gap-1.5'>
           {aplicados.map((filtro) => (
             <Badge
               key={filtro.clave}
               variant='secondary'
-              className='gap-1 py-1 pl-2.5 pr-1 font-normal'
+              className={cn(
+                'h-6 gap-1 py-0 font-normal',
+                filtro.fijo ? 'px-2.5' : 'pl-2.5 pr-1',
+              )}
             >
               <span className='text-muted-foreground'>{filtro.etiqueta}:</span>
               <span className='font-medium'>{filtro.valor}</span>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={`Quitar el filtro ${filtro.etiqueta}`}
-                className='hover:bg-background/60 h-4 w-4 rounded-full'
-                onClick={() => onQuitar(filtro.clave)}
-              >
-                <X className='h-3 w-3' />
-              </Button>
+              {!filtro.fijo && (
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  aria-label={`Quitar el filtro ${filtro.etiqueta}`}
+                  className='hover:bg-background/60 h-4 w-4 rounded-full'
+                  onClick={() => onQuitar(filtro.clave)}
+                >
+                  <X className='h-3 w-3' />
+                </Button>
+              )}
             </Badge>
           ))}
 
-          {aplicados.length > 0 && (
-            <>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                className='h-7 px-2 text-xs'
-                onClick={onLimpiar}
-              >
-                <FilterX className='mr-1 h-3.5 w-3.5' />
-                Limpiar filtros
-              </Button>
-
-              {total !== undefined && (
-                <span className='text-muted-foreground ml-auto text-xs tabular-nums'>
-                  {total} {total === 1 ? 'resultado' : 'resultados'}
-                </span>
-              )}
-            </>
+          {hayQueLimpiar && (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-xs'
+              onClick={onLimpiar}
+            >
+              <FilterX className='mr-1 h-3.5 w-3.5' />
+              Limpiar filtros
+            </Button>
           )}
+
+          <span className='ml-auto flex items-center gap-2'>
+            {actualizando && (
+              <span
+                className='text-muted-foreground flex items-center gap-1 text-xs'
+                // Un cambio de filtro no mueve el foco: sin esto, quien usa
+                // lector de pantalla no se entera de que la tabla cambió.
+                role='status'
+              >
+                <Loader2 className='h-3 w-3 animate-spin' />
+                Actualizando…
+              </span>
+            )}
+            {total !== undefined && (
+              <span className='text-muted-foreground text-xs tabular-nums'>
+                {total} {total === 1 ? 'resultado' : 'resultados'}
+              </span>
+            )}
+          </span>
         </div>
       )}
     </div>

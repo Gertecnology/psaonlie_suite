@@ -23,15 +23,19 @@ interface TarjetaProps {
 
 function Tarjeta({ etiqueta, valor, detalle, destacada }: TarjetaProps) {
   return (
-    <Card className={destacada ? 'border-primary/40' : undefined}>
-      <CardContent className='p-4'>
-        <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+    // El detalle va en `title` y no debajo del importe: es una aclaración que
+    // se lee una vez y después ocupa una línea para siempre. Sacarlo del flujo
+    // es lo que permite que las cinco entren en una fila y que la tabla —que
+    // es a lo que se entra— quede a la vista sin desplazar la página.
+    <Card
+      className={destacada ? 'border-primary/40' : undefined}
+      title={detalle}
+    >
+      <CardContent className='px-3 py-2'>
+        <p className='text-muted-foreground truncate text-[11px] font-medium uppercase tracking-wide'>
           {etiqueta}
         </p>
-        <p className='mt-1 text-2xl font-bold tabular-nums'>{valor}</p>
-        {detalle && (
-          <p className='text-muted-foreground mt-0.5 text-xs'>{detalle}</p>
-        )}
+        <p className='truncate text-lg font-bold tabular-nums'>{valor}</p>
       </CardContent>
     </Card>
   )
@@ -46,16 +50,16 @@ export function TarjetasDeCaja({
 }) {
   if (cargando || !resumen) {
     return (
-      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-5'>
         {[0, 1, 2].map((indice) => (
-          <Skeleton key={indice} className='h-[92px]' />
+          <Skeleton key={indice} className='h-[58px]' />
         ))}
       </div>
     )
   }
 
   return (
-    <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+    <div className='grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-5'>
       <Tarjeta
         etiqueta='Ventas'
         valor={formatearEntero(resumen.cantidadVentas)}

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select'
 import type { EstadoFiltrosPanel } from '../hooks/use-filtros-panel'
 import { useAgenciasPanel } from '../hooks/use-agencias-panel'
-import { SelectorRangoFechas } from './selector-rango-fechas'
+import { SelectorRangoFechas } from '@/components/filtros/selector-rango-fechas'
 
 const TODAS = '__todas__'
 
