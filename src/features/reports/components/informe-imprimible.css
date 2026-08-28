@@ -19,10 +19,64 @@
  * `pageNumber` y `totalPages`.
  */
 
+/*
+ * El fondo alternado se apaga desde la vista previa: en una impresora láser el
+ * gris de la cebra es tóner en cada hoja, y en una planilla de doscientos
+ * renglones se nota. Apagarlo no cambia lo que el informe dice.
+ */
+.informe-sin-cebra .informe-tabla tbody tr {
+  background: transparent !important;
+}
+
 @media print {
+  /*
+   * `@page` la escribe la vista previa, con el tamaño y los márgenes que el
+   * usuario eligió: la regla no acepta variables CSS, así que los valores
+   * tienen que ir literales y por eso se inyectan desde el componente.
+   *
+   * Sin abrir la vista previa, este es el papel por defecto.
+   */
   @page {
     size: A4;
     margin: 14mm 12mm 16mm 12mm;
+  }
+
+  /*
+   * Con la vista previa abierta, el diálogo deja de ser un diálogo y pasa a
+   * ser la hoja: se va el fondo oscurecido, se va el marco, y el resto de la
+   * aplicación —que Radix ya marcó con `aria-hidden` al abrir el modal— no se
+   * imprime. Sin esto saldría el panel entero de fondo.
+   */
+  body > [aria-hidden='true'] {
+    display: none !important;
+  }
+
+  [data-slot='dialog-overlay'] {
+    display: none !important;
+  }
+
+  [data-slot='dialog-content'] {
+    position: static !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: auto !important;
+    transform: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    gap: 0 !important;
+  }
+
+  /*
+   * En pantalla la hoja se achica para caber en el modal, y lleva el papel y
+   * sus márgenes dibujados. En el papel de verdad, todo eso lo pone `@page`.
+   */
+  .informe-imprimible {
+    transform: none !important;
+    width: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
 
   /* Navegación, barra de filtros y botones no son parte del documento. */
