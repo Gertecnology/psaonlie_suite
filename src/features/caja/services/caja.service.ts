@@ -4,6 +4,7 @@ import type {
   FacturaDeLaVenta,
   FiltrosDeCaja,
   ListadoDeCaja,
+  OpcionesDeCaja,
 } from '../models/caja.model'
 
 /**
@@ -30,13 +31,20 @@ function construirQuery(filtros: FiltrosDeCaja): URLSearchParams {
     ['fechaHasta', filtros.hasta],
     ['busqueda', filtros.busqueda],
     ['estadoPago', filtros.estadoPago],
+    ['estadoVenta', filtros.estadoVenta],
     ['emisorId', filtros.emisorId],
+    ['vendedorId', filtros.vendedorId],
+    ['montoMin', filtros.montoMin],
+    ['montoMax', filtros.montoMax],
     ['origen', filtros.origen],
     ['page', filtros.pagina],
     ['limit', filtros.tamano],
   ]
 
   for (const [clave, valor] of mapa) {
+    // Se comparan los tres casos vacíos uno por uno y no por verdad: un
+    // `montoMin` de 0 es un filtro elegido, y descartarlo lo convertiría en
+    // «sin mínimo».
     if (valor === undefined || valor === null || valor === '') continue
     query.append(clave, String(valor))
   }
@@ -51,6 +59,19 @@ export function obtenerListadoDeCaja(
     `${VENTAS}/caja?${construirQuery(filtros).toString()}`,
     { fallbackMessage: 'No se pudo cargar el listado de ventas.' },
   )
+}
+
+/**
+ * Lo que se ofrece en los desplegables: empresas y vendedores con ventas.
+ *
+ * Va aparte del listado y no se vuelve a pedir con cada filtro: las opciones
+ * no dependen del período elegido, así que pedirlas de nuevo en cada cambio
+ * sería una consulta por tecla sin ninguna diferencia en la respuesta.
+ */
+export function obtenerOpcionesDeCaja(): Promise<OpcionesDeCaja> {
+  return apiFetch<OpcionesDeCaja>(`${VENTAS}/caja/opciones`, {
+    fallbackMessage: 'No se pudieron cargar las opciones de filtro.',
+  })
 }
 
 export function obtenerBoletosDeLaVenta(

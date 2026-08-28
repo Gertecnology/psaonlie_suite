@@ -1,21 +1,16 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Plus, Search } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 import { PageLayout } from '@/components/layout/page-layout'
+import { Paginacion } from '@/components/filtros'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { useListadoDeCaja } from '../hooks/use-caja'
+import { useFiltros } from '@/hooks/use-filtros'
+import { useListadoDeCaja, useOpcionesDeCaja } from '../hooks/use-caja'
 import { formatearGuaranies } from '@/lib/formato'
-import type { FilaDeCaja, FiltrosDeCaja, OrigenDeVenta } from '../models/caja.model'
+import { aFechaISOLocal, periodoDesdePreset } from '@/lib/periodo'
+import type { FilaDeCaja, FiltrosDeCaja } from '../models/caja.model'
+import { FiltrosDeCajaControles } from './filtros-de-caja'
 import { ModalDeAnulacion } from './modal-de-anulacion'
 import { ModalDeBoletos } from './modal-de-boletos'
 import { ModalDeEnvio } from './modal-de-envio'
@@ -35,26 +30,38 @@ import { TarjetasDeCaja } from './tarjetas-de-caja'
  * dato que esta persona no tiene derecho a ver, y por eso no vino.
  */
 
-const ESTADOS = ['PAGADO', 'PENDIENTE', 'EXPIRADO', 'CANCELADO', 'REEMBOLSADO']
+/**
+ * El período con el que abre la pantalla.
+ *
+ * Se pone explícito y no se deja al valor por omisión del backend —que también
+ * son treinta días— porque un listado acotado en silencio se lee como si fuera
+ * todo. Al verlo escrito en el filtro, quien mira sabe qué está contando antes
+ * de sacar una conclusión de los totales.
+ */
+function periodoInicial(): { desde: string; hasta: string } {
+  const { desde, hasta } = periodoDesdePreset('30d')
+
+  return { desde: aFechaISOLocal(desde), hasta: aFechaISOLocal(hasta) }
+}
 
 export function PaginaDeCaja() {
-  const [busqueda, setBusqueda] = useState('')
-  const [estadoPago, setEstadoPago] = useState<string>('')
-  const [origen, setOrigen] = useState<OrigenDeVenta>('TODAS')
-  const [pagina, setPagina] = useState(1)
-
-  // Sin esto se consulta en cada tecla, y son veinticinco filas y dos
-  // agregados por consulta.
-  const busquedaDiferida = useDebouncedValue(busqueda, 400)
-
-  const filtros: FiltrosDeCaja = {
-    busqueda: busquedaDiferida || undefined,
-    estadoPago: estadoPago || undefined,
-    origen: origen === 'TODAS' ? undefined : origen,
+  const {
+    filtros,
     pagina,
-  }
+    tamano,
+    poner,
+    quitar,
+    limpiar,
+    irAPagina,
+    cambiarTamano,
+  } = useFiltros<FiltrosDeCaja>(periodoInicial())
 
-  const { data, isLoading, error } = useListadoDeCaja(filtros)
+  const { data, isLoading, isFetching, error } = useListadoDeCaja({
+    ...filtros,
+    pagina,
+    tamano,
+  })
+  const { data: opciones } = useOpcionesDeCaja()
 
   const [verBoletosDe, setVerBoletosDe] = useState<string | null>(null)
   const [verFacturasDe, setVerFacturasDe] = useState<string | null>(null)
@@ -62,7 +69,6 @@ export function PaginaDeCaja() {
   const [anularA, setAnularA] = useState<FilaDeCaja | null>(null)
 
   const soloMisVentas = data?.soloMisVentas ?? true
-  const paginas = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1
 
   return (
     <PageLayout
@@ -84,63 +90,19 @@ export function PaginaDeCaja() {
       <div className='grid gap-4'>
         <TarjetasDeCaja resumen={data?.resumen} cargando={isLoading} />
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <div className='relative min-w-[16rem] flex-1'>
-            <Search className='text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4' />
-            <Input
-              className='pl-8'
-              placeholder='Documento, pasajero o transacción'
-              value={busqueda}
-              aria-label='Buscar ventas'
-              onChange={(evento) => {
-                setBusqueda(evento.target.value)
-                // Volver a la primera página: buscar sobre la página 3 de un
-                // resultado que ahora tiene una sola muestra vacío.
-                setPagina(1)
-              }}
-            />
-          </div>
-
-          <Select
-            value={estadoPago || 'TODOS'}
-            onValueChange={(valor) => {
-              setEstadoPago(valor === 'TODOS' ? '' : valor)
-              setPagina(1)
-            }}
-          >
-            <SelectTrigger className='w-[11rem]' aria-label='Estado del pago'>
-              <SelectValue placeholder='Estado' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='TODOS'>Todos los estados</SelectItem>
-              {ESTADOS.map((estado) => (
-                <SelectItem key={estado} value={estado}>
-                  {estado}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Sólo tiene sentido para quien ve las dos clases de venta. */}
-          {!soloMisVentas && (
-            <Select
-              value={origen}
-              onValueChange={(valor) => {
-                setOrigen(valor as OrigenDeVenta)
-                setPagina(1)
-              }}
-            >
-              <SelectTrigger className='w-[10rem]' aria-label='Origen de la venta'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='TODAS'>Caja y web</SelectItem>
-                <SelectItem value='CAJA'>Sólo caja</SelectItem>
-                <SelectItem value='WEB'>Sólo web</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+        <FiltrosDeCajaControles
+          filtros={filtros}
+          opciones={opciones}
+          soloMisVentas={soloMisVentas}
+          // `isFetching` sin `isLoading`: hay una consulta en vuelo pero
+          // todavía se muestran los datos anteriores. Es exactamente el rato
+          // en que la pantalla parece no haber registrado el cambio.
+          actualizando={isFetching && !isLoading}
+          total={data?.total}
+          onPoner={poner}
+          onQuitar={quitar}
+          onLimpiar={limpiar}
+        />
 
         {error && (
           <p className='text-destructive text-sm'>{(error as Error).message}</p>
@@ -156,31 +118,20 @@ export function PaginaDeCaja() {
           onAnular={setAnularA}
         />
 
-        {paginas > 1 && (
-          <div className='flex items-center justify-between text-sm'>
-            <span className='text-muted-foreground'>
-              Página {data?.page} de {paginas} · {data?.total} ventas
-            </span>
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={pagina <= 1}
-                onClick={() => setPagina((actual) => actual - 1)}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={pagina >= paginas}
-                onClick={() => setPagina((actual) => actual + 1)}
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        )}
+        {/*
+          La página y el tamaño salen del estado local, no de la respuesta: son
+          la intención de quien hizo clic. Tomarlos de `data` los ata a lo que
+          ya llegó, y mientras la página nueva viaja el control muestra la
+          anterior — con lo que «Siguiente» avanza desde el número viejo.
+        */}
+        <Paginacion
+          pagina={pagina}
+          tamano={tamano}
+          total={data?.total ?? 0}
+          onPagina={irAPagina}
+          onTamano={cambiarTamano}
+          cargando={isFetching}
+        />
       </div>
 
       <ModalDeBoletos

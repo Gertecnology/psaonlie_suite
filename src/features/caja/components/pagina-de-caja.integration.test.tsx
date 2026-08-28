@@ -181,7 +181,7 @@ describe('la pantalla de caja (integración)', () => {
       await screen.findByText('Mis ventas')
 
       expect(
-        screen.queryByLabelText('Origen de la venta'),
+        screen.queryByLabelText('Origen'),
       ).not.toBeInTheDocument()
     })
   })
@@ -213,7 +213,7 @@ describe('la pantalla de caja (integración)', () => {
       montar()
 
       expect(
-        await screen.findByLabelText('Origen de la venta'),
+        await screen.findByLabelText('Origen'),
       ).toBeInTheDocument()
     })
   })
@@ -271,7 +271,7 @@ describe('la pantalla de caja (integración)', () => {
       const usuario = montar()
 
       await screen.findByText('Sebastian Castro')
-      await usuario.type(screen.getByLabelText('Buscar ventas'), '4969917')
+      await usuario.type(screen.getByLabelText('Buscar'), '4969917')
 
       // Diferida: no se consulta en cada tecla.
       await waitFor(

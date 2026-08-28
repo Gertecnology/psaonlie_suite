@@ -8,6 +8,7 @@ import {
   obtenerBoletosDeLaVenta,
   obtenerFacturasDeLaVenta,
   obtenerListadoDeCaja,
+  obtenerOpcionesDeCaja,
   type TipoImpresion,
 } from '../services/caja.service'
 import type { FiltrosDeCaja } from '../models/caja.model'
@@ -29,6 +30,21 @@ export function useListadoDeCaja(filtros: FiltrosDeCaja) {
     queryKey: [CLAVE, 'listado', filtros],
     queryFn: () => obtenerListadoDeCaja(filtros),
     placeholderData: (anterior) => anterior,
+  })
+}
+
+/**
+ * Lo que se ofrece en los desplegables.
+ *
+ * `staleTime` largo a propósito: las empresas y los vendedores con ventas no
+ * cambian entre un filtro y el siguiente. Sin él, cada vuelta a la pantalla
+ * repetiría una consulta cuya respuesta ya se tiene.
+ */
+export function useOpcionesDeCaja() {
+  return useQuery({
+    queryKey: [CLAVE, 'opciones'],
+    queryFn: obtenerOpcionesDeCaja,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
