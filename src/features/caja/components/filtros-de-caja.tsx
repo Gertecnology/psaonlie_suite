@@ -7,6 +7,7 @@ import {
   type FiltroAplicado,
 } from '@/components/filtros'
 import { formatearGuaranies } from '@/lib/formato'
+import { deFechaISOLocal, describirPeriodo } from '@/lib/periodo'
 import type {
   FiltrosDeCaja,
   OpcionesDeCaja,
@@ -90,6 +91,21 @@ export function FiltrosDeCajaControles({
   // uuid en un chip no le dice a nadie por qué la tabla tiene tres filas.
   const aplicados: FiltroAplicado[] = []
 
+  // El período va primero y sin cruz: la pantalla lo pone sola y siempre hay
+  // uno. Mostrarlo es lo que impide que alguien lea «Gs. 782.250» creyendo que
+  // es lo vendido desde siempre, cuando son treinta días.
+  if (filtros.desde || filtros.hasta) {
+    aplicados.push({
+      clave: 'periodo',
+      etiqueta: 'Período',
+      valor: describirPeriodo({
+        desde: deFechaISOLocal(filtros.desde) ?? new Date(),
+        hasta: deFechaISOLocal(filtros.hasta) ?? new Date(),
+      }),
+      fijo: true,
+    })
+  }
+
   if (filtros.busqueda) {
     aplicados.push({
       clave: 'busqueda',
@@ -167,17 +183,21 @@ export function FiltrosDeCajaControles({
       actualizando={actualizando}
       total={total}
     >
+      {/*
+        Los anchos no son iguales porque los campos no lo son: la búsqueda se
+        estira con el espacio que sobra, y un desplegable de dos opciones no
+        tiene por qué medir lo mismo que el de empresas.
+      */}
       <FiltroDeTexto
         id='caja-busqueda'
         etiqueta='Buscar'
         placeholder='Documento, pasajero o transacción'
         valor={filtros.busqueda ?? ''}
         onCambiar={(valor) => onPoner({ busqueda: valor || undefined })}
+        className='min-w-[15rem] flex-1'
       />
 
       <FiltroDeRangoDeFechas
-        id='caja-fechas'
-        etiqueta='Fecha de venta'
         desde={filtros.desde}
         hasta={filtros.hasta}
         onCambiar={({ desde, hasta }) => onPoner({ desde, hasta })}
@@ -187,25 +207,29 @@ export function FiltrosDeCajaControles({
         id='caja-estado-pago'
         etiqueta='Estado del pago'
         etiquetaDeTodos='Todos los pagos'
+        placeholder='Pago'
         opciones={ESTADOS_DE_PAGO.map((estado) => ({
           valor: estado,
           etiqueta: estado,
         }))}
         valor={filtros.estadoPago}
         onCambiar={(valor) => onPoner({ estadoPago: valor })}
-      />
+      className='w-[7rem]'
+        />
 
       <FiltroDeSeleccion
         id='caja-estado-venta'
         etiqueta='Estado de la venta'
         etiquetaDeTodos='Todas las ventas'
+        placeholder='Venta'
         opciones={ESTADOS_DE_VENTA.map((estado) => ({
           valor: estado,
           etiqueta: estado,
         }))}
         valor={filtros.estadoVenta}
         onCambiar={(valor) => onPoner({ estadoVenta: valor })}
-      />
+      className='w-[7.5rem]'
+        />
 
       <FiltroDeSeleccion
         id='caja-empresa'
@@ -217,7 +241,8 @@ export function FiltrosDeCajaControles({
         }))}
         valor={filtros.emisorId}
         onCambiar={(valor) => onPoner({ emisorId: valor })}
-      />
+      className='w-[8.5rem]'
+        />
 
       <FiltroDeRangoNumerico
         id='caja-monto'
@@ -227,7 +252,8 @@ export function FiltrosDeCajaControles({
         onCambiar={({ minimo, maximo }) =>
           onPoner({ montoMin: minimo, montoMax: maximo })
         }
-      />
+      className='w-[11rem]'
+        />
 
       {/* Un vendedor no filtra por vendedor: sólo se tiene a sí mismo. */}
       {!soloMisVentas && (
@@ -241,6 +267,7 @@ export function FiltrosDeCajaControles({
           }))}
           valor={filtros.vendedorId}
           onCambiar={(valor) => onPoner({ vendedorId: valor })}
+        className='w-[8.5rem]'
         />
       )}
 
@@ -257,6 +284,7 @@ export function FiltrosDeCajaControles({
           onCambiar={(valor) =>
             onPoner({ origen: (valor as OrigenDeVenta) ?? 'TODAS' })
           }
+        className='w-[7.5rem]'
         />
       )}
     </BarraDeFiltros>
