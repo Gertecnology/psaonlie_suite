@@ -50,6 +50,15 @@ export interface ErrorResultado {
 
 export interface VentaExitosa {
   ventaId: string
+  /**
+   * Con qué se cobró.
+   *
+   * Opcional porque hoy **no viene**: el DTO de confirmación del backend no lo
+   * devuelve. La pantalla de pago lo lee para no volver a preguntar el método
+   * de una venta que ya nació con uno; mientras el backend no lo mande, ese
+   * atajo simplemente no se aplica y el método se elige como siempre.
+   */
+  metodoPago?: string
   numeroTransaccion: string
   numeroBoleto: string
   estado: string

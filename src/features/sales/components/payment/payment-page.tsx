@@ -137,7 +137,6 @@ export function PaymentPage() {
   useEffect(() => {
     const leidos = leerParametros()
     setDatos(leidos)
-    setIsPaid(leidos.search.estado === 'PAGADO')
   }, [])
 
   const handleGoBack = () => {
