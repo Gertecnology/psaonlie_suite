@@ -119,6 +119,42 @@ describe('los documentos de la venta', () => {
     expect(descargarDocumento).not.toHaveBeenCalled()
   })
 
+  it('la lista sigue a la vista con el documento abierto', async () => {
+    // Antes la vista previa se abría DEBAJO de la lista: había que desplazar
+    // para llegar, y al llegar la lista quedaba fuera de la pantalla.
+    // Comparar dos documentos era subir, elegir, bajar. Ahora conviven.
+    montar()
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Ver Boleto 150040010167' }),
+    )
+
+    await screen.findByTitle(/Vista previa de Boleto/i)
+
+    expect(
+      screen.getByRole('button', { name: /Ver Factura del pasaje/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('sin nada elegido, el hueco dice qué hacer', async () => {
+    // Media pantalla en blanco se lee como algo que no cargó.
+    montar()
+
+    expect(
+      await screen.findByText('Elegí un documento para verlo acá.'),
+    ).toBeInTheDocument()
+  })
+
+  it('el visor no se abre solo: traer un PDF cuesta una petición', async () => {
+    montar()
+
+    await screen.findByRole('button', { name: 'Ver Boleto 150040010167' })
+
+    // Quien entra a este panel muchas veces viene a mandarlos por correo, no
+    // a mirarlos.
+    expect(verDocumento).not.toHaveBeenCalled()
+  })
+
   it('no lo vuelve a traer si ya se abrió', async () => {
     // Cada apertura crea un object URL: traerlo dos veces deja uno colgado en
     // memoria por cada clic.

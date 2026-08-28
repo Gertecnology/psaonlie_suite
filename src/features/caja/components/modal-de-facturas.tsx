@@ -36,7 +36,12 @@ export function ModalDeFacturas({
 
   return (
     <Dialog open={!!numeroTransaccion} onOpenChange={(abierto) => !abierto && onClose()}>
-      <DialogContent className='max-h-[85vh] max-w-3xl overflow-y-auto'>
+      {/*
+        Ancho, porque adentro hay dos columnas: la lista de documentos y el
+        documento abierto. En 3xl el visor quedaba tan angosto que un boleto
+        A4 se leía a la mitad del tamaño de la letra.
+      */}
+      <DialogContent className='max-h-[92vh] overflow-y-auto sm:max-w-6xl'>
         <DialogHeader>
           <DialogTitle>Documentos de la venta</DialogTitle>
           <DialogDescription className='font-mono text-xs'>
