@@ -94,6 +94,50 @@ describe('la tabla de la caja', () => {
     })
   })
 
+  describe('una venta anulada', () => {
+    const ANULADA: FilaDeCaja = {
+      ...COMO_VENDEDOR,
+      // El pago sigue en PAGADO: el dinero se cobró de verdad, y el reembolso
+      // es otro hecho. Por eso el estado de la VENTA manda sobre el del pago.
+      estadoPago: 'PAGADO',
+      estadoVenta: 'CANCELADO',
+    }
+
+    it('se ve como anulada, no como pagada', () => {
+      render(<TablaDeCaja filas={[ANULADA]} soloMisVentas {...sinAcciones} />)
+
+      expect(screen.getByText('Anulada')).toBeInTheDocument()
+      expect(screen.queryByText('Pagado')).not.toBeInTheDocument()
+    })
+
+    it('dice que el cobro había entrado', () => {
+      // Es lo que explica que haya un reembolso pendiente.
+      render(<TablaDeCaja filas={[ANULADA]} soloMisVentas {...sinAcciones} />)
+
+      expect(screen.getByText('cobrada')).toBeInTheDocument()
+    })
+
+    it('ya no ofrece anularla de nuevo', () => {
+      render(<TablaDeCaja filas={[ANULADA]} soloMisVentas {...sinAcciones} />)
+
+      expect(
+        screen.queryByLabelText('Anular la venta TXN87593508090'),
+      ).not.toBeInTheDocument()
+    })
+
+    it('una expirada también se ve por su estado de venta', () => {
+      render(
+        <TablaDeCaja
+          filas={[{ ...ANULADA, estadoPago: 'PENDIENTE', estadoVenta: 'EXPIRADO' }]}
+          soloMisVentas
+          {...sinAcciones}
+        />,
+      )
+
+      expect(screen.getByText('Expirada')).toBeInTheDocument()
+    })
+  })
+
   describe('la acción de anular', () => {
     it('se ofrece en una venta pagada', () => {
       render(

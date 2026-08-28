@@ -35,9 +35,43 @@ const ESTADOS: Record<string, { texto: string; variante: 'default' | 'secondary'
   REEMBOLSADO: { texto: 'Reembolsado', variante: 'outline' },
 }
 
-function EstadoDelPago({ estado }: { estado: string }) {
-  const { texto, variante } = ESTADOS[estado] ?? {
-    texto: estado,
+/**
+ * Estados de la VENTA que mandan sobre el del pago.
+ *
+ * Una venta anulada sigue teniendo `estadoPago: PAGADO` —el dinero se cobró de
+ * verdad, y el reembolso es otro hecho— así que mostrar sólo el estado del pago
+ * pintaba «Pagado» sobre una venta cancelada. Quien mira el listado pregunta
+ * primero si la venta vale, no si entró la plata.
+ */
+const VENTA_MANDA: Record<string, { texto: string; variante: 'destructive' | 'outline' }> = {
+  CANCELADO: { texto: 'Anulada', variante: 'destructive' },
+  EXPIRADO: { texto: 'Expirada', variante: 'outline' },
+}
+
+function EstadoDeLaVenta({
+  estadoPago,
+  estadoVenta,
+}: {
+  estadoPago: string
+  estadoVenta: string
+}) {
+  const deLaVenta = VENTA_MANDA[estadoVenta]
+
+  if (deLaVenta) {
+    return (
+      <span className='flex flex-wrap items-center gap-1'>
+        <Badge variant={deLaVenta.variante}>{deLaVenta.texto}</Badge>
+        {/* Y se dice que el cobro había entrado: es lo que explica que haya
+            un reembolso pendiente. */}
+        {estadoPago === 'PAGADO' && (
+          <span className='text-muted-foreground text-xs'>cobrada</span>
+        )}
+      </span>
+    )
+  }
+
+  const { texto, variante } = ESTADOS[estadoPago] ?? {
+    texto: estadoPago,
     variante: 'outline' as const,
   }
 
@@ -128,7 +162,10 @@ export function TablaDeCaja({
               </TableCell>
 
               <TableCell>
-                <EstadoDelPago estado={fila.estadoPago} />
+                <EstadoDeLaVenta
+                  estadoPago={fila.estadoPago}
+                  estadoVenta={fila.estadoVenta}
+                />
               </TableCell>
 
               <TableCell className='text-right font-medium tabular-nums'>
@@ -202,7 +239,8 @@ export function TablaDeCaja({
                     Sólo en las pagadas. Anular una venta que nunca se cobró no
                     devuelve nada, y ofrecerlo sugiere que sí.
                   */}
-                  {fila.estadoPago === 'PAGADO' && (
+                  {fila.estadoPago === 'PAGADO' &&
+                    fila.estadoVenta !== 'CANCELADO' && (
                     <Button
                       variant='ghost'
                       size='icon'

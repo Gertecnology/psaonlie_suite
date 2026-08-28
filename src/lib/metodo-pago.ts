@@ -43,3 +43,20 @@ export const OPCIONES_METODO_PAGO = METODOS_PAGO.map((metodo) => ({
   value: metodo,
   label: ETIQUETAS_METODO_PAGO[metodo],
 }))
+
+/**
+ * Métodos que se cobran en el mostrador, en el mismo acto de la venta.
+ *
+ * La API los rechaza con `estadoPago: PENDIENTE`: no existe un canal por el
+ * que confirmarlos después —nadie manda un callback diciendo "ya te pagó en
+ * efectivo"— así que el estado inicial tiene que ser `PAGADO`.
+ *
+ * Para el vendedor eso es lo que pasa de verdad: aprieta confirmar cuando ya
+ * tiene los billetes en la mano.
+ */
+export const METODOS_COBRADOS_EN_EL_ACTO: readonly MetodoPago[] = ['EFECTIVO']
+
+/** Si este método se cobra en el mostrador y no admite confirmación diferida. */
+export function seCobraEnElActo(metodoPago: MetodoPago | ''): boolean {
+  return METODOS_COBRADOS_EN_EL_ACTO.includes(metodoPago as MetodoPago)
+}
