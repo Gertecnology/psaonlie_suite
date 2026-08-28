@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ClientForm } from './client-form'
+import { FacturacionCard, type DatosDeFacturacion } from './facturacion-card'
 import { ResumenPago } from '../pago/resumen-pago'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import type { Asiento, PasajeroRegistrado, ServiceCharge } from '../../models/sales.model'
@@ -20,7 +21,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { OPCIONES_METODO_PAGO, type MetodoPago } from '@/lib/metodo-pago'
+import {
+  OPCIONES_METODO_PAGO,
+  seCobraEnElActo,
+  type MetodoPago,
+} from '@/lib/metodo-pago'
 import { sumarPreciosAsientos } from '../../utils/money'
 import {
   deserializarServiceCharge,
@@ -60,6 +65,17 @@ export function CheckoutPage() {
   // una venta que expira sin cobrarse quedaba registrada con el método
   // equivocado para siempre.
   const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
+
+  // A nombre de quién sale la factura. Faltaba en la caja: sin esto toda venta
+  // de mostrador salía a consumidor final, y el cliente que pedía factura con
+  // su RUC se iba sin ella.
+  const [facturacion, setFacturacion] = useState<DatosDeFacturacion>({
+    documento: '',
+    razonSocial: '',
+  })
+
+  const faltaFacturacion =
+    !facturacion.documento.trim() || !facturacion.razonSocial.trim()
   const [ventaYaConfirmada, setVentaYaConfirmada] = useState(false)
 
   const confirmarVentaMutation = useConfirmarVenta()
@@ -214,11 +230,24 @@ export function CheckoutPage() {
           origenId: search.origenId,
           destinoId: search.destinoId,
           metodoPago,
-          // Todavía no se cobró: el cobro se registra en el paso siguiente, y
-          // es lo que dispara la emisión de los boletos.
-          estadoPago: 'PENDIENTE',
+          // En efectivo la plata ya está: el vendedor aprieta confirmar con
+          // los billetes en la mano, y la API rechaza `PENDIENTE` porque no
+          // existe un canal por el que confirmarlo después —nadie manda un
+          // callback diciendo "ya te pagó en efectivo".
+          //
+          // Los demás quedan pendientes y se confirman en el paso de cobro:
+          // Bancard por su callback, transferencia y Wepa por verificación.
+          estadoPago: seCobraEnElActo(metodoPago) ? 'PAGADO' : 'PENDIENTE',
           // Sólo pasajes: el cargo por servicio lo calcula el backend.
           importeTotal: sumarPreciosAsientos(asientos),
+          // Se manda con la venta para que quede congelada en ella: lo que se
+          // facturó no puede cambiar si el cliente después edita sus datos.
+          facturacion: {
+            documento: facturacion.documento.trim(),
+            razonSocial: facturacion.razonSocial.trim(),
+            email: facturacion.email?.trim() || undefined,
+            direccion: facturacion.direccion?.trim() || undefined,
+          },
           asiento: asientos.map((asiento, index) => ({
             Nroasiento: asiento.numero,
             Precio: asiento.precio,
@@ -425,6 +454,12 @@ export function CheckoutPage() {
             </Alert>
           )}
 
+          <FacturacionCard
+            valor={facturacion}
+            onChange={setFacturacion}
+            deshabilitado={confirmando || ventaYaConfirmada}
+          />
+
           <div className="grid gap-2">
             <Label htmlFor="metodo-de-pago">Cómo va a pagar</Label>
             <Select
@@ -451,7 +486,11 @@ export function CheckoutPage() {
             className="w-full"
             size="lg"
             disabled={
-              faltanPasajeros || confirmando || ventaYaConfirmada || !metodoPago
+              faltanPasajeros ||
+              confirmando ||
+              ventaYaConfirmada ||
+              !metodoPago ||
+              faltaFacturacion
             }
           >
             <CreditCard className="h-4 w-4 mr-2" />
@@ -461,9 +500,13 @@ export function CheckoutPage() {
                 ? 'Venta ya confirmada'
                 : faltanPasajeros
                   ? `Faltan los datos de ${asientos.length - pasajeros.length} pasajero(s)`
-                  : !metodoPago
+                  : faltaFacturacion
+                    ? 'Faltan los datos de facturación'
+                    : !metodoPago
                     ? 'Elegí con qué va a pagar'
-                    : 'Confirmar venta y continuar al cobro'
+                    : seCobraEnElActo(metodoPago)
+                      ? 'Cobrar en efectivo y emitir los boletos'
+                      : 'Confirmar venta y continuar al cobro'
             }
           </Button>
         </div>
