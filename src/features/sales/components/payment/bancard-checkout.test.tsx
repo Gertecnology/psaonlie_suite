@@ -111,4 +111,50 @@ describe('el pago con tarjeta en la caja', () => {
       await waitFor(() => expect(onError).toHaveBeenCalledWith('falló'))
     })
   })
+
+  describe('lo que necesita Bancard para abrir el proceso', () => {
+    it('manda a dónde vuelve el cliente', async () => {
+      // El backend las exige con `@IsUrl()`. Sin ellas rechazaba el proceso con
+      // «returnUrl must be a URL address» y el formulario nunca se dibujaba.
+      vi.mocked(apiFetch).mockResolvedValue({ processId: 'proc-1' } as never)
+
+      render(<BancardCheckout ventaId='v-1' />)
+
+      await waitFor(() => expect(apiFetch).toHaveBeenCalled())
+
+      const [, opciones] = vi.mocked(apiFetch).mock.calls[0]
+      const enviado = JSON.parse(String(opciones?.body))
+
+      expect(enviado.returnUrl).toMatch(/^https?:\/\//)
+      expect(enviado.cancelUrl).toMatch(/^https?:\/\//)
+    })
+
+    it('las dos vuelven al panel, no a la landing', async () => {
+      // Quien está pagando es un cliente en el mostrador: al terminar, la
+      // pantalla vuelve al vendedor.
+      vi.mocked(apiFetch).mockResolvedValue({ processId: 'proc-1' } as never)
+
+      render(<BancardCheckout ventaId='v-1' />)
+
+      await waitFor(() => expect(apiFetch).toHaveBeenCalled())
+
+      const [, opciones] = vi.mocked(apiFetch).mock.calls[0]
+      const enviado = JSON.parse(String(opciones?.body))
+
+      expect(enviado.returnUrl).toContain(window.location.origin)
+      expect(enviado.cancelUrl).toContain(window.location.origin)
+    })
+
+    it('y sigue mandando de qué venta se trata', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({ processId: 'proc-1' } as never)
+
+      render(<BancardCheckout ventaId='v-1' />)
+
+      await waitFor(() => expect(apiFetch).toHaveBeenCalled())
+
+      const [, opciones] = vi.mocked(apiFetch).mock.calls[0]
+
+      expect(JSON.parse(String(opciones?.body)).ventaId).toBe('v-1')
+    })
+  })
 })

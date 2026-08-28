@@ -135,9 +135,23 @@ export function BancardCheckout({ ventaId, onListo, onError }: Props) {
         document.body.appendChild(script)
       })
 
+    // A dónde vuelve el cliente cuando termina en Bancard. El backend las
+    // exige —`@IsUrl()`— y sin ellas rechaza el proceso con «returnUrl must be
+    // a URL address», que es lo que pasaba: el formulario nunca llegaba a
+    // dibujarse.
+    //
+    // Las dos van al listado de caja: es donde el vendedor ve en qué quedó la
+    // venta. El estado no lo decide esta vuelta sino el callback de Bancard, así
+    // que da igual por cuál de las dos se regrese.
+    const vueltaAlPanel = `${window.location.origin}/caja`
+
     apiFetch<ProcesoIniciado>('/api/pagos/bancard/iniciar', {
       method: 'POST',
-      body: JSON.stringify({ ventaId }),
+      body: JSON.stringify({
+        ventaId,
+        returnUrl: vueltaAlPanel,
+        cancelUrl: vueltaAlPanel,
+      }),
       fallbackMessage: 'No se pudo iniciar el pago con Bancard.',
     })
       .then(async (respuesta) => {
