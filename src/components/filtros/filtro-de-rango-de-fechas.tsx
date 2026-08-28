@@ -1,9 +1,15 @@
-import { Input } from '@/components/ui/input'
-import { CampoDeFiltro } from './campo-de-filtro'
+import { useState } from 'react'
+
+import {
+  PRESET_POR_DEFECTO,
+  aFechaISOLocal,
+  deFechaISOLocal,
+  periodoDesdePreset,
+  type PresetPeriodo,
+} from '@/lib/periodo'
+import { SelectorRangoFechas } from './selector-rango-fechas'
 
 interface FiltroDeRangoDeFechasProps {
-  id: string
-  etiqueta?: string
   /** `YYYY-MM-DD`, o `undefined` si no se acotó. */
   desde?: string
   hasta?: string
@@ -12,54 +18,51 @@ interface FiltroDeRangoDeFechasProps {
 }
 
 /**
- * El rango de fechas: desde y hasta, los dos inclusive.
+ * El período, en un solo control.
  *
- * Los campos son nativos (`type='date'`) a propósito. Toman y devuelven
- * `YYYY-MM-DD`, que es exactamente lo que la API exige y lo que rechaza si
- * viene con zona horaria; un selector propio agregaría una conversión que
- * puede equivocar el formato o correr el día por el huso.
+ * Por dentro es el mismo selector del panel de control: presets como filas
+ * —«Últimos 30 días» se elige de un clic, sin pelearse con una grilla de
+ * días— y el rango a medida detrás de una línea, para quien lo necesita.
  *
- * `min` y `max` cruzados impiden armar un rango invertido en el propio
- * control, en vez de dejar que el servidor lo rechace después de un viaje de
- * ida y vuelta.
+ * Hacia afuera habla en `YYYY-MM-DD`, que es lo que la API de la caja exige y
+ * lo que rechaza si viene con zona horaria. La conversión vive acá y no en
+ * cada pantalla: hecha con `Date` sueltas, un huso a la izquierda de UTC
+ * devuelve el día anterior y el listado aparece corrido un día.
  */
 export function FiltroDeRangoDeFechas({
-  id,
-  etiqueta = 'Período',
   desde,
   hasta,
   onCambiar,
   className,
 }: FiltroDeRangoDeFechasProps) {
+  const [preset, setPreset] = useState<PresetPeriodo>(PRESET_POR_DEFECTO)
+
+  const periodo = {
+    desde: deFechaISOLocal(desde) ?? periodoDesdePreset(PRESET_POR_DEFECTO).desde,
+    hasta: deFechaISOLocal(hasta) ?? periodoDesdePreset(PRESET_POR_DEFECTO).hasta,
+  }
+
   return (
     <div className={className}>
-      <CampoDeFiltro etiqueta={etiqueta} htmlFor={`${id}-desde`}>
-        <div className='flex items-center gap-1.5'>
-          <Input
-            id={`${id}-desde`}
-            type='date'
-            aria-label={`${etiqueta} desde`}
-            className='tabular-nums'
-            value={desde ?? ''}
-            max={hasta}
-            onChange={(evento) =>
-              onCambiar({ desde: evento.target.value || undefined, hasta })
-            }
-          />
-          <span className='text-muted-foreground shrink-0 text-xs'>a</span>
-          <Input
-            id={`${id}-hasta`}
-            type='date'
-            aria-label={`${etiqueta} hasta`}
-            className='tabular-nums'
-            value={hasta ?? ''}
-            min={desde}
-            onChange={(evento) =>
-              onCambiar({ desde, hasta: evento.target.value || undefined })
-            }
-          />
-        </div>
-      </CampoDeFiltro>
+      <SelectorRangoFechas
+        preset={preset}
+        periodo={periodo}
+        onPreset={(nuevo) => {
+          setPreset(nuevo)
+          const elegido = periodoDesdePreset(nuevo)
+          onCambiar({
+            desde: aFechaISOLocal(elegido.desde),
+            hasta: aFechaISOLocal(elegido.hasta),
+          })
+        }}
+        onRango={(inicio, fin) => {
+          setPreset('personalizado')
+          onCambiar({
+            desde: aFechaISOLocal(inicio),
+            hasta: aFechaISOLocal(fin),
+          })
+        }}
+      />
     </div>
   )
 }

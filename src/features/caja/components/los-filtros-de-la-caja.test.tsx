@@ -279,6 +279,43 @@ describe('los filtros de la caja', () => {
     })
   })
 
+  describe('lo que la pantalla filtra sola', () => {
+    beforeEach(() => responderCon(COMO_ADMIN))
+
+    it('el período se ve como chip desde que se entra', async () => {
+      montar()
+
+      // Sin esto, alguien lee «Gs. 782.250» y cree que es lo vendido desde
+      // siempre, cuando son treinta días. El filtro estaba aplicado y no se
+      // veía por ningún lado.
+      expect(await screen.findByText('Período:')).toBeInTheDocument()
+    })
+
+    it('el chip del período no se puede quitar de a uno', async () => {
+      montar()
+      await screen.findByText('Período:')
+
+      // Siempre hay un período: quitarlo dejaría un filtro implícito, que es
+      // el problema que el chip vino a resolver. Se cambia, no se saca.
+      expect(
+        screen.queryByLabelText('Quitar el filtro Período'),
+      ).not.toBeInTheDocument()
+    })
+
+    it('«Limpiar filtros» aparece en cuanto hay algo que limpiar', async () => {
+      const usuario = montar()
+      await screen.findByText('Sebastian Castro')
+
+      // Al entrar sólo está el período, que la pantalla puso sola: no hay nada
+      // que limpiar todavía.
+      expect(screen.queryByText('Limpiar filtros')).not.toBeInTheDocument()
+
+      await elegir(usuario, 'Estado de la venta', 'ANULADO')
+
+      expect(await screen.findByText('Limpiar filtros')).toBeInTheDocument()
+    })
+  })
+
   describe('la paginación', () => {
     beforeEach(() => responderCon(COMO_ADMIN))
 
