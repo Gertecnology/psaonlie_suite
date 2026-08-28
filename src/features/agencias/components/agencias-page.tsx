@@ -84,7 +84,7 @@ export function AgenciasPage() {
   return (
     <>
       <PageLayout
-        title='Empresas y agencias'
+        title='Empresas'
         description='Las empresas que operan rutas, sus agencias y la comisión que cobra cada una.'
         actions={<AgenciaPrimaryButtons />}
       >
