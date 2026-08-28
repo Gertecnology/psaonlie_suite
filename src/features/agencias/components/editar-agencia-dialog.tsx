@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { ImagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useActualizarAgencia } from '../hooks/use-actualizar-agencia'
+import { useActualizarLogoAgencia } from '../hooks/use-actualizar-logo-agencia'
 import { type AgenciaFormValues } from '../models/agencia.model'
 import { type HijaDeEmpresa } from '../services/agencia.service'
 
@@ -39,6 +41,8 @@ export function EditarAgenciaDialog({
   onCerrar,
 }: EditarAgenciaDialogProps) {
   const actualizar = useActualizarAgencia()
+  const actualizarLogo = useActualizarLogoAgencia()
+  const entradaArchivo = React.useRef<HTMLInputElement>(null)
 
   const [nombre, setNombre] = React.useState('')
   const [hereda, setHereda] = React.useState(true)
@@ -101,6 +105,56 @@ export function EditarAgenciaDialog({
         </DialogHeader>
 
         <div className='space-y-5 py-1'>
+          <div className='space-y-1.5'>
+            <Label>Logo</Label>
+            <div className='flex items-center gap-4'>
+              {/* Es un <button> y no un <div onClick>: así se llega con Tab y
+                  se activa con Enter. */}
+              <button
+                type='button'
+                onClick={() => entradaArchivo.current?.click()}
+                aria-label='Elegir el logo de la agencia'
+                disabled={actualizarLogo.isPending}
+                className='border-accent bg-muted focus-visible:ring-ring group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 focus-visible:ring-2 focus-visible:outline-none'
+              >
+                {/* `urlPerfil` llega en `null` cuando no hay logo: el servidor
+                    normaliza la cadena vacía, porque un `src=""` hace que el
+                    navegador vuelva a pedir la página como si fuera imagen. */}
+                {agencia.urlPerfil ? (
+                  <img
+                    src={agencia.urlPerfil}
+                    alt=''
+                    className='h-full w-full object-cover'
+                  />
+                ) : (
+                  <ImagePlus className='text-muted-foreground h-5 w-5' />
+                )}
+                <span className='absolute inset-0 flex items-center justify-center bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100'>
+                  {actualizarLogo.isPending ? '…' : 'Cambiar'}
+                </span>
+              </button>
+              <p className='text-muted-foreground text-sm'>
+                En el pasaje se muestra el logo de la agencia que lo emitió, no
+                el de {nombreEmpresa}.
+              </p>
+            </div>
+            <input
+              ref={entradaArchivo}
+              type='file'
+              accept='image/jpeg,image/png,image/webp,image/svg+xml'
+              className='sr-only'
+              onChange={(evento) => {
+                const archivo = evento.target.files?.[0]
+                // El logo se sube por su propio endpoint y se guarda al
+                // instante: no espera al botón de abajo, que manda los otros
+                // campos por PATCH.
+                if (archivo) {
+                  actualizarLogo.mutate({ id: agencia.id, profileImage: archivo })
+                }
+              }}
+            />
+          </div>
+
           <div className='space-y-1.5'>
             <Label htmlFor='agencia-nombre'>Nombre</Label>
             <Input
