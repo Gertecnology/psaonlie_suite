@@ -32,7 +32,7 @@ export function AgenciaDetailsPage({ agenciaId }: AgenciaDetailsPageProps) {
           <Button variant='ghost' size='sm' asChild>
             <Link to='/agencias'>
               <ArrowLeft className='mr-2 h-4 w-4' />
-              Empresas y agencias
+              Empresas
             </Link>
           </Button>
           {agencia && (

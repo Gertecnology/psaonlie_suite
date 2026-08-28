@@ -174,9 +174,12 @@ export function EmpresaAgenciasTable({
                 <TableCell className='text-muted-foreground'>
                   {formatearComision(agencia.comisionEfectiva)}
                   {agencia.heredaComision && (
-                    <span className='text-muted-foreground/70 ml-1.5 text-xs'>
-                      heredada
-                    </span>
+                    <>
+                      {' '}
+                      <span className='text-muted-foreground/70 text-xs'>
+                        heredada
+                      </span>
+                    </>
                   )}
                 </TableCell>
                 <TableCell>
