@@ -27,6 +27,7 @@ import { Route as AuthenticatedSalesIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedDestinationsIndexRouteImport } from './routes/_authenticated/destinations/index'
 import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients/index'
+import { Route as AuthenticatedCajaIndexRouteImport } from './routes/_authenticated/caja/index'
 import { Route as AuthenticatedAgenciasIndexRouteImport } from './routes/_authenticated/agencias/index'
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
 import { Route as AuthenticatedUsersNuevoRouteImport } from './routes/_authenticated/users/nuevo'
@@ -155,6 +156,11 @@ const AuthenticatedClientsIndexRoute =
     path: '/clients/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCajaIndexRoute = AuthenticatedCajaIndexRouteImport.update({
+  id: '/caja/',
+  path: '/caja/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAgenciasIndexRoute =
   AuthenticatedAgenciasIndexRouteImport.update({
     id: '/agencias/',
@@ -352,6 +358,7 @@ const AuthenticatedSettingsServiceChargesIdEditarRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
@@ -362,7 +369,6 @@ export interface FileRoutesByFullPath {
   '/500': typeof errors500Route
   '/503': typeof errors503Route
   '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/': typeof AuthenticatedIndexRoute
   '/agencias/nueva': typeof AuthenticatedAgenciasNuevaRoute
   '/clients/nuevo': typeof AuthenticatedClientsNuevoRoute
   '/destinations/nuevo': typeof AuthenticatedDestinationsNuevoRoute
@@ -385,22 +391,23 @@ export interface FileRoutesByFullPath {
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
-  '/agencias': typeof AuthenticatedAgenciasIndexRoute
-  '/clients': typeof AuthenticatedClientsIndexRoute
-  '/destinations': typeof AuthenticatedDestinationsIndexRoute
-  '/reports': typeof AuthenticatedReportsIndexRoute
-  '/sales': typeof AuthenticatedSalesIndexRoute
+  '/agencias/': typeof AuthenticatedAgenciasIndexRoute
+  '/caja/': typeof AuthenticatedCajaIndexRoute
+  '/clients/': typeof AuthenticatedClientsIndexRoute
+  '/destinations/': typeof AuthenticatedDestinationsIndexRoute
+  '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/sales/': typeof AuthenticatedSalesIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/users': typeof AuthenticatedUsersIndexRoute
+  '/users/': typeof AuthenticatedUsersIndexRoute
   '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
   '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/settings/service-charges/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
   '/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
-  '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
-  '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
-  '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
+  '/agencias/$id/': typeof AuthenticatedAgenciasIdIndexRoute
+  '/destinations/$id/': typeof AuthenticatedDestinationsIdIndexRoute
+  '/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
   '/settings/service-charges/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
 export interface FileRoutesByTo {
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/agencias': typeof AuthenticatedAgenciasIndexRoute
+  '/caja': typeof AuthenticatedCajaIndexRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/destinations': typeof AuthenticatedDestinationsIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/_authenticated/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/_authenticated/agencias/': typeof AuthenticatedAgenciasIndexRoute
+  '/_authenticated/caja/': typeof AuthenticatedCajaIndexRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/destinations/': typeof AuthenticatedDestinationsIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
@@ -511,6 +520,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/settings'
     | '/forgot-password'
     | '/sign-in'
@@ -521,7 +531,6 @@ export interface FileRouteTypes {
     | '/500'
     | '/503'
     | '/auth/reset-password'
-    | '/'
     | '/agencias/nueva'
     | '/clients/nuevo'
     | '/destinations/nuevo'
@@ -544,22 +553,23 @@ export interface FileRouteTypes {
     | '/settings/service-charges'
     | '/users/nuevo'
     | '/api/auth/verify-email'
-    | '/agencias'
-    | '/clients'
-    | '/destinations'
-    | '/reports'
-    | '/sales'
+    | '/agencias/'
+    | '/caja/'
+    | '/clients/'
+    | '/destinations/'
+    | '/reports/'
+    | '/sales/'
     | '/settings/'
-    | '/users'
+    | '/users/'
     | '/agencias/$id/editar'
     | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
     | '/settings/service-charges/nuevo'
     | '/users/$id/editar'
-    | '/agencias/$id'
-    | '/destinations/$id'
-    | '/settings/external-data'
+    | '/agencias/$id/'
+    | '/destinations/$id/'
+    | '/settings/external-data/'
     | '/settings/service-charges/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/users/nuevo'
     | '/api/auth/verify-email'
     | '/agencias'
+    | '/caja'
     | '/clients'
     | '/destinations'
     | '/reports'
@@ -649,6 +660,7 @@ export interface FileRouteTypes {
     | '/_authenticated/users/nuevo'
     | '/api/auth/verify-email'
     | '/_authenticated/agencias/'
+    | '/_authenticated/caja/'
     | '/_authenticated/clients/'
     | '/_authenticated/destinations/'
     | '/_authenticated/reports/'
@@ -686,7 +698,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -770,7 +782,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated/users/': {
       id: '/_authenticated/users/'
       path: '/users'
-      fullPath: '/users'
+      fullPath: '/users/'
       preLoaderRoute: typeof AuthenticatedUsersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -784,35 +796,42 @@ declare module '@tanstack/react-router' {
     '/_authenticated/sales/': {
       id: '/_authenticated/sales/'
       path: '/sales'
-      fullPath: '/sales'
+      fullPath: '/sales/'
       preLoaderRoute: typeof AuthenticatedSalesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports/': {
       id: '/_authenticated/reports/'
       path: '/reports'
-      fullPath: '/reports'
+      fullPath: '/reports/'
       preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/destinations/': {
       id: '/_authenticated/destinations/'
       path: '/destinations'
-      fullPath: '/destinations'
+      fullPath: '/destinations/'
       preLoaderRoute: typeof AuthenticatedDestinationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clients/': {
       id: '/_authenticated/clients/'
       path: '/clients'
-      fullPath: '/clients'
+      fullPath: '/clients/'
       preLoaderRoute: typeof AuthenticatedClientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/caja/': {
+      id: '/_authenticated/caja/'
+      path: '/caja'
+      fullPath: '/caja/'
+      preLoaderRoute: typeof AuthenticatedCajaIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/agencias/': {
       id: '/_authenticated/agencias/'
       path: '/agencias'
-      fullPath: '/agencias'
+      fullPath: '/agencias/'
       preLoaderRoute: typeof AuthenticatedAgenciasIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -973,21 +992,21 @@ declare module '@tanstack/react-router' {
     '/_authenticated/settings/external-data/': {
       id: '/_authenticated/settings/external-data/'
       path: '/external-data'
-      fullPath: '/settings/external-data'
+      fullPath: '/settings/external-data/'
       preLoaderRoute: typeof AuthenticatedSettingsExternalDataIndexRouteImport
       parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
     '/_authenticated/destinations/$id/': {
       id: '/_authenticated/destinations/$id/'
       path: '/destinations/$id'
-      fullPath: '/destinations/$id'
+      fullPath: '/destinations/$id/'
       preLoaderRoute: typeof AuthenticatedDestinationsIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/agencias/$id/': {
       id: '/_authenticated/agencias/$id/'
       path: '/agencias/$id'
-      fullPath: '/agencias/$id'
+      fullPath: '/agencias/$id/'
       preLoaderRoute: typeof AuthenticatedAgenciasIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
@@ -1089,6 +1108,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsServiceChargesRoute: typeof AuthenticatedSettingsServiceChargesRoute
   AuthenticatedUsersNuevoRoute: typeof AuthenticatedUsersNuevoRoute
   AuthenticatedAgenciasIndexRoute: typeof AuthenticatedAgenciasIndexRoute
+  AuthenticatedCajaIndexRoute: typeof AuthenticatedCajaIndexRoute
   AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedDestinationsIndexRoute: typeof AuthenticatedDestinationsIndexRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
@@ -1134,6 +1154,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedSettingsServiceChargesRoute,
   AuthenticatedUsersNuevoRoute: AuthenticatedUsersNuevoRoute,
   AuthenticatedAgenciasIndexRoute: AuthenticatedAgenciasIndexRoute,
+  AuthenticatedCajaIndexRoute: AuthenticatedCajaIndexRoute,
   AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedDestinationsIndexRoute: AuthenticatedDestinationsIndexRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
