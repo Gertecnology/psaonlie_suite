@@ -11,11 +11,33 @@ import { type Agencia } from '../models/agencia.model'
  * `heredaComision` ni el `porcentajeVentas` propio. Sin esos dos no se puede
  * decir qué comisión cobra cada agencia, y adivinar es informar mal una plata.
  */
+/**
+ * Cuántas agencias se piden de una.
+ *
+ * El endpoint pasó a devolver páginas, y acá hacen falta todas: esto alimenta
+ * el despliegue de una empresa en el listado, que las muestra juntas. La
+ * empresa más grande tiene dieciocho, así que cien deja margen de sobra; si
+ * alguna llegara a pasarse, `total` lo delata en la consola en vez de truncar
+ * en silencio.
+ */
+const TODAS_LAS_QUE_ENTRAN = 100
+
 export async function obtenerHijas(padreId: string): Promise<Agencia[]> {
-  const hijas = await apiFetch<Agencia[]>(`/agencias/${padreId}/hijas`, {
-    fallbackMessage: 'Error al obtener las agencias de la empresa.',
-  })
-  return hijas ?? []
+  const pagina = await apiFetch<{ items: Agencia[]; total: number }>(
+    `/agencias/${padreId}/hijas?page=1&limit=${TODAS_LAS_QUE_ENTRAN}`,
+    { fallbackMessage: 'Error al obtener las agencias de la empresa.' },
+  )
+
+  const hijas = pagina?.items ?? []
+
+  if (pagina && pagina.total > hijas.length) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `La empresa ${padreId} tiene ${pagina.total} agencias y se muestran ${hijas.length}.`,
+    )
+  }
+
+  return hijas
 }
 
 /**
