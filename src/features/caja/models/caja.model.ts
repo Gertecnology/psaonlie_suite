@@ -106,11 +106,18 @@ export interface BoletoDeLaVenta {
 }
 
 /** Un documento fiscal, para el otro modal. */
+/**
+ * Un documento de la venta: el boleto, la factura del pasaje o el comprobante
+ * del cargo por servicio.
+ *
+ * Se llama `Factura` por historia: al principio el listado devolvía sólo las
+ * facturas y el boleto —lo que la persona necesita para viajar— quedaba afuera.
+ */
 export interface FacturaDeLaVenta {
   id: string
-  tipo: 'FACTURA_PASAJE' | 'CARGO_SERVICIO' | string
+  tipo: 'BOLETO' | 'FACTURA_PASAJE' | 'CARGO_SERVICIO' | string
   archivo: string
-  /** El boleto que factura. Vacío en el cargo por servicio, que es uno por compra. */
+  /** El boleto al que pertenece. Vacío en el cargo por servicio, que es uno por compra. */
   numeroBoleto?: string
   tamano: number
   emitidaEn: string
