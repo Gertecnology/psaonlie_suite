@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { LogoPasajeOnline } from '@/assets/logo-pasaje-online'
 import { formatearFecha } from '@/lib/formato'
 import { useAuth } from '@/context/auth-context'
 import {
@@ -47,13 +48,13 @@ export function HojaInforme({
     <div className='informe-hoja bg-background border-border border shadow-sm'>
       <header className='flex items-start justify-between gap-8 px-7 pt-5 pb-3.5'>
         <div className='flex items-start gap-3.5'>
-          {/* El logo del panel, el mismo del sidebar y el mismo que ve el
-              pasajero. Un membrete con otra marca no es el membrete de la
-              empresa. Sin recuadro: la marca ya tiene su forma. */}
-          <img
-            src='/images/pasajeonline.svg'
-            alt=''
-            className='mt-0.5 h-8 w-auto shrink-0'
+          {/* El logotipo de la casa, en el azul de la marca. El SVG del
+              sidebar tiene los trazos en blanco porque el sidebar es oscuro;
+              sobre la hoja desaparecería. Va sin recuadro: la marca ya tiene
+              su forma. */}
+          <LogoPasajeOnline
+            aria-hidden
+            className='mt-0.5 h-8 w-auto shrink-0 text-[#4747f8]'
           />
           <div className='flex flex-col gap-px'>
             <span className='text-sm font-bold tracking-wide text-[#1e2a5a]'>

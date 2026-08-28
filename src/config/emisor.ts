@@ -11,7 +11,8 @@
  * una que dice un RUC equivocado se archiva.
  */
 export const EMISOR = {
-  razonSocial: import.meta.env.VITE_EMISOR_RAZON_SOCIAL ?? 'PASAJE ONLINE S.A.',
+  razonSocial:
+    import.meta.env.VITE_EMISOR_RAZON_SOCIAL ?? 'PASAJEONLINE E.A.S.',
   ruc: import.meta.env.VITE_EMISOR_RUC ?? '[RUC DE LA EMPRESA]',
   direccion:
     import.meta.env.VITE_EMISOR_DIRECCION ?? '[DIRECCIÓN FISCAL]',
