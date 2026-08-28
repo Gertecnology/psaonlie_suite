@@ -227,6 +227,11 @@ export interface HijaDeEmpresa {
   porcentajeVentas: number | null
   /** El que realmente cobra, ya resuelto por el servidor. */
   comisionEfectiva: number | null
+  /**
+   * Su logo propio, si tiene. En el pasaje se muestra el de quien lo emitió,
+   * no el de la empresa que agrupa la conexión.
+   */
+  urlPerfil: string | null
 }
 
 export interface HijasDeEmpresaPage {
