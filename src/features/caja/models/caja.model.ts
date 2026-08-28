@@ -127,3 +127,9 @@ export interface FacturaDeLaVenta {
    */
   esFiscal: boolean
 }
+
+/** Lo que se necesita para anular una venta. */
+export interface AnulacionDeVenta {
+  ventaId: string
+  motivo: string
+}

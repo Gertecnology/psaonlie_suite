@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import {
+  anularVenta,
   descargarFactura,
   enviarDocumentos,
   obtenerBoletosDeLaVenta,
@@ -94,6 +95,34 @@ export function useDescargarFactura() {
     }) => descargarFactura(numeroTransaccion, tipoImpresion),
     onError: (error: Error) => {
       toast.error('No se pudo generar la factura', {
+        description: error.message,
+      })
+    },
+  })
+}
+
+/**
+ * Anula una venta.
+ *
+ * Quién puede lo decide el backend: el vendedor sólo lo suyo, quien administra
+ * cualquiera. El 403 que devuelve dice a quién pedirle que lo haga, así que se
+ * muestra tal cual en vez de un "no tenés permiso" genérico.
+ *
+ * Al terminar refresca el listado: la venta cambia de estado y el total de las
+ * tarjetas ya no es el mismo.
+ */
+export function useAnularVenta() {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ ventaId, motivo }: { ventaId: string; motivo: string }) =>
+      anularVenta(ventaId, motivo),
+    onSuccess: (respuesta) => {
+      toast.success(respuesta.message)
+      void cliente.invalidateQueries({ queryKey: [CLAVE] })
+    },
+    onError: (error: Error) => {
+      toast.error('No se pudo anular la venta', {
         description: error.message,
       })
     },

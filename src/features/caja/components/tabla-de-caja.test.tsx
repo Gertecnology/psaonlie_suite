@@ -16,6 +16,7 @@ describe('la tabla de la caja', () => {
     onVerBoletos: vi.fn(),
     onVerFacturas: vi.fn(),
     onEnviar: vi.fn(),
+    onAnular: vi.fn(),
     cargando: false,
   }
 
@@ -90,6 +91,48 @@ describe('la tabla de la caja', () => {
       )
 
       expect(screen.getByText('Web')).toBeInTheDocument()
+    })
+  })
+
+  describe('la acción de anular', () => {
+    it('se ofrece en una venta pagada', () => {
+      render(
+        <TablaDeCaja filas={[COMO_VENDEDOR]} soloMisVentas {...sinAcciones} />,
+      )
+
+      expect(
+        screen.getByLabelText('Anular la venta TXN87593508090'),
+      ).toBeInTheDocument()
+    })
+
+    it('NO se ofrece en una que nunca se cobró', () => {
+      // Anular algo que no se cobró no devuelve nada, y ofrecerlo sugiere que
+      // sí.
+      render(
+        <TablaDeCaja
+          filas={[{ ...COMO_VENDEDOR, estadoPago: 'PENDIENTE' }]}
+          soloMisVentas
+          {...sinAcciones}
+        />,
+      )
+
+      expect(
+        screen.queryByLabelText('Anular la venta TXN87593508090'),
+      ).not.toBeInTheDocument()
+    })
+
+    it('tampoco en una ya cancelada', () => {
+      render(
+        <TablaDeCaja
+          filas={[{ ...COMO_VENDEDOR, estadoPago: 'CANCELADO' }]}
+          soloMisVentas
+          {...sinAcciones}
+        />,
+      )
+
+      expect(
+        screen.queryByLabelText('Anular la venta TXN87593508090'),
+      ).not.toBeInTheDocument()
     })
   })
 

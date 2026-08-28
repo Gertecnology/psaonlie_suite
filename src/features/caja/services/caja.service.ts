@@ -126,3 +126,29 @@ export async function descargarFactura(
     nombreArchivo ?? `factura-${numeroTransaccion}${sufijo}.pdf`,
   )
 }
+
+/**
+ * Cancels a sale.
+ *
+ * Who may do it is decided by the backend: a seller can only cancel what they
+ * sold, an administrator can cancel anyone's. A sale made on the web was not
+ * made by anybody at the counter, so only an administrator can touch it.
+ *
+ * Cancelling moves money — it refunds the customer, reverses what was owed to
+ * the carrier and takes the seller's commission back — so a 403 here is not a
+ * formality. Its message says whom to ask, because whoever reads it is standing
+ * at a counter with a customer in front of them.
+ */
+export function anularVenta(
+  ventaId: string,
+  motivo: string,
+): Promise<{ success: boolean; message: string }> {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/api/ventas/${encodeURIComponent(ventaId)}/cancelar`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+      fallbackMessage: 'No se pudo anular la venta.',
+    },
+  )
+}

@@ -14,7 +14,9 @@ import {
 } from '@/components/ui/select'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useListadoDeCaja } from '../hooks/use-caja'
-import type { FiltrosDeCaja, OrigenDeVenta } from '../models/caja.model'
+import { formatearGuaranies } from '@/lib/formato'
+import type { FilaDeCaja, FiltrosDeCaja, OrigenDeVenta } from '../models/caja.model'
+import { ModalDeAnulacion } from './modal-de-anulacion'
 import { ModalDeBoletos } from './modal-de-boletos'
 import { ModalDeEnvio } from './modal-de-envio'
 import { ModalDeFacturas } from './modal-de-facturas'
@@ -57,6 +59,7 @@ export function PaginaDeCaja() {
   const [verBoletosDe, setVerBoletosDe] = useState<string | null>(null)
   const [verFacturasDe, setVerFacturasDe] = useState<string | null>(null)
   const [enviarDe, setEnviarDe] = useState<string | null>(null)
+  const [anularA, setAnularA] = useState<FilaDeCaja | null>(null)
 
   const soloMisVentas = data?.soloMisVentas ?? true
   const paginas = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1
@@ -150,6 +153,7 @@ export function PaginaDeCaja() {
           onVerBoletos={setVerBoletosDe}
           onVerFacturas={setVerFacturasDe}
           onEnviar={setEnviarDe}
+          onAnular={setAnularA}
         />
 
         {paginas > 1 && (
@@ -190,6 +194,16 @@ export function PaginaDeCaja() {
       <ModalDeEnvio
         numeroTransaccion={enviarDe}
         onClose={() => setEnviarDe(null)}
+      />
+      <ModalDeAnulacion
+        venta={
+          anularA && {
+            ventaId: anularA.ventaId,
+            numeroTransaccion: anularA.numeroTransaccion,
+            monto: formatearGuaranies(anularA.monto),
+          }
+        }
+        onClose={() => setAnularA(null)}
       />
     </PageLayout>
   )

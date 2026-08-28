@@ -1,4 +1,4 @@
-import { FileText, Mail, Ticket } from 'lucide-react'
+import { Ban, FileText, Mail, Ticket } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,8 @@ interface TablaDeCajaProps {
   onVerBoletos: (numeroTransaccion: string) => void
   onVerFacturas: (numeroTransaccion: string) => void
   onEnviar: (numeroTransaccion: string) => void
+  /** Sólo se ofrece en las ventas que todavía se pueden anular. */
+  onAnular: (fila: FilaDeCaja) => void
 }
 
 export function TablaDeCaja({
@@ -61,6 +63,7 @@ export function TablaDeCaja({
   onVerBoletos,
   onVerFacturas,
   onEnviar,
+  onAnular,
 }: TablaDeCajaProps) {
   if (cargando) {
     return <Skeleton className='h-64 w-full' />
@@ -194,6 +197,22 @@ export function TablaDeCaja({
                   >
                     <Mail className='h-4 w-4' />
                   </Button>
+
+                  {/*
+                    Sólo en las pagadas. Anular una venta que nunca se cobró no
+                    devuelve nada, y ofrecerlo sugiere que sí.
+                  */}
+                  {fila.estadoPago === 'PAGADO' && (
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      title='Anular'
+                      aria-label={`Anular la venta ${fila.numeroTransaccion}`}
+                      onClick={() => onAnular(fila)}
+                    >
+                      <Ban className='text-destructive h-4 w-4' />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
