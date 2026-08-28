@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, Download, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useRoundTrip } from '../../context/round-trip-context'
 import { useActualizarEstadoPago } from '../../hooks/use-actualizar-estado-pago'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
-import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
+import { EntregarLosDocumentos } from '../entrega/entregar-los-documentos'
 import { toast } from 'sonner'
 import {
   ETIQUETAS_METODO_PAGO,
@@ -23,7 +23,6 @@ export function RoundTripPaymentPage() {
   const { roundTripData, setCurrentStep, resetRoundTrip } = useRoundTrip()
   const [metodoPago, setMetodoPago] = useState('')
   const [observaciones, setObservaciones] = useState('')
-  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false)
   const [ventasPagadas, setVentasPagadas] = useState<string[]>([])
   const [errorPago, setErrorPago] = useState<string | null>(null)
 
@@ -74,26 +73,6 @@ export function RoundTripPaymentPage() {
     setCurrentStep('checkout')
   }
 
-  const handleDownloadInvoice = async (numeroTransaccion: string) => {
-    if (isDownloadingInvoice) return
-    setIsDownloadingInvoice(true)
-
-    try {
-      const invoiceResponse = await downloadInvoice(numeroTransaccion)
-      downloadBlobAsFile(invoiceResponse.data, invoiceResponse.filename)
-
-      toast.success('Factura descargada exitosamente', {
-        description: `Archivo: ${invoiceResponse.filename}`,
-        duration: 3000,
-      })
-    } catch (error) {
-      toast.error('Error al descargar la factura', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
-      })
-    } finally {
-      setIsDownloadingInvoice(false)
-    }
-  }
 
   /**
    * Registra el cobro venta por venta.
@@ -373,6 +352,23 @@ export function RoundTripPaymentPage() {
         <div className="space-y-4">
           <ResumenPago tramos={tramos} titulo="Total a cobrar" />
 
+          {/* El último paso, y el que faltaba: la venta se hacía bien y el
+              cliente se iba sin nada. Los documentos de una venta de caja se
+              generan recién cuando se piden. */}
+          {todoCobrado &&
+            ventasAConfirmar.map(({ etiqueta, venta }) => (
+              <div key={venta.ventaId} className="space-y-1">
+                {ventasAConfirmar.length > 1 && (
+                  <p className="text-muted-foreground text-xs font-medium">
+                    {etiqueta}
+                  </p>
+                )}
+                <EntregarLosDocumentos
+                  numeroTransaccion={venta.numeroTransaccion}
+                />
+              </div>
+            ))}
+
           <Card>
             <CardContent className="pt-6 space-y-3">
               {errorPago && (
@@ -447,22 +443,8 @@ export function RoundTripPaymentPage() {
                 <>
                   <Separator />
                   <p className="text-sm font-medium text-green-700">
-                    Cobro registrado. Ya podés descargar las facturas.
+                    Cobro registrado. Falta entregarle los documentos.
                   </p>
-
-                  {ventasAConfirmar.map(({ etiqueta, venta }) => (
-                    <Button
-                      key={venta.ventaId}
-                      onClick={() => handleDownloadInvoice(venta.numeroTransaccion)}
-                      variant="outline"
-                      className="w-full"
-                      size="sm"
-                      disabled={isDownloadingInvoice}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {isDownloadingInvoice ? 'Descargando...' : `Descargar factura ${etiqueta}`}
-                    </Button>
-                  ))}
 
                   <Button
                     onClick={resetRoundTrip}

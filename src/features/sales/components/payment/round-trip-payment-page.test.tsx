@@ -74,7 +74,7 @@ describe('RoundTripPaymentPage', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('registra el cobro y recién ahí ofrece la factura', async () => {
+  it('registra el cobro y recién ahí ofrece entregar los documentos', async () => {
     mockearApi([
       {
         url: 'actualizar-estado-pago',
@@ -100,7 +100,8 @@ describe('RoundTripPaymentPage', () => {
     await usuario.click(screen.getByRole('button', { name: /Confirmar cobro/i }))
 
     expect(
-      await screen.findByRole('button', { name: /Descargar factura Ida/i }),
+      // Cobrado: lo que sigue es entregarle los documentos al cliente.
+      await screen.findByRole('button', { name: /^Enviar$/i }),
     ).toBeInTheDocument()
   })
 
@@ -131,7 +132,7 @@ describe('RoundTripPaymentPage', () => {
 
     await Promise.all([usuario.click(boton), usuario.click(boton)])
 
-    await screen.findByRole('button', { name: /Descargar factura Ida/i })
+    await screen.findByRole('button', { name: /^Enviar$/i })
     await waitFor(() =>
       expect(api.llamadasA('actualizar-estado-pago')).toBe(1),
     )
