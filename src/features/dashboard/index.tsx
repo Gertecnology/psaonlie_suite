@@ -11,6 +11,8 @@ import { GraficoTendencia } from './components/grafico-tendencia'
 import { PanelAlertas } from './components/panel-alertas'
 import { PeriodoSinMovimiento } from './components/periodo-sin-movimiento'
 import { RankingEmpresas } from './components/ranking-empresas'
+import { RankingVendedores } from './components/ranking-vendedores'
+import { useVendedoresDelPeriodo } from './hooks/use-vendedores'
 import { RankingRutas } from './components/ranking-rutas'
 import { TablaVentas } from './components/tabla-ventas'
 import { TarjetaSeccion } from './components/tarjeta-seccion'
@@ -42,6 +44,15 @@ export default function Dashboard() {
   const filtros = useFiltrosPanel()
   const { actual, anterior, cargando, refrescando, error } = useComparativo({
     periodo: filtros.periodo,
+    agenciaId: filtros.agenciaId,
+  })
+
+  // Lo que vendió cada persona en la caja. Sale del mismo informe que usa la
+  // pantalla de comisiones: el saldo que se le debe a alguien no puede depender
+  // de qué pantalla lo mire.
+  const vendedores = useVendedoresDelPeriodo({
+    desde: aFechaISOLocal(filtros.periodo.desde),
+    hasta: aFechaISOLocal(filtros.periodo.hasta),
     agenciaId: filtros.agenciaId,
   })
 
@@ -171,6 +182,26 @@ export default function Dashboard() {
               <RankingRutas rutas={actual?.porRuta} cargando={cargando} />
             </TarjetaSeccion>
           </div>
+
+          {/*
+            La caja aparece sólo si alguien vendió por mostrador. En un negocio
+            que todavía vende únicamente por la web, una sección vacía que dice
+            "nadie vendió" es ruido permanente.
+          */}
+          {!!vendedores.data?.data?.length && (
+            <div className='mb-6'>
+              <TarjetaSeccion
+                titulo='La caja'
+                descripcion='Lo que vendió cada persona en el mostrador, y cuánto se le debe de comisión.'
+                refrescando={vendedores.isFetching}
+              >
+                <RankingVendedores
+                  vendedores={vendedores.data.data}
+                  cargando={vendedores.isLoading}
+                />
+              </TarjetaSeccion>
+            </div>
+          )}
 
           <TarjetaSeccion
             titulo='Últimas ventas'

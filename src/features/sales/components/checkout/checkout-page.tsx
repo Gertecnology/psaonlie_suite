@@ -12,6 +12,15 @@ import type { CreateClientFormValues } from '@/features/clients/models/clients.m
 import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
 import { useLiberarBloqueosAlSalir } from '../../hooks/use-liberar-bloqueos-al-salir'
 import { mensajeParaOperador } from '../../services/confirmar-venta'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { OPCIONES_METODO_PAGO, type MetodoPago } from '@/lib/metodo-pago'
 import { sumarPreciosAsientos } from '../../utils/money'
 import {
   deserializarServiceCharge,
@@ -45,6 +54,12 @@ export function CheckoutPage() {
   const [asientos, setAsientos] = useState<Asiento[]>([])
   const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
+
+  // Con qué se va a cobrar. Se elige acá y no en el paso siguiente porque la
+  // venta nace con este dato: mandarlo fijo obligaba a corregirlo después, y
+  // una venta que expira sin cobrarse quedaba registrada con el método
+  // equivocado para siempre.
+  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
   const [ventaYaConfirmada, setVentaYaConfirmada] = useState(false)
 
   const confirmarVentaMutation = useConfirmarVenta()
@@ -198,7 +213,9 @@ export function CheckoutPage() {
           calidad: search.calidad || '',
           origenId: search.origenId,
           destinoId: search.destinoId,
-          metodoPago: 'EFECTIVO',
+          metodoPago,
+          // Todavía no se cobró: el cobro se registra en el paso siguiente, y
+          // es lo que dispara la emisión de los boletos.
           estadoPago: 'PENDIENTE',
           // Sólo pasajes: el cargo por servicio lo calcula el backend.
           importeTotal: sumarPreciosAsientos(asientos),
@@ -408,12 +425,34 @@ export function CheckoutPage() {
             </Alert>
           )}
 
+          <div className="grid gap-2">
+            <Label htmlFor="metodo-de-pago">Cómo va a pagar</Label>
+            <Select
+              value={metodoPago}
+              onValueChange={(valor) => setMetodoPago(valor as MetodoPago)}
+              disabled={confirmando || ventaYaConfirmada}
+            >
+              <SelectTrigger id="metodo-de-pago" aria-label="Método de pago">
+                <SelectValue placeholder="Elegí el método de pago" />
+              </SelectTrigger>
+              <SelectContent>
+                {OPCIONES_METODO_PAGO.map((metodo) => (
+                  <SelectItem key={metodo.value} value={metodo.value}>
+                    {metodo.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Action Button */}
           <Button
             onClick={handleProceedToPayment}
             className="w-full"
             size="lg"
-            disabled={faltanPasajeros || confirmando || ventaYaConfirmada}
+            disabled={
+              faltanPasajeros || confirmando || ventaYaConfirmada || !metodoPago
+            }
           >
             <CreditCard className="h-4 w-4 mr-2" />
             {confirmando
@@ -422,7 +461,9 @@ export function CheckoutPage() {
                 ? 'Venta ya confirmada'
                 : faltanPasajeros
                   ? `Faltan los datos de ${asientos.length - pasajeros.length} pasajero(s)`
-                  : 'Confirmar venta y continuar al cobro'
+                  : !metodoPago
+                    ? 'Elegí con qué va a pagar'
+                    : 'Confirmar venta y continuar al cobro'
             }
           </Button>
         </div>
