@@ -145,7 +145,12 @@ export function ClientForm({ email }: ClientFormProps) {
     )
   }
 
-  if (isEdit && error) {
+  /**
+   * Un formulario en blanco no se distingue de uno cuyos datos están vacíos, y
+   * guardarlo escribiría ese vacío encima de lo que la persona tenía. Que falle
+   * no puede parecerse a que esté vacío.
+   */
+  if (isEdit && (error || !client)) {
     return (
       <PageLayout title='Cliente' showSearch={false}>
         <div
@@ -153,7 +158,10 @@ export function ClientForm({ email }: ClientFormProps) {
           className='border-destructive/50 text-destructive max-w-2xl rounded-md border p-6'
         >
           <p className='font-medium'>No se pudo cargar el cliente</p>
-          <p className='text-muted-foreground mt-1 text-sm'>{error.message}</p>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            {error?.message ??
+              'El servidor no devolvió sus datos. No se muestra el formulario para no guardar campos vacíos encima de los suyos.'}
+          </p>
           <Button variant='outline' className='mt-4' asChild>
             <Link to='/clients'>Volver al listado</Link>
           </Button>

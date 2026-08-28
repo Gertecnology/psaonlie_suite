@@ -1,8 +1,8 @@
 import * as React from 'react'
+import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
-import { z } from 'zod'
 import { useRoles, useUser, useCreateUser, useUpdateUser } from './use-users'
 
 /**
@@ -94,7 +94,7 @@ export function useUserForm(userId?: string) {
             path: ['confirmPassword'],
           })
         }
-      }),
+      })
     ),
     defaultValues: EMPTY,
   })
@@ -151,7 +151,7 @@ export function useUserForm(userId?: string) {
       lector.onloadend = () => setFotoPreview(lector.result as string)
       lector.readAsDataURL(archivo)
     },
-    [form],
+    [form]
   )
 
   const backToList = React.useCallback(() => {
@@ -173,7 +173,7 @@ export function useUserForm(userId?: string) {
             isVerified: values.isVerified,
           },
         },
-        { onSuccess: backToList },
+        { onSuccess: backToList }
       )
       return
     }
@@ -187,7 +187,7 @@ export function useUserForm(userId?: string) {
         roleIds: values.roleId ? [values.roleId] : undefined,
         profileImage: values.profileImage,
       },
-      { onSuccess: backToList },
+      { onSuccess: backToList }
     )
   })
 
@@ -200,6 +200,8 @@ export function useUserForm(userId?: string) {
     loadingRoles: rolesQuery.isLoading,
     loading: isEdit && userQuery.isLoading,
     error: userQuery.error,
+    /** Si el registro llegó. En edición, sin esto no hay nada que editar. */
+    cargado: !isEdit || Boolean(userQuery.data),
     fotoPreview,
     errorFoto,
     elegirFoto,
