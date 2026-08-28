@@ -282,24 +282,14 @@ describe('los filtros de la caja', () => {
   describe('lo que la pantalla filtra sola', () => {
     beforeEach(() => responderCon(COMO_ADMIN))
 
-    it('el período se ve como chip desde que se entra', async () => {
+    it('el período elegido se lee en el propio control', async () => {
       montar()
 
-      // Sin esto, alguien lee «Gs. 782.250» y cree que es lo vendido desde
-      // siempre, cuando son treinta días. El filtro estaba aplicado y no se
-      // veía por ningún lado.
-      expect(await screen.findByText('Período:')).toBeInTheDocument()
-    })
-
-    it('el chip del período no se puede quitar de a uno', async () => {
-      montar()
-      await screen.findByText('Período:')
-
-      // Siempre hay un período: quitarlo dejaría un filtro implícito, que es
-      // el problema que el chip vino a resolver. Se cambia, no se saca.
-      expect(
-        screen.queryByLabelText('Quitar el filtro Período'),
-      ).not.toBeInTheDocument()
+      // No hay chip de período: sería repetir lo que el control ya dice, y en
+      // una barra de ocho filtros cada línea de más empuja la tabla abajo.
+      // Lo que importa es que el período **se vea**, y se ve acá.
+      expect(await screen.findByText('Últimos 30 días')).toBeInTheDocument()
+      expect(screen.queryByText('Período:')).not.toBeInTheDocument()
     })
 
     it('«Limpiar filtros» aparece en cuanto hay algo que limpiar', async () => {

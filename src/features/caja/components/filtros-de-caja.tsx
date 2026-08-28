@@ -7,7 +7,6 @@ import {
   type FiltroAplicado,
 } from '@/components/filtros'
 import { formatearGuaranies } from '@/lib/formato'
-import { deFechaISOLocal, describirPeriodo } from '@/lib/periodo'
 import type {
   FiltrosDeCaja,
   OpcionesDeCaja,
@@ -52,7 +51,6 @@ interface FiltrosDeCajaProps {
   /** Si quien mira ve sólo sus ventas: le sobran vendedor y origen. */
   soloMisVentas: boolean
   actualizando: boolean
-  total?: number
   onPoner: (parche: Partial<FiltrosDeCaja>) => void
   onQuitar: (clave: keyof FiltrosDeCaja) => void
   onLimpiar: () => void
@@ -74,7 +72,6 @@ export function FiltrosDeCajaControles({
   opciones,
   soloMisVentas,
   actualizando,
-  total,
   onPoner,
   onQuitar,
   onLimpiar,
@@ -90,21 +87,6 @@ export function FiltrosDeCajaControles({
   // Lo que se muestra abajo como chips. Se arma con los valores legibles: un
   // uuid en un chip no le dice a nadie por qué la tabla tiene tres filas.
   const aplicados: FiltroAplicado[] = []
-
-  // El período va primero y sin cruz: la pantalla lo pone sola y siempre hay
-  // uno. Mostrarlo es lo que impide que alguien lea «Gs. 782.250» creyendo que
-  // es lo vendido desde siempre, cuando son treinta días.
-  if (filtros.desde || filtros.hasta) {
-    aplicados.push({
-      clave: 'periodo',
-      etiqueta: 'Período',
-      valor: describirPeriodo({
-        desde: deFechaISOLocal(filtros.desde) ?? new Date(),
-        hasta: deFechaISOLocal(filtros.hasta) ?? new Date(),
-      }),
-      fijo: true,
-    })
-  }
 
   if (filtros.busqueda) {
     aplicados.push({
@@ -181,7 +163,6 @@ export function FiltrosDeCajaControles({
       onQuitar={quitar}
       onLimpiar={onLimpiar}
       actualizando={actualizando}
-      total={total}
     >
       {/*
         Los anchos no son iguales porque los campos no lo son: la búsqueda se

@@ -98,7 +98,6 @@ export function PaginaDeCaja() {
           // todavía se muestran los datos anteriores. Es exactamente el rato
           // en que la pantalla parece no haber registrado el cambio.
           actualizando={isFetching && !isLoading}
-          total={data?.total}
           onPoner={poner}
           onQuitar={quitar}
           onLimpiar={limpiar}

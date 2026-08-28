@@ -27,8 +27,6 @@ interface BarraDeFiltrosProps {
   onLimpiar: () => void
   /** Hay una consulta en vuelo con filtros que ya cambiaron. */
   actualizando?: boolean
-  /** Cuántas filas coinciden, para poder decirlo al lado de los chips. */
-  total?: number
   className?: string
 }
 
@@ -56,7 +54,6 @@ export function BarraDeFiltros({
   onQuitar,
   onLimpiar,
   actualizando = false,
-  total,
   className,
 }: BarraDeFiltrosProps) {
   const hayQueLimpiar = aplicados.some((filtro) => !filtro.fijo)
@@ -106,24 +103,17 @@ export function BarraDeFiltros({
             </Button>
           )}
 
-          <span className='ml-auto flex items-center gap-2'>
-            {actualizando && (
-              <span
-                className='text-muted-foreground flex items-center gap-1 text-xs'
-                // Un cambio de filtro no mueve el foco: sin esto, quien usa
-                // lector de pantalla no se entera de que la tabla cambió.
-                role='status'
-              >
-                <Loader2 className='h-3 w-3 animate-spin' />
-                Actualizando…
-              </span>
-            )}
-            {total !== undefined && (
-              <span className='text-muted-foreground text-xs tabular-nums'>
-                {total} {total === 1 ? 'resultado' : 'resultados'}
-              </span>
-            )}
-          </span>
+          {actualizando && (
+            <span
+              className='text-muted-foreground ml-auto flex items-center gap-1 text-xs'
+              // Un cambio de filtro no mueve el foco: sin esto, quien usa
+              // lector de pantalla no se entera de que la tabla cambió.
+              role='status'
+            >
+              <Loader2 className='h-3 w-3 animate-spin' />
+              Actualizando…
+            </span>
+          )}
         </div>
       )}
     </div>
