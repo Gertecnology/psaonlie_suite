@@ -52,7 +52,12 @@ export interface VentaExitosa {
   ventaId: string
   numeroTransaccion: string
   numeroBoleto: string
+  /** El de la VENTA: CONFIRMADO o CANCELADO. No es el del pago. */
   estado: string
+  /** `PAGADO` cuando nació cobrada, que es lo que pasa en efectivo. */
+  estadoPago?: string
+  /** Con qué se cobró. Se eligió al vender: el paso de cobro sólo lo muestra. */
+  metodoPago?: string
   mensaje: string
   fechaCreacion: string
   boletos: unknown[]
