@@ -28,6 +28,17 @@ import { descargarDocumento, verDocumento } from '../services/caja.service'
  *
  * El vendedor tiene al cliente enfrente y necesita **mirar** lo que va a
  * imprimir o mandar. Por eso el visor está acá adentro y no en otra pestaña.
+ *
+ * ## El reparto
+ *
+ * La lista va a la izquierda y el documento elegido a la derecha, grande. Antes
+ * la vista previa se abría **debajo** de la lista: había que desplazar para
+ * llegar, y al llegar la lista quedaba fuera de la pantalla — comparar dos
+ * documentos obligaba a subir y bajar. Con las dos cosas a la vista, elegir
+ * otro es un clic.
+ *
+ * El visor no se abre solo. Traer un PDF cuesta una petición, y quien entra a
+ * este panel muchas veces viene a mandarlos por correo, no a mirarlos.
  */
 
 /** Cómo se llama cada documento en la pantalla, y con qué ícono. */
@@ -171,73 +182,76 @@ export function LosDocumentosDeLaVenta({
     facturas.length > 0 && facturas.every((factura) => !factura.esFiscal)
 
   return (
-    <div className='space-y-3'>
-      {ningunaEsFiscal && (
-        <div className='flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs'>
-          <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-600' />
-          <p>
-            La transportista todavía no informa timbrado, CDC ni código QR. Estos
-            documentos reproducen la venta, pero{' '}
-            <strong>no son facturas ante la SET</strong>.
-          </p>
-        </div>
-      )}
+    <div className='grid gap-4 lg:grid-cols-[minmax(0,21rem)_1fr] lg:items-start'>
+      {/* La lista, a la izquierda. */}
+      <div className='space-y-3'>
+        {ningunaEsFiscal && (
+          <div className='flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs'>
+            <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-600' />
+            <p>
+              La transportista todavía no informa timbrado, CDC ni código QR.
+              Estos documentos reproducen la venta, pero{' '}
+              <strong>no son facturas ante la SET</strong>.
+            </p>
+          </div>
+        )}
 
-      <div className='grid gap-2'>
-        {documentos.map((documento) => {
-          const { titulo, Icono } = describir(documento)
-          const tamano = formatearTamano(documento.tamano)
-          const esElAbierto = abierto?.id === documento.id
+        <div className='grid gap-1.5'>
+          {documentos.map((documento) => {
+            const { titulo, Icono } = describir(documento)
+            const tamano = formatearTamano(documento.tamano)
+            const esElAbierto = abierto?.id === documento.id
 
-          return (
-            <div
-              key={documento.id}
-              data-abierto={esElAbierto}
-              className='flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 data-[abierto=true]:border-primary'
-            >
-              <div className='flex min-w-0 items-center gap-3'>
-                <Icono className='text-muted-foreground h-5 w-5 shrink-0' />
-                <div className='min-w-0'>
-                  <p className='truncate text-sm font-medium'>{titulo}</p>
-                  <p className='text-muted-foreground text-xs'>
-                    {documento.razonSocial ?? 'Sin razón social'}
-                    {documento.documento && ` · ${documento.documento}`}
-                    {` · ${formatearFechaHora(documento.emitidaEn)}`}
-                    {tamano && ` · ${tamano}`}
-                  </p>
-                </div>
-              </div>
-
-              <div className='flex items-center gap-2'>
-                {documento.tipo !== 'BOLETO' && (
-                  <Badge variant={documento.esFiscal ? 'default' : 'outline'}>
-                    {documento.esFiscal ? 'Fiscal' : 'No fiscal'}
-                  </Badge>
-                )}
-
-                <Button
-                  variant='outline'
-                  size='sm'
+            return (
+              <div
+                key={documento.id}
+                data-abierto={esElAbierto}
+                className='data-[abierto=true]:border-primary data-[abierto=true]:bg-primary/5 flex items-center gap-1 rounded-md border pr-1.5'
+              >
+                {/*
+                  La fila entera abre el documento. Un botón «Ver» al costado
+                  obliga a apuntar a un blanco chico cuando lo que se quiere
+                  tocar es el documento, que es toda la fila.
+                */}
+                <button
+                  type='button'
                   onClick={() => abrir(documento)}
                   disabled={trayendo !== null}
-                  aria-expanded={esElAbierto}
-                  // Seis botones que dicen «Ver» son seis botones idénticos
-                  // para quien navega por lector de pantalla.
-                  aria-label={`${esElAbierto ? 'Cerrar' : 'Ver'} ${titulo}`}
+                  aria-current={esElAbierto}
+                  aria-label={`Ver ${titulo}`}
+                  className='flex min-w-0 flex-1 items-center gap-2.5 rounded-l-md p-2.5 text-left disabled:opacity-60'
                 >
                   {trayendo === documento.id ? (
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  ) : esElAbierto ? (
-                    <X className='mr-2 h-4 w-4' />
+                    <Loader2 className='text-muted-foreground h-4 w-4 shrink-0 animate-spin' />
                   ) : (
-                    <Eye className='mr-2 h-4 w-4' />
+                    <Icono className='text-muted-foreground h-4 w-4 shrink-0' />
                   )}
-                  {esElAbierto ? 'Cerrar' : 'Ver'}
-                </Button>
+
+                  <span className='min-w-0 flex-1'>
+                    <span className='flex items-center gap-1.5'>
+                      <span className='truncate text-sm font-medium'>
+                        {titulo}
+                      </span>
+                      {documento.tipo !== 'BOLETO' && !documento.esFiscal && (
+                        <Badge
+                          variant='outline'
+                          className='h-4 shrink-0 px-1 text-[10px] font-normal'
+                        >
+                          No fiscal
+                        </Badge>
+                      )}
+                    </span>
+                    <span className='text-muted-foreground block truncate text-xs'>
+                      {formatearFechaHora(documento.emitidaEn)}
+                      {tamano && ` · ${tamano}`}
+                    </span>
+                  </span>
+                </button>
 
                 <Button
                   variant='ghost'
-                  size='sm'
+                  size='icon'
+                  className='h-8 w-8 shrink-0'
                   onClick={() => bajar(documento)}
                   disabled={bajando !== null}
                   aria-label={`Descargar ${titulo}`}
@@ -249,38 +263,48 @@ export function LosDocumentosDeLaVenta({
                   )}
                 </Button>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
-      {abierto && urlAbierta && (
-        <div className='overflow-hidden rounded-md border'>
-          <div className='bg-muted/40 flex items-center justify-between gap-2 border-b px-3 py-2'>
-            <span className='truncate text-sm font-medium'>
-              {describir(abierto).titulo}
-            </span>
-            <Button
-              variant='ghost'
-              size='sm'
-              aria-label='Cerrar la vista previa'
-              onClick={() => {
-                setAbierto(null)
-                setUrlAbierta(null)
-              }}
-            >
-              <X className='mr-2 h-4 w-4' />
-              Cerrar
-            </Button>
-          </div>
+      {/* El documento elegido, a la derecha y grande. */}
+      <div className='flex h-[65vh] min-h-[24rem] flex-col overflow-hidden rounded-md border lg:h-[70vh]'>
+        {abierto && urlAbierta ? (
+          <>
+            <div className='bg-muted/40 flex items-center justify-between gap-2 border-b px-3 py-2'>
+              <span className='truncate text-sm font-medium'>
+                {describir(abierto).titulo}
+              </span>
+              <Button
+                variant='ghost'
+                size='sm'
+                aria-label='Cerrar la vista previa'
+                onClick={() => {
+                  setAbierto(null)
+                  setUrlAbierta(null)
+                }}
+              >
+                <X className='mr-2 h-4 w-4' />
+                Cerrar
+              </Button>
+            </div>
 
-          <iframe
-            src={urlAbierta}
-            title={`Vista previa de ${describir(abierto).titulo}`}
-            className='h-[60vh] w-full bg-white'
-          />
-        </div>
-      )}
+            <iframe
+              src={urlAbierta}
+              title={`Vista previa de ${describir(abierto).titulo}`}
+              className='w-full flex-1 bg-white'
+            />
+          </>
+        ) : (
+          // El hueco explica qué hacer en vez de quedar en blanco: sin esto,
+          // media pantalla vacía se lee como algo que no cargó.
+          <div className='text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center'>
+            <Eye className='h-8 w-8 opacity-40' />
+            <p className='text-sm'>Elegí un documento para verlo acá.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
