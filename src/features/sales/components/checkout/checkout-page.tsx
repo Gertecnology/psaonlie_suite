@@ -292,11 +292,20 @@ export function CheckoutPage() {
         numeroTransaccion: ventaExitosa.numeroTransaccion,
         estado: ventaExitosa.estado,
         mensaje: ventaExitosa.mensaje,
+        // Con qué se cobró y si ya está cobrada. Sin esto, el paso siguiente
+        // volvía a pedir el método —dejando cambiarlo después de hecha la
+        // venta— y a una venta en efectivo, que nace pagada, le intentaba
+        // registrar el cobro otra vez: «Transición de estado no válida:
+        // PAGADO → PAGADO».
+        metodoPago,
+        estadoPago: seCobraEnElActo(metodoPago) ? 'PAGADO' : 'PENDIENTE',
       })
       serializarServiceCharge(paymentParams, serviceCharge)
 
       toast.success('Venta confirmada', {
-        description: `Transacción ${ventaExitosa.numeroTransaccion}. Falta registrar el cobro.`,
+        description: seCobraEnElActo(metodoPago)
+          ? `Transacción ${ventaExitosa.numeroTransaccion}. Cobrada en efectivo.`
+          : `Transacción ${ventaExitosa.numeroTransaccion}. Falta registrar el cobro.`,
         duration: 6000,
       })
 

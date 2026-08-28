@@ -15,7 +15,11 @@ import { deserializarServiceCharge } from '../../utils/service-charge-url'
 import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
 import type { Asiento, ServiceCharge } from '../../models/sales.model'
 import { toast } from 'sonner'
-import { OPCIONES_METODO_PAGO } from '@/lib/metodo-pago'
+import {
+  ETIQUETAS_METODO_PAGO,
+  OPCIONES_METODO_PAGO,
+  type MetodoPago,
+} from '@/lib/metodo-pago'
 import { BancardCheckout } from './bancard-checkout'
 
 interface PaymentSearch {
@@ -28,6 +32,10 @@ interface PaymentSearch {
   numeroTransaccion: string
   estado: string
   mensaje: string
+  /** Con qué se cobró. Se eligió al vender: acá sólo se muestra. */
+  metodoPago: string
+  /** `PAGADO` cuando nació cobrada, que es lo que pasa en efectivo. */
+  estadoPago: string
 }
 
 /**
@@ -75,6 +83,8 @@ function leerParametros(): {
       ventaId: params.get('ventaId') || '',
       numeroTransaccion: params.get('numeroTransaccion') || '',
       estado: params.get('estado') || '',
+      metodoPago: params.get('metodoPago') || '',
+      estadoPago: params.get('estadoPago') || '',
       mensaje: params.get('mensaje') || '',
     },
     asientos,
@@ -89,13 +99,30 @@ export function PaymentPage() {
   const [datos, setDatos] = useState<ReturnType<typeof leerParametros> | null>(null)
   const [metodoPago, setMetodoPago] = useState('')
 
+  /**
+   * Con qué se cobró. Viene de la venta, que nació con ese dato al elegirlo en
+   * el checkout. Preguntarlo otra vez acá dejaba cambiarlo después de hecha la
+   * venta, y la caja terminaba diciendo algo distinto de lo que pasó.
+   */
+  const conQueSeCobro = datos?.search.metodoPago || ''
+
+  /**
+   * La venta nació cobrada. Pasa con efectivo: la plata está sobre el
+   * mostrador y no hay nada que registrar después. Intentarlo fallaba con
+   * «Transición de estado no válida: PAGADO → PAGADO».
+   */
+  const nacioPagada = datos?.search.estadoPago === 'PAGADO'
+
   // Con tarjeta no se registra el cobro a mano: lo confirma el callback de
   // Bancard. El vendedor abre el formulario y el cliente escribe ahí.
-  const conTarjeta = metodoPago === 'BANCARD'
+  const conTarjeta = (conQueSeCobro || metodoPago) === 'BANCARD'
   const [bancardAbierto, setBancardAbierto] = useState(false)
   const [observaciones, setObservaciones] = useState('')
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false)
-  const [isPaid, setIsPaid] = useState(false)
+  const [cobroRegistrado, setCobroRegistrado] = useState(false)
+
+  /** Cobrada: nació así —efectivo— o se registró en esta pantalla. */
+  const isPaid = nacioPagada || cobroRegistrado
   const [errorPago, setErrorPago] = useState<string | null>(null)
 
   /**
@@ -169,7 +196,12 @@ export function PaymentPage() {
   const handleConfirmPayment = async () => {
     if (cobroCerrado.current) return
 
-    if (!metodoPago) {
+    // Ya está cobrada: no hay nada que registrar.
+    if (nacioPagada) return
+
+    const conQue = conQueSeCobro || metodoPago
+
+    if (!conQue) {
       toast.error('Por favor selecciona un método de pago')
       return
     }
@@ -182,12 +214,12 @@ export function PaymentPage() {
         ventaId: search.ventaId,
         data: {
           estadoPago: 'PAGADO',
-          metodoPago,
+          metodoPago: conQue,
           observaciones: observaciones || undefined,
         },
       })
 
-      setIsPaid(true)
+      setCobroRegistrado(true)
       toast.success('Cobro registrado', {
         description: `Estado actualizado: ${response.estadoAnterior} → ${response.estadoNuevo}`,
         duration: 6000,
@@ -321,6 +353,16 @@ export function PaymentPage() {
                 </Alert>
               )}
 
+              {/* El método ya se eligió al vender: acá sólo se muestra. */}
+              {conQueSeCobro ? (
+                <div className="grid gap-1">
+                  <span className="text-sm font-medium">Método de pago</span>
+                  <span className="text-muted-foreground text-sm">
+                    {ETIQUETAS_METODO_PAGO[conQueSeCobro as MetodoPago] ??
+                      conQueSeCobro}
+                  </span>
+                </div>
+              ) : (
               <div>
                 <Label htmlFor="metodoPago" className="text-sm font-medium">
                   Método de Pago *
@@ -338,6 +380,7 @@ export function PaymentPage() {
                   </SelectContent>
                 </Select>
               </div>
+              )}
 
               <div>
                 <Label htmlFor="observaciones" className="text-sm font-medium">

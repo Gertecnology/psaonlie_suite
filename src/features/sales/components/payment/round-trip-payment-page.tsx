@@ -13,7 +13,11 @@ import { useActualizarEstadoPago } from '../../hooks/use-actualizar-estado-pago'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
 import { toast } from 'sonner'
-import { OPCIONES_METODO_PAGO } from '@/lib/metodo-pago'
+import {
+  ETIQUETAS_METODO_PAGO,
+  OPCIONES_METODO_PAGO,
+  type MetodoPago,
+} from '@/lib/metodo-pago'
 
 export function RoundTripPaymentPage() {
   const { roundTripData, setCurrentStep, resetRoundTrip } = useRoundTrip()
@@ -103,7 +107,12 @@ export function RoundTripPaymentPage() {
   const handleConfirmPayment = async () => {
     if (cobroCerrado.current) return
 
-    if (!metodoPago) {
+    // El que se eligió al vender manda sobre el de esta pantalla: la venta ya
+    // nació con ese dato y cambiarlo acá haría que la caja diga algo distinto
+    // de lo que pasó.
+    const conQue = conQueSeCobro || metodoPago
+
+    if (!conQue) {
       toast.error('Por favor selecciona un método de pago')
       return
     }
@@ -120,15 +129,17 @@ export function RoundTripPaymentPage() {
     const fallidas: string[] = []
 
     for (const { etiqueta, venta } of ventasAConfirmar) {
-      // Si ya se cobró en un intento anterior, no se vuelve a mandar.
-      if (pagadas.includes(venta.ventaId)) continue
+      // Si ya está cobrada —nació pagada por ser en efectivo, o se cobró en un
+      // intento anterior— no se vuelve a mandar. El backend rechaza
+      // `PAGADO → PAGADO` como transición inválida.
+      if (yaEstaCobrada(venta)) continue
 
       try {
         await actualizarEstadoPagoMutation.mutateAsync({
           ventaId: venta.ventaId,
           data: {
             estadoPago: 'PAGADO',
-            metodoPago,
+            metodoPago: conQue,
             observaciones: observaciones || undefined,
           },
         })
@@ -162,9 +173,31 @@ export function RoundTripPaymentPage() {
   }
 
   const cobrando = actualizarEstadoPagoMutation.isPending
+
+  /**
+   * Una venta ya cobrada, sea porque nació así o porque se cobró acá.
+   *
+   * Nace cobrada cuando se eligió efectivo en el checkout: ahí la plata está
+   * sobre el mostrador y la venta se confirma como `PAGADO`. Este paso sólo
+   * mostraba lo cobrado **en esta pantalla**, así que a una venta que llegaba
+   * pagada le volvía a pedir el método —y registrarlo fallaba con «Transición
+   * de estado no válida: PAGADO → PAGADO»—.
+   */
+  const yaEstaCobrada = (venta: { ventaId: string; estadoPago?: string }) =>
+    venta.estadoPago === 'PAGADO' || ventasPagadas.includes(venta.ventaId)
+
   const todoCobrado =
     ventasAConfirmar.length > 0 &&
-    ventasAConfirmar.every(({ venta }) => ventasPagadas.includes(venta.ventaId))
+    ventasAConfirmar.every(({ venta }) => yaEstaCobrada(venta))
+
+  /**
+   * Con qué se cobró, para no volver a preguntarlo.
+   *
+   * El método se elige en el checkout, antes de confirmar: la venta nace con
+   * ese dato. Preguntarlo de nuevo acá dejaba cambiarlo después de hecha la
+   * venta, y la caja terminaba diciendo algo distinto de lo que pasó.
+   */
+  const conQueSeCobro = ventasAConfirmar[0]?.venta.metodoPago
 
   return (
     <div className="space-y-4">
@@ -349,23 +382,41 @@ export function RoundTripPaymentPage() {
                 </Alert>
               )}
 
-              <div>
-                <Label htmlFor="metodoPago" className="text-sm font-medium">
-                  Método de Pago *
-                </Label>
-                <Select value={metodoPago} onValueChange={setMetodoPago} disabled={todoCobrado}>
-                  <SelectTrigger className="h-8 w-full">
-                    <SelectValue placeholder="Seleccionar método" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OPCIONES_METODO_PAGO.map((metodo) => (
-                      <SelectItem key={metodo.value} value={metodo.value}>
-                        {metodo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* El método ya se eligió en el checkout: acá sólo se muestra.
+                  Volver a preguntarlo dejaba cambiarlo después de hecha la
+                  venta, y la caja terminaba diciendo algo distinto de lo que
+                  pasó. */}
+              {conQueSeCobro ? (
+                <div className="grid gap-1">
+                  <span className="text-sm font-medium">Método de pago</span>
+                  <span className="text-muted-foreground text-sm">
+                    {ETIQUETAS_METODO_PAGO[conQueSeCobro as MetodoPago] ??
+                      conQueSeCobro}
+                  </span>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="metodoPago" className="text-sm font-medium">
+                    Método de Pago *
+                  </Label>
+                  <Select
+                    value={metodoPago}
+                    onValueChange={setMetodoPago}
+                    disabled={todoCobrado}
+                  >
+                    <SelectTrigger className="h-8 w-full">
+                      <SelectValue placeholder="Seleccionar método" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPCIONES_METODO_PAGO.map((metodo) => (
+                        <SelectItem key={metodo.value} value={metodo.value}>
+                          {metodo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="observaciones" className="text-sm font-medium">
@@ -386,7 +437,7 @@ export function RoundTripPaymentPage() {
                   onClick={handleConfirmPayment}
                   className="w-full"
                   size="sm"
-                  disabled={!metodoPago || cobrando}
+                  disabled={!(conQueSeCobro || metodoPago) || cobrando}
                 >
                   {cobrando ? 'Registrando cobro...' : 'Confirmar cobro'}
                 </Button>
