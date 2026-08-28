@@ -1,11 +1,25 @@
 import * as React from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Download, Loader2, Star, Trash2 } from 'lucide-react'
+import {
+  Download,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { formatearGuaranies } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -27,6 +41,7 @@ import {
   useQuitarTitular,
 } from '../hooks/use-libreta-facturacion'
 import { type TitularDeFacturacion } from '../services/facturacion.service'
+import { TitularFacturacionDialog } from './titular-facturacion-dialog'
 
 interface ClientDetalleTabsProps {
   clienteId: string
@@ -58,9 +73,9 @@ const estadoDelPadron = (estado: string | null) => {
 /**
  * Lo que rodea a un cliente y antes vivía en otras pantallas.
  *
- * Su libreta de facturación no se veía en ningún lado, y sus compras estaban
- * en una ventana aparte que tapaba justamente los datos con los que uno las
- * está mirando.
+ * Su libreta de facturación no se veía en ningún lado, y sus compras estaban en
+ * una ventana aparte que tapaba justamente los datos con los que uno las está
+ * mirando.
  */
 export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
   const libreta = useLibretaFacturacion(clienteId)
@@ -70,6 +85,12 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
   // Quitar un titular no se puede deshacer, así que se pregunta antes.
   const [titularAQuitar, setTitularAQuitar] =
     React.useState<TitularDeFacturacion | null>(null)
+
+  // `null` es agregar uno nuevo; un titular es corregir ése. `undefined` es que
+  // el diálogo está cerrado.
+  const [titularEnEdicion, setTitularEnEdicion] = React.useState<
+    TitularDeFacturacion | null | undefined
+  >(undefined)
 
   const [pagina, setPagina] = React.useState(1)
   const compras = useVentasList({ clienteId, page: pagina, limit: 10 })
@@ -103,6 +124,9 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
   }
 
   const titulares = libreta.data ?? []
+  const predeterminados = titulares.filter(
+    (titular) => titular.esPredeterminado
+  ).length
   const ventas = compras.data?.data ?? []
   const totalCompras = compras.data?.total ?? 0
   const totalPaginas = compras.data?.totalPages ?? 1
@@ -128,12 +152,23 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
         </div>
 
         <TabsContent value='facturacion' className='mt-0'>
-          <div className='px-4 py-4 md:px-6'>
-            <p className='text-muted-foreground text-sm'>
-              A nombre de quién factura. Al comprar se le ofrecen éstos y el
-              predeterminado viene elegido. Lo que guardó acá manda sobre lo que
-              diga el padrón.
-            </p>
+          <div className='flex flex-wrap items-start justify-between gap-3 px-4 py-4 md:px-6'>
+            <div className='space-y-1'>
+              <h3 className='font-semibold'>A nombre de quién factura</h3>
+              <p className='text-muted-foreground max-w-2xl text-sm'>
+                Su libreta. Al comprar se le ofrecen éstos, y el predeterminado
+                viene elegido. Lo que guardó acá manda sobre lo que diga el
+                padrón.
+              </p>
+            </div>
+            <Button
+              type='button'
+              size='sm'
+              onClick={() => setTitularEnEdicion(null)}
+            >
+              <Plus className='mr-1.5 h-4 w-4' />
+              Agregar titular
+            </Button>
           </div>
 
           <div className='overflow-x-auto border-t'>
@@ -213,29 +248,51 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className='space-x-1 text-right'>
-                        {!titular.esPredeterminado && (
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            size='sm'
-                            disabled={marcar.isPending}
-                            onClick={() => marcar.mutate(titular.id)}
-                          >
-                            <Star className='mr-1.5 h-3.5 w-3.5' />
-                            Predeterminar
-                          </Button>
-                        )}
+                      <TableCell className='space-x-1 text-right whitespace-nowrap'>
                         <Button
                           type='button'
                           variant='ghost'
                           size='sm'
-                          disabled={quitar.isPending}
-                          onClick={() => setTitularAQuitar(titular)}
+                          onClick={() => setTitularEnEdicion(titular)}
                         >
-                          <Trash2 className='mr-1.5 h-3.5 w-3.5' />
-                          Quitar
+                          <Pencil className='mr-1.5 h-3.5 w-3.5' />
+                          Editar
                         </Button>
+                        {/* Predeterminar y quitar van en el menú: son las
+                            excepciones, y con tres botones por fila la tabla
+                            deja de leerse. */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              className='h-8 w-8 p-0'
+                            >
+                              <span className='sr-only'>
+                                Más acciones para {titular.razonSocial}
+                              </span>
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            {!titular.esPredeterminado && (
+                              <DropdownMenuItem
+                                disabled={marcar.isPending}
+                                onClick={() => marcar.mutate(titular.id)}
+                              >
+                                <Star className='mr-2 h-4 w-4' />
+                                Predeterminar
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              disabled={quitar.isPending}
+                              onClick={() => setTitularAQuitar(titular)}
+                            >
+                              <Trash2 className='mr-2 h-4 w-4' />
+                              Quitar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   )
@@ -243,6 +300,14 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
               </TableBody>
             </Table>
           </div>
+
+          {titulares.length > 0 && (
+            <div className='text-muted-foreground border-t px-4 py-3 text-sm md:px-6'>
+              {titulares.length}{' '}
+              {titulares.length === 1 ? 'titular' : 'titulares'}
+              {predeterminados > 0 && ' · 1 predeterminado'}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value='compras' className='mt-0'>
@@ -313,7 +378,7 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
                     </TableCell>
                     <TableCell className='text-right'>
                       {/* Sin número de transacción no hay factura que pedir: el
-                        endpoint la busca justamente por ese número. */}
+                          endpoint la busca justamente por ese número. */}
                       {venta.numeroTransaccion ? (
                         <Button
                           type='button'
@@ -373,6 +438,15 @@ export function ClientDetalleTabs({ clienteId }: ClientDetalleTabsProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      <TitularFacturacionDialog
+        clienteId={clienteId}
+        titular={titularEnEdicion}
+        open={titularEnEdicion !== undefined}
+        onOpenChange={(abierto) => {
+          if (!abierto) setTitularEnEdicion(undefined)
+        }}
+      />
 
       <ConfirmDialog
         open={titularAQuitar !== null}

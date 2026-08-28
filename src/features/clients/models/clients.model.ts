@@ -6,6 +6,10 @@ export const clienteSchema = z.object({
   apellido: z.string(),
   nombre: z.string(),
   nombreCompleto: z.string(),
+  // El documento se define al dar de alta y la API de actualización no lo
+  // acepta, pero identifica a la persona y por eso se muestra.
+  tipoDocumento: z.string().optional(),
+  numeroDocumento: z.string().optional(),
   fechaNacimiento: z.string().optional(),
   sexo: z.string().optional(),
   nacionalidad: z.string().optional(),
@@ -54,7 +58,9 @@ export const clientesSearchParamsSchema = z.object({
   nacionalidad: z.string().optional(),
   fechaRegistroDesde: z.string().optional(),
   fechaRegistroHasta: z.string().optional(),
-  sortBy: z.enum(['nombre', 'apellido', 'email', 'createdAt', 'totalVentas']).default('createdAt'),
+  sortBy: z
+    .enum(['nombre', 'apellido', 'email', 'createdAt', 'totalVentas'])
+    .default('createdAt'),
   sortOrder: z.enum(['ASC', 'DESC']).default('DESC'),
 })
 
@@ -108,7 +114,9 @@ export const createClientResponseSchema = z.object({
 
 export type Cliente = z.infer<typeof clienteSchema>
 export type EstadisticasVentas = z.infer<typeof estadisticasVentasSchema>
-export type ClienteConEstadisticas = z.infer<typeof clienteConEstadisticasSchema>
+export type ClienteConEstadisticas = z.infer<
+  typeof clienteConEstadisticasSchema
+>
 export type ClientesListResponse = z.infer<typeof clientesListResponseSchema>
 export type ClientesSearchParams = z.infer<typeof clientesSearchParamsSchema>
 export type CreateClientFormValues = z.infer<typeof createClientSchema>

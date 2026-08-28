@@ -48,6 +48,67 @@ export async function marcarPredeterminado(
   )
 }
 
+/** Lo que se manda al guardar un titular. El backend hace upsert por documento. */
+export interface TitularAGuardar {
+  documento: string
+  razonSocial: string
+  tipoDocumento?: 'RUC' | 'CI'
+  email?: string
+  direccion?: string
+  telefono?: string
+  esPredeterminado?: boolean
+}
+
+/**
+ * Guarda un titular, nuevo o corregido.
+ *
+ * Es el mismo endpoint para los dos casos: el backend busca por documento y
+ * actualiza el que encuentre. Un titular no se identifica por su id sino por su
+ * número, que es lo que la DNIT usa para saber a quién se le facturó.
+ */
+export async function guardarTitular(
+  clienteId: string,
+  datos: TitularAGuardar
+): Promise<TitularDeFacturacion> {
+  return apiFetch<TitularDeFacturacion>(
+    `/api/clientes/${encodeURIComponent(clienteId)}/facturacion`,
+    {
+      method: 'POST',
+      body: JSON.stringify(datos),
+      fallbackMessage: 'No se pudo guardar el titular.',
+    }
+  ) as Promise<TitularDeFacturacion>
+}
+
+/** De dónde salieron los datos de un documento. */
+export interface DocumentoResuelto {
+  origen: 'libreta' | 'padron' | 'no-encontrado'
+  razonSocial?: string
+  tipoDocumento?: 'RUC' | 'CI'
+  documento?: string
+  email?: string
+  direccion?: string
+  telefono?: string
+  estadoPadron?: string
+}
+
+/**
+ * Resuelve un documento para completar el formulario.
+ *
+ * Mira primero la libreta del cliente y sólo después el padrón: lo que él
+ * guardó es lo que quiere que diga su factura, y puede diferir de lo que la
+ * DNIT tenga registrado.
+ */
+export async function resolverDocumento(
+  clienteId: string,
+  documento: string
+): Promise<DocumentoResuelto | null> {
+  return apiFetch<DocumentoResuelto>(
+    `/api/clientes/${encodeURIComponent(clienteId)}/facturacion/buscar?documento=${encodeURIComponent(documento)}`,
+    { fallbackMessage: 'No se pudo consultar el documento.' }
+  )
+}
+
 export async function quitarTitular(
   clienteId: string,
   titularId: string

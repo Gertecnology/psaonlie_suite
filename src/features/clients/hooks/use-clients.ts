@@ -35,39 +35,3 @@ export function useClientePorEmail(email: string) {
     refetchOnWindowFocus: false,
   })
 }
-
-/**
- * El cliente junto con sus estadísticas de compras.
- *
- * `GET /api/clientes/:email` devuelve la persona sola: los totales de compras
- * viven únicamente en el listado. Éste lo consulta filtrado por email y se
- * queda con la coincidencia exacta — el backend filtra por coincidencia
- * parcial, así que `datos[0]` podría ser otro cliente cuyo email contenga al
- * buscado.
- */
-export function useClienteConEstadisticas(email: string) {
-  return useQuery({
-    queryKey: ['cliente-con-estadisticas', email],
-    queryFn: async () => {
-      const respuesta = await getClientesList({
-        page: 1,
-        limit: 5,
-        email,
-        sortBy: 'createdAt',
-        sortOrder: 'DESC',
-      })
-
-      return (
-        respuesta.data.find(
-          (fila) =>
-            fila.cliente.email.toLowerCase() === email.trim().toLowerCase()
-        ) ?? null
-      )
-    },
-    enabled: !!email,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 2,
-    refetchOnWindowFocus: false,
-  })
-}
