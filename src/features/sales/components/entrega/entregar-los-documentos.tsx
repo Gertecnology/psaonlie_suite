@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { LosDocumentosDeLaVenta } from '@/features/caja/components/los-documentos-de-la-venta'
 import {
   descargarFactura,
   enviarDocumentos,
@@ -17,11 +18,14 @@ import {
  * Entregarle al cliente lo que compró.
  *
  * Es el último paso de una venta de mostrador, y el que faltaba: la venta se
- * hacía bien y el cliente se iba sin nada. Los documentos de una venta de caja
- * **se generan recién cuando se piden** —a diferencia de la web, que los manda
- * sola—, así que sin este paso una venta quedaba sin boleto ni factura.
+ * hacía bien y el cliente se iba sin nada.
  *
- * Tres formas, porque en el mostrador pasa de las tres:
+ * Arriba, **lo que se generó**: el boleto de cada pasajero, la factura de cada
+ * pasaje y el comprobante del cargo por servicio, cada uno para abrir y mirar.
+ * El vendedor tiene al cliente enfrente; entregar a ciegas lo que no vio es
+ * cómo se imprime el boleto equivocado.
+ *
+ * Abajo, cómo se los da, porque en el mostrador pasa de las tres formas:
  *
  * - **Por correo**, si el cliente lo quiere en el teléfono.
  * - **Impresa**, en la hoja de siempre.
@@ -93,6 +97,10 @@ export function EntregarLosDocumentos({
       </CardHeader>
 
       <CardContent className='space-y-4'>
+        <LosDocumentosDeLaVenta numeroTransaccion={numeroTransaccion} />
+
+        <Separator />
+
         <div className='grid gap-2'>
           <Label htmlFor='correo-de-entrega'>Mandárselos por correo</Label>
           <div className='flex flex-wrap items-center gap-2'>
