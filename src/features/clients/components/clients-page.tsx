@@ -3,8 +3,6 @@ import { DataTable, useTablaServidor } from '@/components/data-table'
 import { PageLayout } from '@/components/layout/page-layout'
 import { ClientsProvider } from '../context/clients-context'
 import { useClientesList } from '../hooks/use-clients'
-import { type ClienteConEstadisticas } from '../models/clients.model'
-import { ClientDetailsScreen } from './client-details-screen'
 import { crearColumnasClientes } from './clients-columns'
 import { ClientsDialogs } from './clients-dialogs'
 import { ClientsPrimaryButtons } from './clients-primary-buttons'
@@ -20,11 +18,6 @@ import { ClientsToolbar } from './clients-toolbar'
 export function ClientsPage() {
   const tabla = useTablaServidor()
 
-  // Qué cliente está abierto en la pantalla de detalle. Es estado de la vista
-  // y no del servidor, así que no viaja a la URL.
-  const [clienteAbierto, setClienteAbierto] =
-    React.useState<ClienteConEstadisticas | null>(null)
-
   const { data, isLoading, isFetching, error, refetch } = useClientesList({
     page: tabla.parametrosApi.page,
     limit: tabla.parametrosApi.limit,
@@ -33,28 +26,9 @@ export function ClientsPage() {
     sortOrder: 'DESC',
   })
 
-  const verDetalles = React.useCallback((cliente: ClienteConEstadisticas) => {
-    setClienteAbierto(cliente)
-  }, [])
-
-  const columnas = React.useMemo(
-    () => crearColumnasClientes({ onVerDetalles: verDetalles }),
-    [verDetalles]
-  )
+  const columnas = React.useMemo(() => crearColumnasClientes(), [])
 
   const filas = React.useMemo(() => data?.data ?? [], [data?.data])
-
-  if (clienteAbierto) {
-    return (
-      <ClientsProvider>
-        <ClientDetailsScreen
-          client={clienteAbierto}
-          onBack={() => setClienteAbierto(null)}
-        />
-        <ClientsDialogs />
-      </ClientsProvider>
-    )
-  }
 
   return (
     <ClientsProvider>

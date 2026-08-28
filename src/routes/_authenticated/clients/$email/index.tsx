@@ -13,6 +13,6 @@ function EditarCliente() {
   return <ClientForm email={email} />
 }
 
-export const Route = createFileRoute('/_authenticated/clients/$email/editar')({
+export const Route = createFileRoute('/_authenticated/clients/$email/')({
   component: EditarCliente,
 })

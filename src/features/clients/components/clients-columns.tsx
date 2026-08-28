@@ -1,26 +1,18 @@
+import { Link } from '@tanstack/react-router'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { type ClienteConEstadisticas } from '../models/clients.model'
 import { ClientRowActions } from './client-row-actions'
 
-interface OpcionesColumnas {
-  /** Abre la pantalla de detalle de un cliente. */
-  onVerDetalles: (cliente: ClienteConEstadisticas) => void
-}
-
 /**
  * Columns for the client list.
  *
- * They are built by a function so the "Ver detalles" action can reach the
- * page's handler. It used to travel through the table's `meta`, where it was
- * typed `unknown` and read back with a double cast — so nothing checked that
- * the page was still passing it, and the menu item silently disappeared when
- * it was not.
+ * Siguen armadas por una función y no por una constante para que la lista de
+ * columnas se pueda memoizar en la página sin que el array cambie de identidad
+ * en cada render.
  */
-export function crearColumnasClientes({
-  onVerDetalles,
-}: OpcionesColumnas): ColumnDef<ClienteConEstadisticas>[] {
+export function crearColumnasClientes(): ColumnDef<ClienteConEstadisticas>[] {
   return [
     {
       id: 'select',
@@ -57,10 +49,16 @@ export function crearColumnasClientes({
       ),
       cell: ({ row }) => {
         const cliente = row.original.cliente
+        // El nombre abre la ficha: llegar a un cliente no debería exigir
+        // encontrar el menú de la fila y elegir dentro de él.
         return (
-          <div className='font-medium'>
+          <Link
+            to='/clients/$email'
+            params={{ email: cliente.email }}
+            className='hover:text-primary font-medium hover:underline'
+          >
             {cliente.nombre} {cliente.apellido}
-          </div>
+          </Link>
         )
       },
     },
@@ -105,9 +103,7 @@ export function crearColumnasClientes({
     {
       id: 'actions',
       header: 'Acciones',
-      cell: ({ row }) => (
-        <ClientRowActions cliente={row.original} onVerDetalles={onVerDetalles} />
-      ),
+      cell: ({ row }) => <ClientRowActions cliente={row.original} />,
       enableSorting: false,
       enableHiding: false,
     },

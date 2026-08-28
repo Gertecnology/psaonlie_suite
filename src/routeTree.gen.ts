@@ -54,12 +54,12 @@ import { Route as AuthenticatedClientsNuevoRouteImport } from './routes/_authent
 import { Route as AuthenticatedAgenciasNuevaRouteImport } from './routes/_authenticated/agencias/nueva'
 import { Route as AuthenticatedSettingsExternalDataIndexRouteImport } from './routes/_authenticated/settings/external-data/index'
 import { Route as AuthenticatedDestinationsIdIndexRouteImport } from './routes/_authenticated/destinations/$id/index'
+import { Route as AuthenticatedClientsEmailIndexRouteImport } from './routes/_authenticated/clients/$email/index'
 import { Route as AuthenticatedAgenciasIdIndexRouteImport } from './routes/_authenticated/agencias/$id/index'
 import { Route as AuthenticatedUsersIdEditarRouteImport } from './routes/_authenticated/users/$id/editar'
 import { Route as AuthenticatedSettingsServiceChargesNuevoRouteImport } from './routes/_authenticated/settings_.service-charges_.nuevo'
 import { Route as AuthenticatedSettingsExternalDataDayConfigurationRouteImport } from './routes/_authenticated/settings/external-data/day-configuration'
 import { Route as AuthenticatedDestinationsIdEditarRouteImport } from './routes/_authenticated/destinations/$id/editar'
-import { Route as AuthenticatedClientsEmailEditarRouteImport } from './routes/_authenticated/clients/$email/editar'
 import { Route as AuthenticatedAgenciasIdEditarRouteImport } from './routes/_authenticated/agencias/$id/editar'
 import { Route as AuthenticatedSettingsServiceChargesIdEditarRouteImport } from './routes/_authenticated/settings_.service-charges_.$id.editar'
 
@@ -315,6 +315,12 @@ const AuthenticatedDestinationsIdIndexRoute =
     path: '/destinations/$id/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedClientsEmailIndexRoute =
+  AuthenticatedClientsEmailIndexRouteImport.update({
+    id: '/clients/$email/',
+    path: '/clients/$email/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAgenciasIdIndexRoute =
   AuthenticatedAgenciasIdIndexRouteImport.update({
     id: '/agencias/$id/',
@@ -343,12 +349,6 @@ const AuthenticatedDestinationsIdEditarRoute =
   AuthenticatedDestinationsIdEditarRouteImport.update({
     id: '/destinations/$id/editar',
     path: '/destinations/$id/editar',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedClientsEmailEditarRoute =
-  AuthenticatedClientsEmailEditarRouteImport.update({
-    id: '/clients/$email/editar',
-    path: '/clients/$email/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAgenciasIdEditarRoute =
@@ -408,12 +408,12 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
-  '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/settings/service-charges/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
   '/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
+  '/clients/$email': typeof AuthenticatedClientsEmailIndexRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
   '/settings/service-charges/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
@@ -461,12 +461,12 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
-  '/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/settings/service-charges/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
   '/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/agencias/$id': typeof AuthenticatedAgenciasIdIndexRoute
+  '/clients/$email': typeof AuthenticatedClientsEmailIndexRoute
   '/destinations/$id': typeof AuthenticatedDestinationsIdIndexRoute
   '/settings/external-data': typeof AuthenticatedSettingsExternalDataIndexRoute
   '/settings/service-charges/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
@@ -517,12 +517,12 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/agencias/$id/editar': typeof AuthenticatedAgenciasIdEditarRoute
-  '/_authenticated/clients/$email/editar': typeof AuthenticatedClientsEmailEditarRoute
   '/_authenticated/destinations/$id/editar': typeof AuthenticatedDestinationsIdEditarRoute
   '/_authenticated/settings/external-data/day-configuration': typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   '/_authenticated/settings_/service-charges_/nuevo': typeof AuthenticatedSettingsServiceChargesNuevoRoute
   '/_authenticated/users/$id/editar': typeof AuthenticatedUsersIdEditarRoute
   '/_authenticated/agencias/$id/': typeof AuthenticatedAgenciasIdIndexRoute
+  '/_authenticated/clients/$email/': typeof AuthenticatedClientsEmailIndexRoute
   '/_authenticated/destinations/$id/': typeof AuthenticatedDestinationsIdIndexRoute
   '/_authenticated/settings/external-data/': typeof AuthenticatedSettingsExternalDataIndexRoute
   '/_authenticated/settings_/service-charges_/$id/editar': typeof AuthenticatedSettingsServiceChargesIdEditarRoute
@@ -573,12 +573,12 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/users'
     | '/agencias/$id/editar'
-    | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
     | '/settings/service-charges/nuevo'
     | '/users/$id/editar'
     | '/agencias/$id'
+    | '/clients/$email'
     | '/destinations/$id'
     | '/settings/external-data'
     | '/settings/service-charges/$id/editar'
@@ -626,12 +626,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/agencias/$id/editar'
-    | '/clients/$email/editar'
     | '/destinations/$id/editar'
     | '/settings/external-data/day-configuration'
     | '/settings/service-charges/nuevo'
     | '/users/$id/editar'
     | '/agencias/$id'
+    | '/clients/$email'
     | '/destinations/$id'
     | '/settings/external-data'
     | '/settings/service-charges/$id/editar'
@@ -681,12 +681,12 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/users/'
     | '/_authenticated/agencias/$id/editar'
-    | '/_authenticated/clients/$email/editar'
     | '/_authenticated/destinations/$id/editar'
     | '/_authenticated/settings/external-data/day-configuration'
     | '/_authenticated/settings_/service-charges_/nuevo'
     | '/_authenticated/users/$id/editar'
     | '/_authenticated/agencias/$id/'
+    | '/_authenticated/clients/$email/'
     | '/_authenticated/destinations/$id/'
     | '/_authenticated/settings/external-data/'
     | '/_authenticated/settings_/service-charges_/$id/editar'
@@ -1023,6 +1023,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDestinationsIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/clients/$email/': {
+      id: '/_authenticated/clients/$email/'
+      path: '/clients/$email'
+      fullPath: '/clients/$email'
+      preLoaderRoute: typeof AuthenticatedClientsEmailIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/agencias/$id/': {
       id: '/_authenticated/agencias/$id/'
       path: '/agencias/$id'
@@ -1056,13 +1063,6 @@ declare module '@tanstack/react-router' {
       path: '/destinations/$id/editar'
       fullPath: '/destinations/$id/editar'
       preLoaderRoute: typeof AuthenticatedDestinationsIdEditarRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/clients/$email/editar': {
-      id: '/_authenticated/clients/$email/editar'
-      path: '/clients/$email/editar'
-      fullPath: '/clients/$email/editar'
-      preLoaderRoute: typeof AuthenticatedClientsEmailEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/agencias/$id/editar': {
@@ -1136,11 +1136,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSalesIndexRoute: typeof AuthenticatedSalesIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedAgenciasIdEditarRoute: typeof AuthenticatedAgenciasIdEditarRoute
-  AuthenticatedClientsEmailEditarRoute: typeof AuthenticatedClientsEmailEditarRoute
   AuthenticatedDestinationsIdEditarRoute: typeof AuthenticatedDestinationsIdEditarRoute
   AuthenticatedSettingsServiceChargesNuevoRoute: typeof AuthenticatedSettingsServiceChargesNuevoRoute
   AuthenticatedUsersIdEditarRoute: typeof AuthenticatedUsersIdEditarRoute
   AuthenticatedAgenciasIdIndexRoute: typeof AuthenticatedAgenciasIdIndexRoute
+  AuthenticatedClientsEmailIndexRoute: typeof AuthenticatedClientsEmailIndexRoute
   AuthenticatedDestinationsIdIndexRoute: typeof AuthenticatedDestinationsIdIndexRoute
   AuthenticatedSettingsServiceChargesIdEditarRoute: typeof AuthenticatedSettingsServiceChargesIdEditarRoute
 }
@@ -1183,13 +1183,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSalesIndexRoute: AuthenticatedSalesIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
   AuthenticatedAgenciasIdEditarRoute: AuthenticatedAgenciasIdEditarRoute,
-  AuthenticatedClientsEmailEditarRoute: AuthenticatedClientsEmailEditarRoute,
   AuthenticatedDestinationsIdEditarRoute:
     AuthenticatedDestinationsIdEditarRoute,
   AuthenticatedSettingsServiceChargesNuevoRoute:
     AuthenticatedSettingsServiceChargesNuevoRoute,
   AuthenticatedUsersIdEditarRoute: AuthenticatedUsersIdEditarRoute,
   AuthenticatedAgenciasIdIndexRoute: AuthenticatedAgenciasIdIndexRoute,
+  AuthenticatedClientsEmailIndexRoute: AuthenticatedClientsEmailIndexRoute,
   AuthenticatedDestinationsIdIndexRoute: AuthenticatedDestinationsIdIndexRoute,
   AuthenticatedSettingsServiceChargesIdEditarRoute:
     AuthenticatedSettingsServiceChargesIdEditarRoute,
