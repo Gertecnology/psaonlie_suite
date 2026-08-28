@@ -8,9 +8,7 @@ import {
   IconShoppingCart,
   IconCurrencyDollar,
   IconUsers,
-  IconPalette,
   IconFileReport,
-  IconExternalLink,
   IconBook,
 } from '@tabler/icons-react'
 import { Command } from 'lucide-react'
@@ -135,16 +133,6 @@ export const sidebarData: SidebarData = {
               title: 'Cargos por servicio',
               url: '/settings/service-charges',
               icon: IconCurrencyDollar,
-            },
-            {
-              title: 'Apariencia',
-              url: '/settings/appearance',
-              icon: IconPalette,
-            },
-            {
-              title: 'Datos externos',
-              url: '/settings/external-data',
-              icon: IconExternalLink,
             },
           ],
         },
