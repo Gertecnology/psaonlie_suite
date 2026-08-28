@@ -155,7 +155,7 @@ export function DestinationMapPicker({
   onChange,
   precision,
   disabled,
-  alto = '340px',
+  alto = '100%',
 }: DestinationMapPickerProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
 
@@ -213,10 +213,15 @@ export function DestinationMapPicker({
 
   return (
     <APIProvider apiKey={apiKey} libraries={['places']}>
-      <div className='space-y-4'>
+      {/*
+        Columna flex de alto completo: al mapa se le pide `height: 100%`, y un
+        porcentaje contra un padre de alto automático resuelve a 0. Por eso el
+        bloque aparecía vacío dentro de la tarjeta.
+      */}
+      <div className='flex h-full min-h-0 flex-col gap-4'>
         <BuscadorDeLugares onElegir={elegirEnMapa} disabled={disabled} />
 
-        <div className='relative overflow-hidden rounded-md border'>
+        <div className='relative min-h-[220px] flex-1 overflow-hidden rounded-md border'>
           <Map
             style={{ width: '100%', height: alto }}
             defaultCenter={valor ?? CENTRO_PARAGUAY}
@@ -291,14 +296,6 @@ export function DestinationMapPicker({
           )}
         </div>
 
-        <CamposDeCoordenadas
-          latTexto={latTexto}
-          lngTexto={lngTexto}
-          setLatTexto={setLatTexto}
-          setLngTexto={setLngTexto}
-          aplicarTexto={aplicarTexto}
-          disabled={disabled}
-        />
       </div>
     </APIProvider>
   )
