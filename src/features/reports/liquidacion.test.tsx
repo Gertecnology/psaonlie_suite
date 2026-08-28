@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderEnRuta } from '@/test/router'
 import { contieneDinero, respuestaJson } from '@/test/utils'
@@ -133,7 +134,9 @@ describe('Liquidación a empresas transportistas', () => {
     montar()
 
     await screen.findByText(/todavía no hay nada que ver/i)
-    expect(screen.queryByRole('button', { name: /exportar a pdf/i })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: /imprimir o guardar pdf/i }),
+    ).toBeNull()
   })
 
   it('la hoja se identifica: qué documento es y con qué código', async () => {
@@ -234,13 +237,12 @@ describe('Liquidación a empresas transportistas', () => {
     expect(screen.queryByRole('button', { name: /excel/i })).toBeNull()
   })
 
-  it('con datos a la vista, ofrece exportar a PDF y nada más', async () => {
+  it('con datos a la vista, ofrece imprimir', async () => {
     montar(EMITIDO)
 
     expect(
-      await screen.findByRole('button', { name: /exportar a pdf/i }),
+      await screen.findByRole('button', { name: /imprimir o guardar pdf/i }),
     ).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /imprimir/i })).toBeNull()
   })
 
   it('la tabla repite su encabezado al imprimir: es una tabla, no una grilla de divs', async () => {
@@ -253,5 +255,72 @@ describe('Liquidación a empresas transportistas', () => {
     expect(tabla).not.toBeNull()
     expect(tabla?.querySelector('thead')).not.toBeNull()
     expect(tabla?.querySelector('tfoot')).not.toBeNull()
+  })
+
+  it('imprimir abre la vista previa, no el diálogo del navegador a ciegas', async () => {
+    const usuario = userEvent.setup()
+    montar(EMITIDO)
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /imprimir o guardar pdf/i }),
+    )
+
+    const dialogo = await screen.findByRole('dialog')
+    expect(
+      within(dialogo).getByText(/vista previa de impresión/i),
+    ).toBeInTheDocument()
+    // El documento se identifica dos veces y las dos hacen falta: el diálogo
+    // dice qué se está por imprimir, y la hoja lleva su membrete porque es la
+    // que sale por la impresora.
+    expect(
+      within(dialogo).getAllByText(/liquidación a empresas transportistas/i)
+        .length,
+    ).toBeGreaterThanOrEqual(2)
+  })
+
+  it('la vista previa deja elegir el papel antes de gastarlo', async () => {
+    const usuario = userEvent.setup()
+    montar(EMITIDO)
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /imprimir o guardar pdf/i }),
+    )
+    const dialogo = await screen.findByRole('dialog')
+
+    expect(within(dialogo).getByLabelText(/tamaño del papel/i)).toBeInTheDocument()
+    expect(within(dialogo).getByLabelText(/orientación/i)).toBeInTheDocument()
+    expect(within(dialogo).getByLabelText(/márgenes/i)).toBeInTheDocument()
+    expect(within(dialogo).getByLabelText(/fondo alternado/i)).toBeInTheDocument()
+  })
+
+  it('la vista previa manda la regla de página que la impresora va a obedecer', async () => {
+    const usuario = userEvent.setup()
+    montar(EMITIDO)
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /imprimir o guardar pdf/i }),
+    )
+    await screen.findByRole('dialog')
+
+    // `@page` no acepta variables CSS: si esta regla no se inyecta, el papel
+    // que se eligió en la pantalla no llega a la impresora.
+    const estilo = document.head.querySelector('[data-informe-pagina]')
+    expect(estilo?.textContent).toContain('@page')
+    expect(estilo?.textContent).toContain('210mm 297mm portrait')
+  })
+
+  it('la vista previa dice cuántas hojas van a salir', async () => {
+    const usuario = userEvent.setup()
+    montar(EMITIDO)
+
+    await usuario.click(
+      await screen.findByRole('button', { name: /imprimir o guardar pdf/i }),
+    )
+    const dialogo = await screen.findByRole('dialog')
+
+    // Saber si son dos hojas o veinte antes de mandar a imprimir. Se declara
+    // estimado porque el navegador puede correr un renglón a la hoja siguiente.
+    expect(within(dialogo).getByText(/hojas?$/im)).toBeInTheDocument()
+    expect(within(dialogo).getByText(/estimado/i)).toBeInTheDocument()
   })
 })

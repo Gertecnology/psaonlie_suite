@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { AlertCircle, Download } from 'lucide-react'
+import { AlertCircle, Printer } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { HeaderNotifications } from '@/components/notifications/header-notifications'
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { DefinicionInforme, FiltrosInforme, PeriodoInforme } from '../models/informe.model'
 import { estaGenerado } from '../models/informe.model'
 import { HojaInforme } from './hoja-informe'
+import { VistaPreviaImpresion } from './vista-previa-impresion'
 import './informe-imprimible.css'
 
 interface MarcoInformeProps {
@@ -59,10 +60,30 @@ export function MarcoInforme({
 
   // Se congela cuando llegan los datos: reimprimir el mismo informe no puede
   // cambiarle la hora de emisión, o dejan de ser el mismo documento.
+  const [vistaPrevia, setVistaPrevia] = React.useState(false)
   const [emitidoEn, setEmitidoEn] = React.useState<Date | null>(null)
   React.useEffect(() => {
     if (resultado && !isLoading) setEmitidoEn(new Date())
   }, [resultado, isLoading])
+
+  const hoja = (
+    <HojaInforme
+      definicion={definicion}
+      periodo={periodo}
+      filtrosDescritos={filtrosDescritos}
+      emitidoEn={emitidoEn ?? new Date()}
+    >
+      {!emitido ? (
+        <SinEmitir />
+      ) : isLoading ? (
+        <Cargando />
+      ) : error ? (
+        <ErrorInforme error={error} onReintentar={onBuscar} />
+      ) : (
+        resultado
+      )}
+    </HojaInforme>
+  )
 
   return (
     <>
@@ -95,34 +116,27 @@ export function MarcoInforme({
             {emitido && resultado && (
               <>
                 <Separator orientation='vertical' className='h-6' />
-                <Button variant='outline' onClick={() => window.print()}>
-                  <Download />
-                  Exportar a PDF
+                <Button variant='outline' onClick={() => setVistaPrevia(true)}>
+                  <Printer />
+                  Imprimir o guardar PDF
                 </Button>
               </>
             )}
           </div>
         </div>
 
-        <div className='informe-imprimible'>
-          <HojaInforme
-            definicion={definicion}
-            periodo={periodo}
-            filtrosDescritos={filtrosDescritos}
-            emitidoEn={emitidoEn ?? new Date()}
-          >
-            {!emitido ? (
-              <SinEmitir />
-            ) : isLoading ? (
-              <Cargando />
-            ) : error ? (
-              <ErrorInforme error={error} onReintentar={onBuscar} />
-            ) : (
-              resultado
-            )}
-          </HojaInforme>
-        </div>
+        {/* La hoja se dibuja una sola vez: acá, o dentro de la vista previa.
+            Tenerla en los dos lados haría que la impresión sacara dos. */}
+        <div className='informe-imprimible'>{!vistaPrevia && hoja}</div>
       </Main>
+
+      <VistaPreviaImpresion
+        abierto={vistaPrevia}
+        onCerrar={() => setVistaPrevia(false)}
+        documento={definicion.documento}
+      >
+        {hoja}
+      </VistaPreviaImpresion>
     </>
   )
 }
