@@ -28,6 +28,22 @@ const schema = z.object({
   confirmPassword: z.string(),
   isActive: z.boolean(),
   isVerified: z.boolean(),
+  // Se guarda como texto porque el campo es un `<input>`: un número vacío es
+  // `NaN`, y `NaN` no se distingue de «todavía no escribí nada».
+  porcentajeComisionVenta: z
+    .string()
+    .refine((valor) => valor === '' || !Number.isNaN(Number(valor)), {
+      message: 'El porcentaje tiene que ser un número.',
+    })
+    .refine((valor) => valor === '' || Number(valor) >= 0, {
+      message: 'El porcentaje no puede ser negativo.',
+    })
+    .refine((valor) => valor === '' || Number(valor) <= 100, {
+      message: 'El porcentaje no puede pasar de 100.',
+    })
+    .refine((valor) => /^\d*([.,]\d{0,2})?$/.test(valor), {
+      message: 'El porcentaje admite hasta dos decimales.',
+    }),
   profileImage: z.instanceof(File).optional(),
 })
 
@@ -42,6 +58,7 @@ const EMPTY: UserFormFields = {
   confirmPassword: '',
   isActive: true,
   isVerified: false,
+  porcentajeComisionVenta: '0',
   profileImage: undefined,
 }
 
@@ -123,6 +140,7 @@ export function useUserForm(userId?: string) {
       confirmPassword: '',
       isActive: user.isActive,
       isVerified: user.isVerified,
+      porcentajeComisionVenta: String(user.porcentajeComisionVenta ?? 0),
       profileImage: undefined,
     })
     setFotoPreview(user.urlPerfil ?? null)
@@ -158,6 +176,29 @@ export function useUserForm(userId?: string) {
     void navigate({ to: '/users' })
   }, [navigate])
 
+  /**
+   * Sólo quien vende cobra comisión.
+   *
+   * El porcentaje viaja únicamente cuando el rol elegido es el de vendedor:
+   * mandarlo para un administrador guardaría un número que nadie va a leer, y
+   * al pasar a otro rol el valor viejo dejaría de tener sentido.
+   */
+  const roleId = form.watch('roleId')
+  const esVendedor = React.useMemo(
+    () =>
+      (rolesQuery.data ?? []).some(
+        (rol) => rol.id === roleId && rol.name.toLowerCase() === 'vendedor'
+      ),
+    [rolesQuery.data, roleId]
+  )
+
+  const comisionAGuardar = (valor: string): number | undefined => {
+    if (!esVendedor) return undefined
+    if (valor.trim() === '') return 0
+
+    return Number(valor.replace(',', '.'))
+  }
+
   const save = form.handleSubmit((values) => {
     // Sólo se navega si la operación salió bien: si falla, el formulario se
     // queda con todo lo cargado y el error a la vista.
@@ -171,6 +212,9 @@ export function useUserForm(userId?: string) {
             roleIds: values.roleId ? [values.roleId] : undefined,
             isActive: values.isActive,
             isVerified: values.isVerified,
+            porcentajeComisionVenta: comisionAGuardar(
+              values.porcentajeComisionVenta
+            ),
           },
         },
         { onSuccess: backToList }
@@ -185,6 +229,9 @@ export function useUserForm(userId?: string) {
         firstName: values.firstName,
         lastName: values.lastName,
         roleIds: values.roleId ? [values.roleId] : undefined,
+        porcentajeComisionVenta: comisionAGuardar(
+          values.porcentajeComisionVenta
+        ),
         profileImage: values.profileImage,
       },
       { onSuccess: backToList }
@@ -198,6 +245,7 @@ export function useUserForm(userId?: string) {
     isEdit,
     roles: rolesQuery.data ?? [],
     loadingRoles: rolesQuery.isLoading,
+    esVendedor,
     loading: isEdit && userQuery.isLoading,
     error: userQuery.error,
     /** Si el registro llegó. En edición, sin esto no hay nada que editar. */

@@ -61,6 +61,7 @@ export function UserForm({ userId }: UserFormProps) {
     isEdit,
     roles,
     loadingRoles,
+    esVendedor,
     loading,
     error,
     cargado,
@@ -328,6 +329,40 @@ export function UserForm({ userId }: UserFormProps) {
                     </FormItem>
                   )}
                 />
+
+                {/* Sólo quien vende cobra comisión, así que el campo aparece
+                    recién cuando el rol elegido es el de vendedor. Ofrecerlo
+                    para un administrador sería pedir un dato que nadie usa. */}
+                {esVendedor && (
+                  <FormField
+                    control={form.control}
+                    name='porcentajeComisionVenta'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Comisión por venta</FormLabel>
+                        <div className='relative'>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              inputMode='decimal'
+                              placeholder='0'
+                              className='pr-8'
+                            />
+                          </FormControl>
+                          <span className='text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm'>
+                            %
+                          </span>
+                        </div>
+                        <FormDescription>
+                          Qué porcentaje de cada venta le queda. Sale del cargo
+                          por servicio, no del precio del pasaje. En cero vende
+                          igual, pero no cobra.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {!isEdit && (
                   <div className='grid grid-cols-2 gap-4'>
