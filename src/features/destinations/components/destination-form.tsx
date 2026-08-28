@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { ArrowLeft, MapPin } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout'
+import { ArrowLeft, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -23,12 +22,20 @@ import { Input } from '@/components/ui/input'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { PageLayout } from '@/components/layout'
 import { useDestinationForm } from '../hooks/use-destination-form'
 import { DestinationMapPicker } from './destination-map-picker'
 import { DestinationParadasTable } from './destination-paradas-table'
 
-/** Alto compartido por las dos tarjetas de arriba, de donde sale la simetría. */
-const ALTO_DE_LA_FILA = 'lg:h-[460px]'
+/**
+ * Alto compartido por las dos tarjetas de arriba, de donde sale la simetría.
+ *
+ * `min-h` y no `h`: con alto fijo, la columna que tenga un campo más desborda
+ * la tarjeta y su último control se monta sobre lo que sigue. Como el grid
+ * estira las dos al alto de la más alta, la simetría se mantiene igual y
+ * ninguna corta su contenido.
+ */
+const ALTO_DE_LA_FILA = 'lg:min-h-[460px]'
 
 const ID_DEL_FORM = 'destino-form'
 
@@ -242,7 +249,9 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
               </CardContent>
             </Card>
 
-            <Card className={`flex flex-col overflow-hidden ${ALTO_DE_LA_FILA}`}>
+            <Card
+              className={`flex flex-col overflow-hidden ${ALTO_DE_LA_FILA}`}
+            >
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <MapPin className='h-4 w-4' />
