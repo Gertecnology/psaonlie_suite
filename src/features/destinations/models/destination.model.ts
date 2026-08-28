@@ -4,6 +4,10 @@ export const destinationSchema = z.object({
   id: z.string(),
   nombre: z.string(),
   activo: z.boolean(),
+  latitud: z.number().nullable().optional(),
+  longitud: z.number().nullable().optional(),
+  /** `MANUAL`, `ROOFTOP`, `APPROXIMATE`… de dónde salió la coordenada. */
+  geocodingPrecision: z.string().nullable().optional(),
   paradasHomologadas: z.array(z.object({
     id: z.string(),
     nombre: z.string(),
@@ -13,12 +17,38 @@ export const destinationSchema = z.object({
   cantidadParadas: z.number().optional(),
 })
 
-export const destinationFormSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es requerido.'),
-  // Sin mínimo: un destino existe antes de que se le homologue una parada, y
-  // exigir una impedía incluso corregirle el nombre a los que no tienen.
-  paradasHomologadasIds: z.array(z.string()),
-})
+export const destinationFormSchema = z
+  .object({
+    nombre: z
+      .string()
+      .trim()
+      .min(1, 'Poné el nombre del destino.')
+      .max(255, 'El nombre no puede pasar de 255 caracteres.'),
+    // Sin mínimo: un destino existe antes de que se le homologue una parada, y
+    // exigir una impedía incluso corregirle el nombre a los que no tienen.
+    paradasHomologadasIds: z.array(z.string()),
+    activo: z.boolean(),
+    // `null` es "sin ubicación cargada", que es un estado válido: el destino
+    // funciona igual, sólo que no se puede proponer por cercanía.
+    latitud: z
+      .number({ invalid_type_error: 'La latitud tiene que ser un número.' })
+      .min(-90, 'La latitud va de -90 a 90.')
+      .max(90, 'La latitud va de -90 a 90.')
+      .nullable(),
+    longitud: z
+      .number({ invalid_type_error: 'La longitud tiene que ser un número.' })
+      .min(-180, 'La longitud va de -180 a 180.')
+      .max(180, 'La longitud va de -180 a 180.')
+      .nullable(),
+  })
+  .refine(
+    (valores) => (valores.latitud === null) === (valores.longitud === null),
+    {
+      // Media coordenada no ubica nada, y la base lo rechaza con un CHECK.
+      message: 'La ubicación necesita las dos coordenadas.',
+      path: ['latitud'],
+    },
+  )
 
 export const clientSchema = z.object({
   email: z.string().email('El email no es válido.'),

@@ -22,6 +22,11 @@ import { useUpdateDestination } from './use-update-destination'
 const EMPTY: DestinationFormValues = {
   nombre: '',
   paradasHomologadasIds: [],
+  // Un destino nuevo nace ofreciéndose: crear uno apagado y no entender por qué
+  // no aparece en la búsqueda es un viaje de ida.
+  activo: true,
+  latitud: null,
+  longitud: null,
 }
 
 interface ParadaOption {
@@ -69,6 +74,9 @@ export function useDestinationForm(destinationId?: string) {
       paradasHomologadasIds: (destination.paradasHomologadas ?? []).map(
         (parada) => parada.id,
       ),
+      activo: destination.activo,
+      latitud: destination.latitud ?? null,
+      longitud: destination.longitud ?? null,
     })
   }, [destination, form])
 
@@ -126,6 +134,8 @@ export function useDestinationForm(destinationId?: string) {
   return {
     form,
     save,
+    /** De dónde salió la ubicación guardada, para poder decirlo en pantalla. */
+    precisionUbicacion: destination?.geocodingPrecision ?? null,
     saving: create.isPending || update.isPending,
     isEdit,
     paradaOptions,
