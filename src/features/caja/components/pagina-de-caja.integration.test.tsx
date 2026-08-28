@@ -234,9 +234,17 @@ describe('la pantalla de caja (integración)', () => {
         ),
       ).toBe(false)
 
-      await usuario.click(
-        screen.getByLabelText('Ver los boletos de TXN87593508090'),
-      )
+      await usuario.click(screen.getByLabelText('Ver la venta TXN87593508090'))
+
+      // Ni siquiera al abrir el modal: la pestaña que arranca es la de
+      // documentos, y los boletos son otra consulta.
+      expect(
+        vi.mocked(apiFetch).mock.calls.some(([ruta]) =>
+          String(ruta).includes('/boletos'),
+        ),
+      ).toBe(false)
+
+      await usuario.click(screen.getByRole('tab', { name: 'Boletos' }))
 
       await waitFor(() =>
         expect(
@@ -251,9 +259,8 @@ describe('la pantalla de caja (integración)', () => {
       const usuario = montar()
 
       await screen.findByText('Sebastian Castro')
-      await usuario.click(
-        screen.getByLabelText('Ver los boletos de TXN87593508090'),
-      )
+      await usuario.click(screen.getByLabelText('Ver la venta TXN87593508090'))
+      await usuario.click(await screen.findByRole('tab', { name: 'Boletos' }))
 
       const modal = await screen.findByRole('dialog')
 

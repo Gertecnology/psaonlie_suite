@@ -12,9 +12,8 @@ import { aFechaISOLocal, periodoDesdePreset } from '@/lib/periodo'
 import type { FilaDeCaja, FiltrosDeCaja } from '../models/caja.model'
 import { FiltrosDeCajaControles } from './filtros-de-caja'
 import { ModalDeAnulacion } from './modal-de-anulacion'
-import { ModalDeBoletos } from './modal-de-boletos'
 import { ModalDeEnvio } from './modal-de-envio'
-import { ModalDeFacturas } from './modal-de-facturas'
+import { ModalDeLaVenta } from './modal-de-la-venta'
 import { TablaDeCaja } from './tabla-de-caja'
 import { TarjetasDeCaja } from './tarjetas-de-caja'
 
@@ -63,8 +62,7 @@ export function PaginaDeCaja() {
   })
   const { data: opciones } = useOpcionesDeCaja()
 
-  const [verBoletosDe, setVerBoletosDe] = useState<string | null>(null)
-  const [verFacturasDe, setVerFacturasDe] = useState<string | null>(null)
+  const [verLaVentaDe, setVerLaVentaDe] = useState<string | null>(null)
   const [enviarDe, setEnviarDe] = useState<string | null>(null)
   const [anularA, setAnularA] = useState<FilaDeCaja | null>(null)
 
@@ -111,8 +109,7 @@ export function PaginaDeCaja() {
           filas={data?.items ?? []}
           soloMisVentas={soloMisVentas}
           cargando={isLoading}
-          onVerBoletos={setVerBoletosDe}
-          onVerFacturas={setVerFacturasDe}
+          onVerLaVenta={setVerLaVentaDe}
           onEnviar={setEnviarDe}
           onAnular={setAnularA}
         />
@@ -133,13 +130,9 @@ export function PaginaDeCaja() {
         />
       </div>
 
-      <ModalDeBoletos
-        numeroTransaccion={verBoletosDe}
-        onClose={() => setVerBoletosDe(null)}
-      />
-      <ModalDeFacturas
-        numeroTransaccion={verFacturasDe}
-        onClose={() => setVerFacturasDe(null)}
+      <ModalDeLaVenta
+        numeroTransaccion={verLaVentaDe}
+        onClose={() => setVerLaVentaDe(null)}
       />
       <ModalDeEnvio
         numeroTransaccion={enviarDe}

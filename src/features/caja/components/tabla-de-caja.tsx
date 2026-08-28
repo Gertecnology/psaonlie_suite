@@ -1,4 +1,4 @@
-import { Ban, FileText, Mail, Ticket } from 'lucide-react'
+import { Ban, FileText, Mail } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -83,8 +83,7 @@ interface TablaDeCajaProps {
   /** Si quien mira ve sólo sus ventas: cambia qué columnas tienen sentido. */
   soloMisVentas: boolean
   cargando: boolean
-  onVerBoletos: (numeroTransaccion: string) => void
-  onVerFacturas: (numeroTransaccion: string) => void
+  onVerLaVenta: (numeroTransaccion: string) => void
   onEnviar: (numeroTransaccion: string) => void
   /** Sólo se ofrece en las ventas que todavía se pueden anular. */
   onAnular: (fila: FilaDeCaja) => void
@@ -94,8 +93,7 @@ export function TablaDeCaja({
   filas,
   soloMisVentas,
   cargando,
-  onVerBoletos,
-  onVerFacturas,
+  onVerLaVenta,
   onEnviar,
   onAnular,
 }: TablaDeCajaProps) {
@@ -205,22 +203,18 @@ export function TablaDeCaja({
 
               <TableCell>
                 <div className='flex justify-end gap-1'>
+                  {/*
+                    Uno solo. Antes eran dos íconos —boletos y facturas— que
+                    para quien mira la fila dicen lo mismo: «acá hay algo de
+                    esta venta». Había que abrir los dos para saber cuál era
+                    cuál. Ahora abren el mismo modal, con una pestaña cada uno.
+                  */}
                   <Button
                     variant='ghost'
                     size='icon'
-                    title='Ver boletos'
-                    aria-label={`Ver los boletos de ${fila.numeroTransaccion}`}
-                    onClick={() => onVerBoletos(fila.numeroTransaccion)}
-                  >
-                    <Ticket className='h-4 w-4' />
-                  </Button>
-
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    title='Ver facturas'
-                    aria-label={`Ver las facturas de ${fila.numeroTransaccion}`}
-                    onClick={() => onVerFacturas(fila.numeroTransaccion)}
+                    title='Ver la venta'
+                    aria-label={`Ver la venta ${fila.numeroTransaccion}`}
+                    onClick={() => onVerLaVenta(fila.numeroTransaccion)}
                   >
                     <FileText className='h-4 w-4' />
                   </Button>

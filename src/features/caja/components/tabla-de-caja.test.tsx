@@ -13,8 +13,7 @@ import type { FilaDeCaja } from '../models/caja.model'
  */
 describe('la tabla de la caja', () => {
   const sinAcciones = {
-    onVerBoletos: vi.fn(),
-    onVerFacturas: vi.fn(),
+    onVerLaVenta: vi.fn(),
     onEnviar: vi.fn(),
     onAnular: vi.fn(),
     cargando: false,
@@ -190,7 +189,7 @@ describe('la tabla de la caja', () => {
     render(<TablaDeCaja filas={[COMO_VENDEDOR]} soloMisVentas {...sinAcciones} />)
 
     expect(
-      screen.getByLabelText('Ver los boletos de TXN87593508090'),
+      screen.getByLabelText('Ver la venta TXN87593508090'),
     ).toBeInTheDocument()
     expect(
       screen.getByLabelText('Enviar los documentos de TXN87593508090'),
