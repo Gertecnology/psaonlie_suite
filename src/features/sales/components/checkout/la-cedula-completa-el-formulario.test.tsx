@@ -12,8 +12,8 @@ vi.mock('@/features/clients/hooks/use-client-mutations', () => ({
 vi.mock('@/features/clients/hooks/use-tipos-documento', () => ({
   useTiposDocumentoByEmpresa: () => ({
     data: [
-      { codigo: 'CB', descripcion: 'C.I. Boliviana' },
-      { codigo: 'C', descripcion: 'C.I. Paraguaya' },
+      { id: 'td-1', codigo: 'CB', descripcion: 'C.I. Boliviana' },
+      { id: 'td-2', codigo: 'C', descripcion: 'C.I. Paraguaya' },
     ],
     isLoading: false,
   }),
@@ -21,9 +21,10 @@ vi.mock('@/features/clients/hooks/use-tipos-documento', () => ({
 
 vi.mock('../../hooks/use-get-paises', () => ({
   useGetPaisesDisponibles: () => ({
+    // La forma que devuelve el web service: `Codigo` y `Descripcion`.
     data: [
-      { codigo: 'AF', nombre: 'Afganistán' },
-      { codigo: 'PY', nombre: 'Paraguay' },
+      { id: 'p-1', Codigo: 'AF', Descripcion: 'Afgano' },
+      { id: 'p-2', Codigo: 'PY', Descripcion: 'Paraguayo' },
     ],
     isLoading: false,
   }),
@@ -134,5 +135,57 @@ describe('la cédula completa el formulario', () => {
     await waitFor(() => expect(apiFetch).toHaveBeenCalled(), { timeout: 3000 })
 
     expect(screen.getByPlaceholderText('Nombres')).toBeInTheDocument()
+  })
+
+  describe('los desplegables también', () => {
+    // Este es el caso que faltaba. Los campos de texto se llenaban y los cuatro
+    // desplegables quedaban en su placeholder: usaban `defaultValue`, que los
+    // hace NO controlados y sólo se lee al montar. El formulario tenía el dato
+    // y la pantalla mostraba «Tipo», «Nacionalidad», «Género» y «Seleccione una
+    // ocupación», como si no hubiera precargado nada.
+    //
+    // Se mira el `<select>` nativo que Radix mantiene junto al desplegable:
+    // es lo que refleja el valor elegido, y lo que se enviaría en el submit.
+    // El texto del disparador no sirve de comprobación acá —Radix lo pinta con
+    // medidas de layout que jsdom no calcula—, y buscarlo por texto da un falso
+    // positivo, porque ese mismo texto está en las opciones.
+
+    const valoresDeLosDesplegables = () =>
+      Array.from(document.querySelectorAll('select')).map((uno) => uno.value)
+
+    const esperarLaPrecarga = () =>
+      waitFor(
+        () =>
+          expect(screen.getByPlaceholderText('Nombres')).toHaveValue('Sebastian'),
+        { timeout: 3000 },
+      )
+
+    it('completa los cuatro con lo que devuelve el backend', async () => {
+      montar()
+
+      await userEvent.type(screen.getByPlaceholderText('Número'), '4969917')
+      await esperarLaPrecarga()
+
+      // Tipo de documento, nacionalidad, género y ocupación.
+      await waitFor(() =>
+        expect(valoresDeLosDesplegables()).toEqual(['C', 'PY', 'M', 'Empresario']),
+      )
+    })
+
+    it('ninguno se queda con el primer ítem de su lista', async () => {
+      // El síntoma exacto que se veía: nacionalidad en «Afgano» y tipo en
+      // «C.I. Boliviana», que son los primeros de cada lista, no lo guardado.
+      montar()
+
+      await userEvent.type(screen.getByPlaceholderText('Número'), '4969917')
+      await esperarLaPrecarga()
+
+      await waitFor(() => {
+        const valores = valoresDeLosDesplegables()
+        expect(valores[0]).not.toBe('CB')
+        expect(valores[1]).not.toBe('AF')
+        expect(valores[3]).not.toBe('Estudiante')
+      })
+    })
   })
 })

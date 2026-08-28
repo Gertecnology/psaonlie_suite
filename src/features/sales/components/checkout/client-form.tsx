@@ -229,8 +229,13 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
                     <FormItem className="space-y-1">
                       <FormLabel className="text-sm">Tipo de documento <span className="text-destructive">*</span></FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                        // `value` y no `defaultValue`: con `defaultValue` el
+                        // desplegable es NO controlado y lee su valor una sola
+                        // vez, al montarse. La precarga por documento llega
+                        // después, así que el formulario tenía el dato y la
+                        // pantalla seguía mostrando el placeholder.
+                        value={field.value}
                         disabled={isLoadingTiposDocumento}
                       >
                         <FormControl>
@@ -297,8 +302,13 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
                     <FormItem className="space-y-1">
                       <FormLabel className="text-sm">Nacionalidad <span className="text-destructive">*</span></FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                        // `value` y no `defaultValue`: con `defaultValue` el
+                        // desplegable es NO controlado y lee su valor una sola
+                        // vez, al montarse. La precarga por documento llega
+                        // después, así que el formulario tenía el dato y la
+                        // pantalla seguía mostrando el placeholder.
+                        value={field.value}
                         disabled={isLoadingPaises}
                       >
                         <FormControl>
@@ -394,8 +404,13 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
                     <FormItem className="space-y-1">
                       <FormLabel className="text-sm">Género <span className="text-destructive">*</span></FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                        // `value` y no `defaultValue`: con `defaultValue` el
+                        // desplegable es NO controlado y lee su valor una sola
+                        // vez, al montarse. La precarga por documento llega
+                        // después, así que el formulario tenía el dato y la
+                        // pantalla seguía mostrando el placeholder.
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="h-8 w-full">
@@ -419,8 +434,13 @@ export function ClientForm({ agenciaId, empresaNombre, onClientCreated, isClient
                     <FormItem className="space-y-1">
                       <FormLabel className="text-sm">Ocupación <span className="text-destructive">*</span></FormLabel>
                       <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                        // `value` y no `defaultValue`: con `defaultValue` el
+                        // desplegable es NO controlado y lee su valor una sola
+                        // vez, al montarse. La precarga por documento llega
+                        // después, así que el formulario tenía el dato y la
+                        // pantalla seguía mostrando el placeholder.
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="h-8 w-full">
