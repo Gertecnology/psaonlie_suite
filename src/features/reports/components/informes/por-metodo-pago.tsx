@@ -4,31 +4,35 @@ import {
   formatearPorcentaje,
 } from '@/lib/formato'
 import { ETIQUETAS_METODO_PAGO } from '@/lib/metodo-pago'
+import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
+import { useInforme } from '../../hooks/use-informe'
 import { informePorRuta } from '../../models/informe.model'
 import {
   etiquetaMetodoPago,
   type FilaMetodoPago,
   type InformePorMetodoPago,
 } from '../../models/por-metodo-pago.model'
-import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
-import { useInforme } from '../../hooks/use-informe'
-import { exportarInformes } from '../../services/informes.service'
+import {
+  alcanceDeLosTotales,
+  rotuloDeLosTotales,
+  sumar,
+} from '../../models/totales'
 import { FiltrosInformeControles } from '../filtros-informe'
 import { MarcoInforme } from '../marco-informe'
+import { TablaContable, type ColumnaContable } from '../tabla-contable'
 
 const DEFINICION = informePorRuta('por-metodo-pago')!
 
 /**
- * Which way of collecting works best.
+ * Qué medio de cobro funciona mejor.
  *
- * Two figures per method, and they are not the same question: `cobradoAlCliente`
- * is the volume that moved through it, `ingresoPropio` is what stayed with us.
- * A method can carry most of the volume and leave the least income, which is
- * exactly what a report ordered by volume alone hides.
+ * Cada renglón contesta tres preguntas distintas y por eso no se puede ordenar
+ * por una sola: `cobradoAlCliente` es el volumen que pasó por el medio,
+ * `ingresoPropio` es lo que quedó acá, y `tasaConcrecion` es cuántas de las
+ * ventas que se iniciaron con ese medio terminaron cobradas. Un medio que
+ * arranca cien y cierra doce no es un medio chico, es uno roto.
  *
- * `tasaConcrecion` is the third: sales started against sales that ended up
- * collected. A method that starts a hundred and finishes twelve is not a small
- * method, it is a broken one.
+ * No se pagina: la API devuelve todos los medios del período en una respuesta.
  */
 export function InformePorMetodoPago() {
   const { borrador, aplicados, cambiar, generar, puedeGenerar } =
@@ -36,7 +40,7 @@ export function InformePorMetodoPago() {
 
   const { data, isLoading, error } = useInforme<InformePorMetodoPago>(
     DEFINICION.ruta,
-    aplicados,
+    aplicados
   )
 
   return (
@@ -44,14 +48,14 @@ export function InformePorMetodoPago() {
       definicion={DEFINICION}
       filtros={aplicados}
       periodo={data?.periodo}
-      // El filtro por método cambia el universo del informe: sin decirlo en el
-      // encabezado, un informe de un solo método impreso es indistinguible de
-      // uno de todos con un solo método activo.
+      // El filtro por medio cambia el universo del informe: sin declararlo en la
+      // ficha técnica, una hoja de un solo medio impresa es indistinguible de
+      // una de todos donde sólo hubo movimiento en uno.
       filtrosDescritos={
         aplicados.metodoPago
           ? [
               {
-                etiqueta: 'Método de pago',
+                etiqueta: 'Medio de cobro',
                 valor: ETIQUETAS_METODO_PAGO[aplicados.metodoPago],
               },
             ]
@@ -59,160 +63,147 @@ export function InformePorMetodoPago() {
       }
       isLoading={isLoading}
       error={error}
-      onGenerar={generar}
-      onExportar={() => void exportarInformes(aplicados)}
-      puedeGenerar={puedeGenerar}
+      onEmitir={generar}
+      puedeEmitir={puedeGenerar}
+      controles={
+        <FiltrosInformeControles
+          borrador={borrador}
+          onCambiar={cambiar}
+          extras={['metodoPago']}
+        />
+      }
       resultado={data ? <Cuerpo datos={data} /> : undefined}
-    >
-      <FiltrosInformeControles
-        borrador={borrador}
-        onCambiar={cambiar}
-        extras={['metodoPago']}
-      />
-    </MarcoInforme>
+    />
   )
 }
 
 function Cuerpo({ datos }: { datos: InformePorMetodoPago }) {
-  if (datos.data.length === 0) {
-    return (
-      <p className='text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm'>
-        El período no registra ventas cobradas por ningún método de pago.
-      </p>
-    )
-  }
+  const filas = datos.data
 
-  const totales = calcularTotales(datos.data)
+  // La API no devuelve un objeto de totales, así que la hoja los suma. Es
+  // legítimo acá porque este endpoint no pagina: `data` son todos los medios
+  // del período, y la suma de la columna es lo que cualquiera verifica a ojo.
+  //
+  // Por eso el total del período va `undefined`: no hay un conteo aparte contra
+  // el cual la hoja pueda quedar corta, y el rótulo puede decir «del período».
+  const rotuloTotales = rotuloDeLosTotales(filas.length, undefined)
+  const alcanceTotales = alcanceDeLosTotales(filas.length, undefined)
 
-  return (
-    <section>
-      <table className='w-full text-sm'>
-        <caption className='sr-only'>
-          Cobrado al cliente, ingreso propio y tasa de concreción de cada método
-          de pago del período
-        </caption>
-        <thead>
-          <tr className='border-b text-left'>
-            <th scope='col' className='py-2'>
-              Método
-            </th>
-            <Encabezado titulo='Concretadas' unidad='ventas' />
-            <Encabezado titulo='Iniciadas' unidad='ventas' />
-            <Encabezado titulo='Tasa de concreción' unidad='%' />
-            <Encabezado titulo='Cobrado al cliente' unidad='PYG' />
-            <Encabezado titulo='Ingreso propio' unidad='PYG' />
-            <Encabezado titulo='Participación' unidad='% del cobrado' />
-            <Encabezado titulo='Cobradas sin boleto' unidad='ventas' />
-          </tr>
-        </thead>
-        <tbody>
-          {datos.data.map((fila) => (
-            <tr key={fila.metodoPago} className='border-b last:border-0'>
-              <th scope='row' className='py-2 text-left font-medium'>
-                {etiquetaMetodoPago(fila.metodoPago)}
-              </th>
-              <Celda>{formatearEntero(fila.ventasLiquidables)}</Celda>
-              <Celda>{formatearEntero(fila.ventasTotales)}</Celda>
-              <Celda>{formatearPorcentaje(fila.tasaConcrecion)}</Celda>
-              <Celda>{formatearGuaranies(fila.cobradoAlCliente)}</Celda>
-              <Celda>{formatearGuaranies(fila.ingresoPropio)}</Celda>
-              <Celda>{formatearPorcentaje(fila.participacion)}</Celda>
-              <Celda>
-                {fila.pagadasSinBoletoCantidad === 0 ? (
-                  <span className='text-muted-foreground'>—</span>
-                ) : (
-                  <span className='text-destructive font-semibold'>
-                    {formatearEntero(fila.pagadasSinBoletoCantidad)}
-                    <span className='sr-only'>
-                      {' '}
-                      ventas cobradas al cliente sin pasaje entregado
-                    </span>
-                  </span>
-                )}
-              </Celda>
-            </tr>
-          ))}
-        </tbody>
-        {/* El pie va en `tfoot` y no en una fila más del cuerpo: la hoja de
-            impresión lo repite al final de cada página. */}
-        <tfoot>
-          <tr className='border-t-2 font-medium'>
-            <th scope='row' className='py-2 text-left'>
-              Total del período
-            </th>
-            <Celda>{formatearEntero(totales.ventasLiquidables)}</Celda>
-            <Celda>{formatearEntero(totales.ventasTotales)}</Celda>
-            <Celda>{formatearPorcentaje(totales.tasaConcrecion)}</Celda>
-            <Celda>{formatearGuaranies(totales.cobradoAlCliente)}</Celda>
-            <Celda>{formatearGuaranies(totales.ingresoPropio)}</Celda>
-            <Celda>{formatearPorcentaje(totales.participacion)}</Celda>
-            <Celda>{formatearEntero(totales.pagadasSinBoletoCantidad)}</Celda>
-          </tr>
-        </tfoot>
-      </table>
-    </section>
-  )
-}
+  const ventasLiquidables = sumar(filas, (fila) => fila.ventasLiquidables)
+  const ventasTotales = sumar(filas, (fila) => fila.ventasTotales)
+  const pasajes = sumar(filas, (fila) => fila.pasajes)
+  const cargoServicio = sumar(filas, (fila) => fila.cargoServicio)
+  const cobradoAlCliente = sumar(filas, (fila) => fila.cobradoAlCliente)
+  const ingresoPropio = sumar(filas, (fila) => fila.ingresoPropio)
 
-/**
- * Totals for the footer.
- *
- * They are summed here and not read off the response because this endpoint
- * returns no totals object — and it can be done honestly only because the
- * report is **not paginated**: `data` is every method of the period, so the sum
- * of the rows on screen is the sum of the period. The same shortcut on a
- * paginated report would state a page as if it were the whole.
- *
- * The two rates are recomputed, never averaged: the mean of per-method rates
- * weighs a method with three sales the same as one with three hundred.
- */
-function calcularTotales(filas: FilaMetodoPago[]) {
-  const totales = filas.reduce(
-    (acumulado, fila) => ({
-      ventasLiquidables: acumulado.ventasLiquidables + fila.ventasLiquidables,
-      ventasTotales: acumulado.ventasTotales + fila.ventasTotales,
-      cobradoAlCliente: acumulado.cobradoAlCliente + fila.cobradoAlCliente,
-      ingresoPropio: acumulado.ingresoPropio + fila.ingresoPropio,
-      participacion: acumulado.participacion + fila.participacion,
-      pagadasSinBoletoCantidad:
-        acumulado.pagadasSinBoletoCantidad + fila.pagadasSinBoletoCantidad,
-    }),
+  // La concreción del total se recalcula, nunca se promedia: el promedio de las
+  // tasas le daría a un medio con tres ventas el mismo peso que a uno con
+  // trescientas.
+  const concrecionTotal =
+    ventasTotales === 0 ? 0 : (ventasLiquidables / ventasTotales) * 100
+
+  const columnas: ColumnaContable<FilaMetodoPago>[] = [
     {
-      ventasLiquidables: 0,
-      ventasTotales: 0,
-      cobradoAlCliente: 0,
-      ingresoPropio: 0,
-      participacion: 0,
-      pagadasSinBoletoCantidad: 0,
+      clave: 'medio',
+      titulo: 'Medio de cobro',
+      alinear: 'izquierda',
+      celda: (fila) => (
+        <span className='flex flex-col gap-px'>
+          <span>{etiquetaMetodoPago(fila.metodoPago)}</span>
+          {/* El color no puede ser la única señal: en papel no se imprime. El
+              renglón observado lo dice con texto. */}
+          {fila.pagadasSinBoletoCantidad > 0 && (
+            <span className='text-destructive text-[10.5px]'>
+              {formatearEntero(fila.pagadasSinBoletoCantidad)} ventas cobradas
+              sin boleto
+            </span>
+          )}
+        </span>
+      ),
     },
-  )
+    {
+      clave: 'ventas-liquidables',
+      titulo: 'Ventas liquidables',
+      unidad: 'ventas',
+      ancho: 96,
+      celda: (fila) => formatearEntero(fila.ventasLiquidables),
+      total: formatearEntero(ventasLiquidables),
+    },
+    {
+      clave: 'ventas-totales',
+      titulo: 'Ventas totales',
+      unidad: 'ventas',
+      ancho: 90,
+      celda: (fila) => formatearEntero(fila.ventasTotales),
+      total: formatearEntero(ventasTotales),
+    },
+    {
+      clave: 'concrecion',
+      titulo: 'Concreción',
+      unidad: '%',
+      ancho: 78,
+      celda: (fila) => formatearPorcentaje(fila.tasaConcrecion),
+      total: formatearPorcentaje(concrecionTotal),
+    },
+    {
+      clave: 'pasajes',
+      titulo: 'Pasajes',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => formatearGuaranies(fila.pasajes),
+      total: formatearGuaranies(pasajes),
+    },
+    {
+      clave: 'cargo-servicio',
+      titulo: 'Cargo por servicio',
+      unidad: 'Gs.',
+      ancho: 122,
+      celda: (fila) => formatearGuaranies(fila.cargoServicio),
+      total: formatearGuaranies(cargoServicio),
+    },
+    {
+      clave: 'cobrado-al-cliente',
+      titulo: 'Cobrado al cliente',
+      unidad: 'Gs.',
+      ancho: 132,
+      celda: (fila) => formatearGuaranies(fila.cobradoAlCliente),
+      total: formatearGuaranies(cobradoAlCliente),
+    },
+    {
+      clave: 'ingreso-propio',
+      titulo: 'Ingreso propio',
+      unidad: 'Gs.',
+      ancho: 124,
+      celda: (fila) => formatearGuaranies(fila.ingresoPropio),
+      total: formatearGuaranies(ingresoPropio),
+    },
+    {
+      clave: 'participacion',
+      titulo: 'Participación',
+      unidad: '%',
+      ancho: 84,
+      celda: (fila) => formatearPorcentaje(fila.participacion),
+      // Las participaciones no se suman como importes: reparten el mismo cobro
+      // del período, así que el cierre es 100 % por definición.
+      total: formatearPorcentaje(100),
+    },
+  ]
 
-  return {
-    ...totales,
-    tasaConcrecion:
-      totales.ventasTotales === 0
-        ? 0
-        : (totales.ventasLiquidables / totales.ventasTotales) * 100,
-  }
-}
-
-function Encabezado({ titulo, unidad }: { titulo: string; unidad: string }) {
   return (
-    <th scope='col' className='py-2 text-right' data-tipo='monto'>
-      {titulo}
-      {/* La unidad va declarada en el encabezado: "Cobrado 1.240" no dice si
-          son guaraníes o ventas, y un informe archivado no tiene contexto. */}
-      <span className='text-muted-foreground block text-xs font-normal'>
-        {unidad}
-      </span>
-    </th>
-  )
-}
-
-function Celda({ children }: { children: React.ReactNode }) {
-  return (
-    <td className='py-2 text-right tabular-nums' data-tipo='monto'>
-      {children}
-    </td>
+    <TablaContable
+      columnas={columnas}
+      filas={filas}
+      // `SIN_METODO` es un renglón real —ventas que nunca registraron medio— y
+      // necesita clave estable igual que los demás.
+      claveFila={(fila) => fila.metodoPago}
+      observada={(fila) => fila.pagadasSinBoletoCantidad > 0}
+      rotuloTotales={rotuloTotales}
+      alcanceTotales={alcanceTotales}
+      // Lo que el período le debitó al cliente por todos los medios juntos: es
+      // el importe que esta hoja liquida.
+      sonImporte={cobradoAlCliente}
+      descripcion='Cobrado al cliente, ingreso propio y tasa de concreción de cada medio de cobro del período'
+      mensajeVacio='El período no registra ventas cobradas por ningún medio.'
+    />
   )
 }

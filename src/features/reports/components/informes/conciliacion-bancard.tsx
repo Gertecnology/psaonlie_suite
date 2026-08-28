@@ -1,89 +1,24 @@
-import { type ColumnDef } from '@tanstack/react-table'
-import { DataTable, useTablaServidor } from '@/components/data-table'
-import { TableCell, TableRow } from '@/components/ui/table'
-import { formatearEntero, formatearFechaISO, formatearGuaranies } from '@/lib/formato'
-import { informePorRuta } from '../../models/informe.model'
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import {
+  formatearEntero,
+  formatearFechaISO,
+  formatearGuaranies,
+} from '@/lib/formato'
+import { informePorRuta, type FiltrosInforme } from '../../models/informe.model'
 import {
   EXPLICACION_DESCUADRE,
   type ConciliacionBancard,
   type DescuadreBancard,
 } from '../../models/conciliacion-bancard.model'
+import { alcanceDeLosTotales, sumar } from '../../models/totales'
 import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
 import { useInforme } from '../../hooks/use-informe'
 import { FiltrosInformeControles } from '../filtros-informe'
 import { MarcoInforme } from '../marco-informe'
+import { TablaContable, type ColumnaContable } from '../tabla-contable'
 
 const DEFINICION = informePorRuta('conciliacion-bancard')!
-
-const COLUMNAS: ColumnDef<DescuadreBancard, unknown>[] = [
-  {
-    id: 'tipo',
-    accessorKey: 'tipo',
-    header: 'Qué pasó',
-    cell: ({ row }) => {
-      const explicacion = EXPLICACION_DESCUADRE[row.original.tipo]
-      return (
-        <div className='max-w-sm'>
-          <p className='font-medium'>{explicacion.titulo}</p>
-          <p className='text-muted-foreground text-xs leading-relaxed'>
-            {explicacion.significado}
-          </p>
-        </div>
-      )
-    },
-  },
-  {
-    id: 'numeroTransaccion',
-    accessorKey: 'numeroTransaccion',
-    header: 'Venta',
-    cell: ({ row }) => (
-      <span className='font-mono text-xs'>
-        {row.original.numeroTransaccion ?? '—'}
-      </span>
-    ),
-  },
-  {
-    id: 'bancardTransactionId',
-    accessorKey: 'bancardTransactionId',
-    header: 'Transacción Bancard',
-    cell: ({ row }) => (
-      <span className='font-mono text-xs'>
-        {row.original.bancardTransactionId ?? '—'}
-      </span>
-    ),
-  },
-  {
-    id: 'fechaVenta',
-    accessorKey: 'fechaVenta',
-    header: 'Fecha',
-    cell: ({ row }) => formatearFechaISO(row.original.fechaVenta),
-  },
-  {
-    id: 'montoEsperado',
-    accessorKey: 'montoEsperado',
-    header: 'Registrado',
-    meta: { tipo: 'monto', unidad: 'PYG', className: 'text-right' },
-    cell: ({ row }) => formatearGuaranies(row.original.montoEsperado),
-  },
-  {
-    id: 'montoBancard',
-    accessorKey: 'montoBancard',
-    header: 'Bancard',
-    meta: { tipo: 'monto', unidad: 'PYG', className: 'text-right' },
-    cell: ({ row }) => formatearGuaranies(row.original.montoBancard),
-  },
-  {
-    id: 'diferencia',
-    accessorKey: 'diferencia',
-    header: 'Diferencia',
-    meta: { tipo: 'monto', unidad: 'PYG', className: 'text-right' },
-    cell: ({ row }) => (
-      <span className='text-destructive font-medium'>
-        {formatearGuaranies(row.original.diferencia)}
-      </span>
-    ),
-  },
-]
 
 /**
  * What the gateway says against what we recorded.
@@ -98,97 +33,211 @@ const COLUMNAS: ColumnDef<DescuadreBancard, unknown>[] = [
 export function InformeConciliacionBancard() {
   const { borrador, aplicados, cambiar, generar, puedeGenerar } =
     useFiltrosInforme()
-  const tabla = useTablaServidor()
+
+  // Sin paginar: una conciliación se lee y se firma entera. Partirla en páginas
+  // deja el cotejo de arriba hablando de un período y el detalle de abajo de
+  // una página.
+  const filtros = React.useMemo<FiltrosInforme>(
+    () => ({ ...aplicados, pagina: 1, tamano: 200 }),
+    [aplicados],
+  )
 
   const { data, isLoading, error } = useInforme<ConciliacionBancard>(
     DEFINICION.ruta,
-    { ...aplicados, pagina: tabla.parametrosApi.page, tamano: tabla.parametrosApi.limit },
+    filtros,
   )
 
   return (
     <MarcoInforme
       definicion={DEFINICION}
-      filtros={aplicados}
+      filtros={filtros}
       periodo={data?.periodo}
       isLoading={isLoading}
       error={error}
-      onGenerar={generar}
-      puedeGenerar={puedeGenerar}
-      resultado={
-        data ? (
-          /* La comparación es la tabla. Los dos lados y el veredicto eran dos
-             tarjetas y un cartel antes del primer dato; ahora el total de cada
-             lado cierra la tabla, que es donde se contrastan. */
-          <DataTable
-            columns={COLUMNAS}
-            data={data.descuadres}
-            // Una venta puede aparecer sin id de Bancard y viceversa; el par de
-            // los dos es lo único que identifica una diferencia.
-            getRowId={(fila) =>
-              `${fila.ventaId ?? 'sin-venta'}:${fila.bancardTransactionId ?? 'sin-tx'}`
-            }
-            pageCount={Math.max(data.totalPages, 1)}
-            pagination={tabla.pagination}
-            onPaginationChange={tabla.onPaginationChange}
-            caption='Diferencias entre lo aprobado por Bancard y lo registrado en el sistema'
-            emptyMessage='El período concilia: lo aprobado por Bancard coincide con lo registrado.'
-            renderFooter={() => (
-              <>
-                <TableRow>
-                  <TableCell colSpan={4} className='font-medium'>
-                    Según Bancard
-                    <span className='text-muted-foreground ml-2 text-xs font-normal'>
-                      {formatearEntero(data.bancard.transaccionesAprobadas)}{' '}
-                      transacciones aprobadas
-                    </span>
-                  </TableCell>
-                  <TableCell
-                    colSpan={3}
-                    className='text-right tabular-nums'
-                    data-tipo='monto'
-                  >
-                    {formatearGuaranies(data.bancard.montoAprobado)}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell colSpan={4} className='font-medium'>
-                    Según el sistema
-                    <span className='text-muted-foreground ml-2 text-xs font-normal'>
-                      {formatearEntero(data.registrado.ventasPagadas)} ventas
-                      dadas por pagadas
-                    </span>
-                  </TableCell>
-                  <TableCell
-                    colSpan={3}
-                    className='text-right tabular-nums'
-                    data-tipo='monto'
-                  >
-                    {formatearGuaranies(data.registrado.montoEsperado)}
-                  </TableCell>
-                </TableRow>
-                <TableRow className='border-t-2'>
-                  <TableCell colSpan={4} className='font-semibold'>
-                    Diferencia
-                  </TableCell>
-                  <TableCell
-                    colSpan={3}
-                    className={
-                      data.concilia
-                        ? 'text-right font-semibold tabular-nums'
-                        : 'text-destructive text-right font-semibold tabular-nums'
-                    }
-                    data-tipo='monto'
-                  >
-                    {formatearGuaranies(data.diferencia)}
-                  </TableCell>
-                </TableRow>
-              </>
-            )}
-          />
-        ) : undefined
+      onEmitir={generar}
+      puedeEmitir={puedeGenerar}
+      controles={
+        <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
       }
+      resultado={data ? <Cuerpo datos={data} /> : undefined}
+    />
+  )
+}
+
+function Cuerpo({ datos }: { datos: ConciliacionBancard }) {
+  const descuadres = datos.descuadres
+
+  // La hoja pide los 200 renglones de una, así que salvo desborde la suma es
+  // la de todos los descuadres del período. Cuando no lo es, el rótulo y
+  // `alcanceDeLosTotales` lo dicen en vez de callarlo.
+  const listados = descuadres.length
+  const completo = datos.totalDescuadres <= listados
+
+  const totales = {
+    montoEsperado: sumar(descuadres, (fila) => fila.montoEsperado),
+    montoBancard: sumar(descuadres, (fila) => fila.montoBancard),
+    diferencia: sumar(descuadres, (fila) => fila.diferencia),
+  }
+
+  const columnas: ColumnaContable<DescuadreBancard>[] = [
+    {
+      clave: 'fecha',
+      titulo: 'Fecha',
+      unidad: 'de la venta (AAAA-MM-DD)',
+      alinear: 'izquierda',
+      ancho: 118,
+      celda: (fila) => formatearFechaISO(fila.fechaVenta),
+    },
+    {
+      clave: 'tipo',
+      titulo: 'Tipo',
+      alinear: 'izquierda',
+      celda: (fila) => {
+        const explicacion = EXPLICACION_DESCUADRE[fila.tipo]
+        return (
+          <span className='flex flex-col gap-px'>
+            {/* Todo renglón de esta tabla es un descuadre, y lo dice con texto:
+                el color no puede ser la única señal porque en papel no se
+                imprime. */}
+            <span className='text-destructive'>{explicacion.titulo}</span>
+            <span className='text-muted-foreground text-[10.5px]'>
+              {explicacion.significado}
+            </span>
+          </span>
+        )
+      },
+    },
+    {
+      clave: 'venta',
+      titulo: 'Venta',
+      alinear: 'izquierda',
+      ancho: 116,
+      celda: (fila) => fila.numeroTransaccion ?? '—',
+    },
+    {
+      clave: 'transaccion-bancard',
+      titulo: 'Transacción Bancard',
+      alinear: 'izquierda',
+      ancho: 148,
+      celda: (fila) => fila.bancardTransactionId ?? '—',
+    },
+    {
+      clave: 'importe-registrado',
+      titulo: 'Importe registrado',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => formatearGuaranies(fila.montoEsperado),
+      total: formatearGuaranies(totales.montoEsperado),
+    },
+    {
+      clave: 'importe-bancard',
+      titulo: 'Importe Bancard',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => formatearGuaranies(fila.montoBancard),
+      total: formatearGuaranies(totales.montoBancard),
+    },
+    {
+      clave: 'diferencia',
+      titulo: 'Diferencia',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => (
+        <span className='text-destructive font-semibold'>
+          {formatearGuaranies(fila.diferencia)}
+        </span>
+      ),
+      // Cuánto hay que explicar en total. Es la cifra que le dice a quien
+      // concilia el tamaño del trabajo que tiene por delante.
+      total: formatearGuaranies(totales.diferencia),
+    },
+  ]
+
+  // Sin `SON:` a propósito: el informe no liquida un importe, lista partidas a
+  // revisar. El cotejo de los dos lados va arriba y no como conclusión al pie.
+  return (
+    <TablaContable
+      columnas={columnas}
+      filas={descuadres}
+      // Una venta puede aparecer sin id de Bancard y viceversa; el par de los
+      // dos es lo único que identifica una diferencia.
+      claveFila={(fila) =>
+        `${fila.ventaId ?? 'sin-venta'}:${fila.bancardTransactionId ?? 'sin-tx'}`
+      }
+      observada={() => true}
+      // El rótulo no dice «del período»: lo que cierra esta tabla son los
+      // descuadres, no las ventas. `rotuloDeLosTotales` no sabe nombrarlos, así
+      // que se escribe acá con el mismo criterio de completitud que el alcance.
+      rotuloTotales={
+        completo ? 'Totales de los descuadres' : 'Totales de los descuadres listados'
+      }
+      alcanceTotales={alcanceDeLosTotales(listados, datos.totalDescuadres)}
+      antesDeLaTabla={<Cotejo datos={datos} />}
+      descripcion='Diferencias entre lo aprobado por la pasarela Bancard y lo registrado en el sistema, con el importe de cada lado'
+      mensajeVacio='El período concilia: lo aprobado por la pasarela coincide con lo registrado.'
+    />
+  )
+}
+
+/**
+ * Los dos lados y el veredicto, antes del detalle.
+ *
+ * Va arriba y como renglones, no como párrafo debajo de la tabla: la
+ * conclusión de un informe se lee antes de las partidas que la explican, y un
+ * párrafo suelto al pie no es parte del documento.
+ */
+function Cotejo({ datos }: { datos: ConciliacionBancard }) {
+  return (
+    <dl className='border-border border-b px-7 py-2.5 text-[12.5px]'>
+      <Renglon
+        concepto='Según la pasarela — transacciones aprobadas'
+        cantidad={`${formatearEntero(datos.bancard.transaccionesAprobadas)} tx`}
+        importe={formatearGuaranies(datos.bancard.montoAprobado)}
+      />
+      <Renglon
+        concepto='Según el sistema — ventas cobradas'
+        cantidad={`${formatearEntero(datos.registrado.ventasPagadas)} ventas`}
+        importe={formatearGuaranies(datos.registrado.montoEsperado)}
+      />
+      <Renglon
+        concepto={datos.concilia ? 'DIFERENCIA' : 'DIFERENCIA — NO CONCILIA'}
+        cantidad='—'
+        importe={formatearGuaranies(datos.diferencia)}
+        destacado
+        observado={!datos.concilia}
+      />
+    </dl>
+  )
+}
+
+function Renglon({
+  concepto,
+  cantidad,
+  importe,
+  destacado = false,
+  observado = false,
+}: {
+  concepto: string
+  cantidad: string
+  importe: string
+  destacado?: boolean
+  observado?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-baseline gap-4 py-0.5',
+        destacado && 'border-border/70 mt-1 border-t pt-1.5 font-semibold',
+        observado && 'text-destructive',
+      )}
     >
-      <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
-    </MarcoInforme>
+      <dt className='flex-1'>{concepto}</dt>
+      <dd className='text-muted-foreground w-[110px] text-right tabular-nums'>
+        {cantidad}
+      </dd>
+      <dd className='w-[132px] text-right tabular-nums' data-tipo='monto'>
+        {importe}
+      </dd>
+    </div>
   )
 }

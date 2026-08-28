@@ -1,32 +1,31 @@
 /*
- * Print rules for reports.
+ * Reglas de impresión de los informes.
  *
- * A report that only exists on screen is half a report: the figures get
- * archived, emailed and handed to an auditor on paper. These rules are what
- * make a multi-page table readable once printed — every page has to say what it
- * is, which page it is, and where it ends.
+ * Un informe que sólo existe en la pantalla es medio informe: las cifras se
+ * archivan, se mandan por correo y se le entregan a un contador en papel. Esto
+ * es lo que hace legible una planilla de varias hojas — que cada hoja diga qué
+ * es, a qué columna corresponde cada número, y dónde termina.
  *
- * They live in a plain stylesheet and not in Tailwind classes because `@page`
- * and `counter()` have no utility equivalent, and because the repeating header
- * relies on `<thead>` behaviour that no class can express.
+ * Viven en una hoja de estilos suelta y no en clases de Tailwind porque el
+ * comportamiento de `thead` repitiéndose por página no lo expresa ninguna
+ * utilidad, y porque `@page` no tiene equivalente.
+ *
+ * NO se numeran las páginas con `@page { @bottom-right { counter(page) } }`.
+ * Se intentó y nunca se imprimió: los margin boxes de CSS Paged Media no están
+ * implementados en Chrome ni en Firefox, así que esa regla no hacía nada
+ * mientras el navegador dibujaba su propio pie con la URL y la fecha del
+ * sistema. La numeración real —«Hoja 1 de 2»— sale del PDF que genera el
+ * backend con Puppeteer, donde `headerTemplate`/`footerTemplate` sí resuelven
+ * `pageNumber` y `totalPages`.
  */
 
 @media print {
   @page {
     size: A4;
-    margin: 18mm 12mm 20mm 12mm;
-
-    /* Page numbering lives in the page margin, which is the only place that
-       cannot be pushed around by content reflow. */
-    @bottom-right {
-      content: 'Página ' counter(page) ' de ' counter(pages);
-      font-family: system-ui, sans-serif;
-      font-size: 9pt;
-      color: #555;
-    }
+    margin: 14mm 12mm 16mm 12mm;
   }
 
-  /* Navegación, filtros y botones no son parte del informe. */
+  /* Navegación, barra de filtros y botones no son parte del documento. */
   .no-imprimir,
   nav,
   aside,
@@ -37,7 +36,7 @@
   body {
     background: #fff;
     color: #000;
-    font-size: 10pt;
+    font-size: 9.5pt;
   }
 
   .informe-imprimible {
@@ -46,55 +45,64 @@
     padding: 0;
   }
 
-  /* El encabezado de trazabilidad abre el documento y no se parte. */
-  .informe-imprimible header {
+  /* La hoja impresa no lleva el marco que la separa del fondo en pantalla:
+     el papel ya es el marco. */
+  .informe-hoja {
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* El membrete abre el documento y no se parte entre dos hojas. */
+  .informe-hoja > header {
     break-inside: avoid;
-    border: 1px solid #000;
   }
 
   /*
-   * El encabezado de la tabla se repite en cada página.
-   *
-   * Es lo que evita que la segunda hoja sea una grilla de números sin saber a
-   * qué columna corresponde cada uno. `table-header-group` es la instrucción
-   * que hace que el navegador lo redibuje arriba de cada página.
+   * El encabezado de columnas se repite arriba de cada hoja y el pie de
+   * totales abajo. Es lo que evita que la segunda hoja sea una grilla de
+   * números sin saber a qué corresponde cada uno, y lo único que consigue ese
+   * comportamiento es una `<table>` de verdad.
    */
-  .informe-imprimible thead {
+  .informe-tabla thead {
     display: table-header-group;
   }
 
-  /* El pie —los totales— se repite abajo de cada página. */
-  .informe-imprimible tfoot {
+  .informe-tabla tfoot {
     display: table-footer-group;
   }
 
-  /* Una fila cortada por la mitad entre dos hojas es ilegible. */
-  .informe-imprimible tr,
-  .informe-imprimible .tarjeta-informe {
+  /* Un renglón cortado por la mitad entre dos hojas es ilegible. */
+  .informe-tabla tr {
     break-inside: avoid;
   }
 
-  .informe-imprimible table {
+  .informe-tabla {
     width: 100%;
     border-collapse: collapse;
   }
 
-  .informe-imprimible th,
-  .informe-imprimible td {
+  .informe-tabla th,
+  .informe-tabla td {
     border: 1px solid #999;
-    padding: 4px 6px;
-    text-align: left;
+    padding: 3px 5px;
   }
 
-  .informe-imprimible th {
-    background: #eee !important;
+  .informe-tabla thead th {
+    background: #1e2a5a !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .informe-tabla tfoot td {
+    background: #eef1f5 !important;
+    font-weight: bold;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   /* Los importes se leen comparando magnitudes: alineados a la derecha. */
-  .informe-imprimible .monto,
-  .informe-imprimible [data-tipo='monto'] {
+  .informe-tabla [data-tipo='monto'] {
     text-align: right;
     font-variant-numeric: tabular-nums;
   }

@@ -20,7 +20,7 @@ import { InformeVentasSinBoleto } from './components/informes/ventas-sin-boleto'
  * this test too, since the app cannot be run against the backend.
  *
  * On top of it comes the rule the whole migration exists for — **nothing is
- * fetched until Generar is pressed** — and one assertion per screen on the
+ * fetched until Emitir is pressed** — and one assertion per screen on the
  * figure that screen is read for. The fixtures mirror the DTOs field by field,
  * so a payload that changes shape fails here rather than on someone's monitor.
  */
@@ -208,7 +208,7 @@ const PANTALLAS: Array<[string, FunctionComponent]> = [
   ['anomalias', InformeAnomalias],
 ]
 
-/** What a shared link carries: the period plus the Generar mark. */
+/** What a shared link carries: the period plus the Emitir mark. */
 const GENERADO = '?generado=true&desde=2026-08-01&hasta=2026-08-31'
 
 function montar(Pantalla: FunctionComponent, busqueda = '') {
@@ -264,7 +264,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('nada se carga hasta apretar Generar', () => {
+describe('nada se carga hasta apretar Emitir', () => {
   it.each(PANTALLAS)(
     'el informe "%s" se abre sin consultar nada',
     async (_ruta, Pantalla) => {
@@ -272,7 +272,7 @@ describe('nada se carga hasta apretar Generar', () => {
 
       // El botón es la única señal de que la pantalla montó y está esperando.
       expect(
-        await screen.findByRole('button', { name: 'Generar' }),
+        await screen.findByRole('button', { name: 'Emitir' }),
       ).toBeInTheDocument()
       // La regla no es "se ve vacío": es que no salió ninguna consulta. Un
       // informe que pide los datos y los esconde igual castiga a la base.
@@ -297,24 +297,33 @@ describe('informes paginados', () => {
     ).toBeGreaterThan(0)
   })
 
-  it('la página y el tamaño viajan explícitos en la consulta', async () => {
-    // Sin ellos el servidor aplica su límite por defecto (25) mientras la tabla
-    // pagina de a 10: el pie diría una cosa y la grilla otra.
+  it('pide el período entero, no una página', async () => {
+    // El formato contable sacó la paginación: la fila de totales dice «totales
+    // del período», así que la hoja tiene que traer todos los renglones. Con el
+    // límite por defecto del servidor (25) ese rótulo sería falso.
     montar(InformePorRuta, GENERADO)
 
     await screen.findByText('Tarifa promedio')
 
     expect(urlsDeInformes()[0]).toContain('page=1')
-    expect(urlsDeInformes()[0]).toContain('limit=10')
+    expect(urlsDeInformes()[0]).toContain('limit=200')
   })
 
   it('por servicio muestra el primer y el último viaje en ISO 8601', async () => {
     montar(InformePorServicio, GENERADO)
 
     // ISO y no dd/mm/aaaa: 08/09 es ambiguo para quien lee el informe
-    // archivado sin conocer la convención local.
-    expect(await screen.findByText('2026-08-03')).toBeInTheDocument()
-    expect(screen.getByText('2026-08-28')).toBeInTheDocument()
+    // archivado sin conocer la convención local. Las dos fechas comparten
+    // celda —«primero — último»—, así que se busca por el renglón.
+    const celda = await screen.findByText((_, elemento) => {
+      const texto = elemento?.textContent ?? ''
+      return (
+        elemento?.tagName === 'TD' &&
+        texto.includes('2026-08-03') &&
+        texto.includes('2026-08-28')
+      )
+    })
+    expect(celda).toBeInTheDocument()
     expect(screen.getByText('EJECUTIVO')).toBeInTheDocument()
   })
 
@@ -323,19 +332,24 @@ describe('informes paginados', () => {
     // `ventas-pagadas-sin-boleto`: si se usara la ruta, la API devolvería 404.
     montar(InformeVentasSinBoleto, GENERADO)
 
-    expect(await screen.findByText('hace 3 días')).toBeInTheDocument()
+    await screen.findAllByText('Canindeyú')
     expect(urlsDeInformes()[0]).toContain(
       '/api/admin/informes/ventas-pagadas-sin-boleto?',
     )
   })
 
-  it('ventas sin boleto destaca las antiguas y avisa cuando no hay a quién llamar', async () => {
+  it('ventas sin boleto mide la antigüedad en horas, no en texto relativo', async () => {
     montar(InformeVentasSinBoleto, GENERADO)
 
-    // 72 horas: ya no es un cobro en curso, es un caso para atender. Y se dice
-    // con texto, no sólo con color, porque en papel el color no se imprime.
-    expect(await screen.findByText('hace 3 días')).toBeInTheDocument()
-    expect(screen.getByText('Sin datos de contacto')).toBeInTheDocument()
+    // «hace 3 días» no dice nada en una hoja archivada: no se sabe desde
+    // cuándo se cuenta. La cifra y su unidad sí, y se leen igual en papel.
+    await screen.findAllByText('Canindeyú')
+    expect(screen.getByText('horas')).toBeInTheDocument()
+    const antiguedad = screen.getByText((_, elemento) => {
+      const texto = elemento?.textContent ?? ''
+      return elemento?.tagName === 'SPAN' && texto.startsWith('72 horas')
+    })
+    expect(antiguedad).toBeInTheDocument()
     // El monto es el del período completo, no el de la página.
     expect(
       screen.getAllByText(contieneDinero('Gs. 210.000')).length,
@@ -365,7 +379,7 @@ describe('serie temporal', () => {
     expect(
       (await screen.findAllByText(contieneDinero('Gs. 1.365.000'))).length,
     ).toBeGreaterThan(0)
-    expect(screen.getByText('Total del período')).toBeInTheDocument()
+    expect(screen.getByText(/totales del período/i)).toBeInTheDocument()
   })
 
   it('cada tramo se identifica por el día en que empieza', async () => {

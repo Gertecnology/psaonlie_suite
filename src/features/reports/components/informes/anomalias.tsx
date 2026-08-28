@@ -1,11 +1,5 @@
 import * as React from 'react'
-import type {
-  ColumnDef,
-  OnChangeFn,
-  PaginationState,
-} from '@tanstack/react-table'
 import { formatearFechaISO, formatearGuaranies } from '@/lib/formato'
-import { DataTable, useTablaServidor } from '@/components/data-table'
 import {
   informePorRuta,
   rutaApi,
@@ -19,38 +13,36 @@ import {
 } from '../../models/anomalias.model'
 import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
 import { useInforme } from '../../hooks/use-informe'
-import { exportarInformes } from '../../services/informes.service'
 import { FiltrosInformeControles } from '../filtros-informe'
 import { MarcoInforme } from '../marco-informe'
+import { TablaContable, type ColumnaContable } from '../tabla-contable'
 
 const DEFINICION = informePorRuta('anomalias')!
 
 /**
- * Sales whose own figures contradict each other.
+ * Ventas cuyas propias cifras se contradicen.
  *
- * This is not a list of things to review some day: every row here is already
- * being counted by the other reports. A commission larger than its fare is
- * inside the saldo some company gets transferred, and the saldo report has no
- * way to say so. Reading this one first is what makes the rest trustworthy.
+ * Todos los renglones son partidas observadas: no es una lista de cosas a mirar
+ * algún día, es lo que los demás informes ya están contando. Una comisión mayor
+ * que su pasaje está dentro del saldo que se le transfiere a una empresa, y el
+ * informe de saldos no tiene manera de decirlo.
+ *
+ * No lleva `SON:`. No liquida nada: son partidas para revisar a mano, y la suma
+ * de importes que justamente no cierran entre sí no es una cifra que alguien
+ * vaya a pagar.
  */
 export function InformeAnomalias() {
   const { borrador, aplicados, cambiar, generar, puedeGenerar } =
     useFiltrosInforme()
-  const { pagination, onPaginationChange } = useTablaServidor()
 
-  // La página y el tamaño viajan SIEMPRE explícitos: sin ellos el servidor
-  // aplica su límite por defecto (25) mientras la tabla sigue diciendo 10 por
-  // página, y el pie contradice a la grilla.
+  // Sin paginar: la lista se revisa entera. Partirla en páginas obliga a
+  // recorrer el informe de a pedazos para saber cuántas partidas hay.
   const filtros = React.useMemo<FiltrosInforme>(
-    () => ({
-      ...aplicados,
-      pagina: pagination.pageIndex + 1,
-      tamano: pagination.pageSize,
-    }),
-    [aplicados, pagination],
+    () => ({ ...aplicados, pagina: 1, tamano: 200 }),
+    [aplicados],
   )
 
-  const { data, isLoading, isFetching, error } = useInforme<DatosAnomalias>(
+  const { data, isLoading, error } = useInforme<DatosAnomalias>(
     rutaApi(DEFINICION),
     filtros,
   )
@@ -62,122 +54,103 @@ export function InformeAnomalias() {
       periodo={data?.periodo}
       isLoading={isLoading}
       error={error}
-      onGenerar={generar}
-      onExportar={() => void exportarInformes(aplicados)}
-      puedeGenerar={puedeGenerar}
-      resultado={
-        data ? (
-          <Cuerpo
-            datos={data}
-            pagination={pagination}
-            onPaginationChange={onPaginationChange}
-            isFetching={isFetching}
-          />
-        ) : undefined
+      onEmitir={generar}
+      puedeEmitir={puedeGenerar}
+      controles={
+        <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
       }
-    >
-      <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
-    </MarcoInforme>
+      resultado={data ? <Cuerpo datos={data} /> : undefined}
+    />
   )
 }
 
-function Cuerpo({
-  datos,
-  pagination,
-  onPaginationChange,
-  isFetching,
-}: {
-  datos: DatosAnomalias
-  pagination: PaginationState
-  onPaginationChange: OnChangeFn<PaginationState>
-  isFetching: boolean
-}) {
-  return (
-    <div className='space-y-4'>
-      {/* Sin cartel de advertencia ni resumen por tipo: la tabla ES la lista de
-          lo que hay que revisar, y cada fila dice qué le pasa. */}
-      <section className='space-y-2'>
-        <DataTable
-          columns={COLUMNAS}
-          data={datos.data}
-          // Una venta puede fallar varios controles y volver como varias filas:
-          // la clave tiene que incluir el tipo o dos filas compartirían clave.
-          getRowId={claveAnomalia}
-          pageCount={datos.totalPages}
-          pagination={pagination}
-          onPaginationChange={onPaginationChange}
-          isFetching={isFetching}
-          caption='Ventas del período cuyos importes y comisiones no se sostienen entre sí, con el detalle de cada inconsistencia'
-          emptyMessage='El período no tiene anomalías. Es el resultado que se busca.'
-        />
-      </section>
-    </div>
-  )
-}
-
-/** Right-aligned figure column: `data-tipo` is what the print sheet keys on. */
-const MONTO = {
-  className: 'text-right tabular-nums',
-  tipo: 'monto',
-} as const
-
-const COLUMNAS: ColumnDef<Anomalia, unknown>[] = [
-  {
-    id: 'tipo',
-    header: 'Tipo',
-    cell: ({ row }) => (
-      <span className='text-destructive font-medium'>
-        {etiquetaAnomalia(row.original.tipo)}
-      </span>
-    ),
-  },
-  {
-    id: 'venta',
-    header: 'Venta',
-    cell: ({ row }) => (
-      <>
-        <span className='font-medium'>{row.original.numeroTransaccion}</span>
-        <span className='text-muted-foreground block text-xs'>
-          {row.original.estadoPago}
+function Cuerpo({ datos }: { datos: DatosAnomalias }) {
+  const columnas: ColumnaContable<Anomalia>[] = [
+    {
+      clave: 'fecha',
+      titulo: 'Fecha',
+      unidad: 'AAAA-MM-DD',
+      alinear: 'izquierda',
+      ancho: 112,
+      celda: (fila) => formatearFechaISO(fila.fechaVenta),
+    },
+    {
+      clave: 'observacion',
+      titulo: 'Observación',
+      alinear: 'izquierda',
+      celda: (fila) => (
+        <span className='flex flex-col gap-px'>
+          {/* El color no puede ser la única señal: en papel no se imprime. El
+              renglón dice con texto qué le pasa. */}
+          <span className='text-destructive font-medium'>
+            {etiquetaAnomalia(fila.tipo)}
+          </span>
+          {/* La explicación es la del backend, no una interpretación del panel:
+              reescribirla acá haría que la hoja y la API dijeran cosas
+              distintas sobre la misma venta. */}
+          <span className='text-muted-foreground text-[10.5px]'>
+            {fila.detalle}
+          </span>
         </span>
-      </>
-    ),
-  },
-  {
-    id: 'empresa',
-    header: 'Empresa',
-    cell: ({ row }) => row.original.empresaNombre,
-  },
-  {
-    id: 'fecha-venta',
-    header: 'Fecha de venta',
-    meta: { unidad: 'AAAA-MM-DD', className: 'tabular-nums' },
-    cell: ({ row }) => formatearFechaISO(row.original.fechaVenta),
-  },
-  {
-    id: 'pasaje',
-    header: 'Pasaje',
-    meta: { ...MONTO, unidad: 'PYG' },
-    cell: ({ row }) => formatearGuaranies(row.original.pasaje),
-  },
-  {
-    id: 'comision',
-    header: 'Comisión registrada',
-    meta: { ...MONTO, unidad: 'PYG' },
-    cell: ({ row }) => formatearGuaranies(row.original.comision),
-  },
-  {
-    id: 'comision-esperada',
-    header: 'Comisión esperada',
-    meta: { ...MONTO, unidad: 'PYG' },
-    cell: ({ row }) => formatearGuaranies(row.original.comisionEsperada),
-  },
-  {
-    id: 'detalle',
-    header: 'Detalle',
-    // Es la explicación del backend, no una interpretación del panel: reescribirla
-    // acá haría que la pantalla y el informe exportado dijeran cosas distintas.
-    meta: { className: 'max-w-xs text-xs' },
-    cell: ({ row }) => row.original.detalle,
-  },
-]
+      ),
+    },
+    {
+      clave: 'transaccion',
+      titulo: 'Transacción',
+      alinear: 'izquierda',
+      ancho: 130,
+      celda: (fila) => fila.numeroTransaccion,
+    },
+    {
+      clave: 'empresa',
+      titulo: 'Empresa',
+      alinear: 'izquierda',
+      ancho: 170,
+      celda: (fila) => fila.empresaNombre,
+    },
+    {
+      clave: 'estado-pago',
+      titulo: 'Estado de pago',
+      alinear: 'izquierda',
+      ancho: 130,
+      celda: (fila) => fila.estadoPago,
+    },
+    {
+      clave: 'pasaje',
+      titulo: 'Pasaje',
+      unidad: 'Gs.',
+      ancho: 118,
+      celda: (fila) => formatearGuaranies(fila.pasaje),
+    },
+    {
+      clave: 'comision-asentada',
+      titulo: 'Comisión asentada',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => formatearGuaranies(fila.comision),
+    },
+    {
+      clave: 'comision-esperada',
+      titulo: 'Comisión esperada',
+      unidad: 'Gs.',
+      ancho: 128,
+      celda: (fila) => formatearGuaranies(fila.comisionEsperada),
+    },
+  ]
+
+  // Sin fila de totales: la API de este informe no totaliza ninguna columna de
+  // importe. Sumar acá los pasajes o las comisiones de partidas que justamente
+  // no cierran daría una cifra que no existe en ninguna otra parte del sistema.
+  return (
+    <TablaContable
+      columnas={columnas}
+      filas={datos.data}
+      // Una venta puede fallar varios controles y volver como varias filas: la
+      // clave incluye el tipo o dos filas compartirían clave.
+      claveFila={claveAnomalia}
+      observada={() => true}
+      descripcion='Ventas del período cuyos importes y comisiones no se sostienen entre sí, con la observación de cada una'
+      mensajeVacio='El período no tiene partidas observadas. Es el resultado que se busca.'
+    />
+  )
+}

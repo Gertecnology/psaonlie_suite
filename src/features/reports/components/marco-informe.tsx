@@ -1,53 +1,60 @@
 import * as React from 'react'
-import { AlertCircle, Download, FileSearch, Printer } from 'lucide-react'
-import { PageLayout } from '@/components/layout/page-layout'
+import { AlertCircle, Download } from 'lucide-react'
+import { Header } from '@/components/layout/header'
+import { Main } from '@/components/layout/main'
+import { HeaderNotifications } from '@/components/notifications/header-notifications'
+import { ProfileDropdown } from '@/components/profile-dropdown'
+import { ThemeSwitch } from '@/components/theme-switch'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { DefinicionInforme, FiltrosInforme, PeriodoInforme } from '../models/informe.model'
-import { estaGenerado, rutaApi } from '../models/informe.model'
-import { EncabezadoInforme } from './encabezado-informe'
+import { estaGenerado } from '../models/informe.model'
+import { HojaInforme } from './hoja-informe'
 import './informe-imprimible.css'
 
 interface MarcoInformeProps {
   definicion: DefinicionInforme
+  /** Los filtros con los que se emitió lo que se está viendo. */
   filtros: FiltrosInforme
-  /** The filter controls for this report. */
-  children: React.ReactNode
-  /** The report itself. Only rendered once there is data. */
+  /** Los controles de la barra de arriba. */
+  controles: React.ReactNode
+  /** El cuerpo del informe. Sólo se dibuja cuando hay datos. */
   resultado?: React.ReactNode
   periodo?: PeriodoInforme
-  /** Filters in force, worded for the header. */
+  /** Filtros extra en vigor, redactados para la ficha técnica de la hoja. */
   filtrosDescritos?: Array<{ etiqueta: string; valor: string }>
   isLoading?: boolean
   error?: Error | null
-  onGenerar: () => void
-  onExportar?: () => void
-  puedeGenerar: boolean
+  onEmitir: () => void
+  puedeEmitir: boolean
 }
 
 /**
- * Everything a report screen has in common: filters, the Generar button, the
- * traceability header and the print action.
+ * Lo que todos los informes tienen en común.
  *
- * The shape follows the rule the owner set — **nothing is fetched until you
- * ask for it**. Which is why the empty state below is not a placeholder for
- * missing data: it is the normal state of a report you have not run yet, and it
- * says so.
+ * El reparto es lo que define esta pantalla, y viene de una corrección del
+ * dueño: **los filtros van arriba, fuera del informe**, en la misma fila que el
+ * botón de exportar. Dentro de la hoja va lo que se aplicó, en texto. Un
+ * informe emitido es un documento, y un documento no se filtra.
+ *
+ * La otra regla que la forma: **nada se consulta hasta que se pide**. Cada
+ * informe recorre la totalidad de las ventas del período, así que el estado
+ * «sin emitir» de abajo no es un placeholder de datos que faltan — es el estado
+ * normal de un informe que todavía no se pidió, y lo dice.
  */
 export function MarcoInforme({
   definicion,
   filtros,
-  children,
+  controles,
   resultado,
   periodo,
   filtrosDescritos,
   isLoading = false,
   error = null,
-  onGenerar,
-  onExportar,
-  puedeGenerar,
+  onEmitir,
+  puedeEmitir,
 }: MarcoInformeProps) {
-  const generado = estaGenerado(filtros)
+  const emitido = estaGenerado(filtros)
 
   // Se congela cuando llegan los datos: reimprimir el mismo informe no puede
   // cambiarle la hora de emisión, o dejan de ser el mismo documento.
@@ -57,73 +64,91 @@ export function MarcoInforme({
   }, [resultado, isLoading])
 
   return (
-    <PageLayout
-      title={definicion.titulo}
-      description={definicion.responde}
-      showSearch={false}
-      actions={
-        <div className='no-imprimir flex items-center gap-2'>
-          {generado && resultado && (
-            <>
-              <Button variant='outline' size='sm' onClick={() => window.print()}>
-                <Printer className='mr-2 h-4 w-4' />
-                Imprimir
-              </Button>
-              {onExportar && (
-                <Button variant='outline' size='sm' onClick={onExportar}>
-                  <Download className='mr-2 h-4 w-4' />
-                  Excel
-                </Button>
-              )}
-            </>
-          )}
+    <>
+      <Header fixed>
+        <div className='ml-auto flex items-center space-x-4'>
+          <HeaderNotifications />
+          <ThemeSwitch />
+          <ProfileDropdown />
         </div>
-      }
-    >
-      {/* Los filtros son una barra, no una tarjeta con un párrafo adentro: se
-          usan una vez al abrir y después estorban. La descripción del informe
-          ya está en el subtítulo de la página. */}
-      <div className='no-imprimir mb-6 flex flex-wrap items-end gap-3 border-b pb-4'>
-        {children}
-        <Button onClick={onGenerar} disabled={!puedeGenerar || isLoading}>
-          {isLoading ? 'Generando…' : 'Generar'}
-        </Button>
-      </div>
+      </Header>
 
-      <div className='informe-imprimible'>
-        {!generado ? (
-          <SinGenerar />
-        ) : isLoading ? (
-          <Cargando />
-        ) : error ? (
-          <ErrorInforme error={error} onReintentar={onGenerar} />
-        ) : (
-          <>
-            <EncabezadoInforme
-              titulo={definicion.titulo}
-              periodo={periodo}
-              // El endpoint, no el segmento del navegador: el encabezado existe
-              // para que otro pueda reproducir estas cifras, y un informe
-              // cuya ruta de API difiere de su URL imprimiría un path que no
-              // responde.
-              origen={`/api/admin/informes/${rutaApi(definicion)}`}
-              emitidoEn={emitidoEn ?? new Date()}
-              filtros={filtrosDescritos}
-            />
-            {resultado}
-          </>
-        )}
-      </div>
-    </PageLayout>
+      <Main>
+        {/* La barra: título, código, filtros y exportar, todo al mismo nivel. */}
+        <div className='no-imprimir mb-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3'>
+          <div className='flex items-baseline gap-3'>
+            <h1 className='text-xl font-bold tracking-tight'>
+              {definicion.titulo}
+            </h1>
+            <span className='text-muted-foreground text-xs tabular-nums'>
+              {definicion.codigo}
+            </span>
+          </div>
+
+          <div className='flex flex-wrap items-center gap-2.5'>
+            {controles}
+            <Button
+              size='sm'
+              className='h-[30px] rounded-none bg-[#1e2a5a] px-4 text-xs font-semibold hover:bg-[#18224a]'
+              onClick={onEmitir}
+              disabled={!puedeEmitir || isLoading}
+            >
+              {isLoading ? 'Emitiendo…' : 'Emitir'}
+            </Button>
+            {emitido && resultado && (
+              <>
+                <span className='bg-border h-[22px] w-px' aria-hidden />
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-[30px] border-[#1e2a5a] text-xs font-semibold text-[#1e2a5a]'
+                  onClick={() => window.print()}
+                >
+                  <Download className='mr-1.5 size-3.5' />
+                  Exportar a PDF
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className='informe-imprimible'>
+          <HojaInforme
+            definicion={definicion}
+            periodo={periodo}
+            filtrosDescritos={filtrosDescritos}
+            emitidoEn={emitidoEn ?? new Date()}
+          >
+            {!emitido ? (
+              <SinEmitir />
+            ) : isLoading ? (
+              <Cargando />
+            ) : error ? (
+              <ErrorInforme error={error} onReintentar={onEmitir} />
+            ) : (
+              resultado
+            )}
+          </HojaInforme>
+        </div>
+      </Main>
+    </>
   )
 }
 
-function SinGenerar() {
+/**
+ * El estado normal al entrar.
+ *
+ * Como ningún informe se consulta solo, esto es lo que se ve siempre al abrir
+ * la pantalla. Por eso explica por qué no cargó en lugar de disculparse por no
+ * tener datos.
+ */
+function SinEmitir() {
   return (
-    <div className='text-muted-foreground flex items-center gap-3 py-8 text-sm'>
-      <FileSearch className='h-5 w-5 shrink-0' />
-      <p>
-        Elegí el período y apretá <strong>Generar</strong>.
+    <div className='flex flex-col items-center justify-center gap-1.5 px-7 py-16 text-center'>
+      <p className='text-[13.5px] font-semibold'>El informe no se emitió</p>
+      <p className='text-muted-foreground text-xs'>
+        Elegí el período arriba y apretá <strong>Emitir</strong>. Ningún informe
+        se ejecuta al abrir la pantalla.
       </p>
     </div>
   )
@@ -131,9 +156,9 @@ function SinGenerar() {
 
 function Cargando() {
   return (
-    <div className='space-y-3'>
-      <Skeleton className='h-28 w-full' />
-      <Skeleton className='h-64 w-full' />
+    <div className='space-y-2 px-7 py-6'>
+      <Skeleton className='h-7 w-full' />
+      <Skeleton className='h-52 w-full' />
     </div>
   )
 }
@@ -148,11 +173,11 @@ function ErrorInforme({
   return (
     <div
       role='alert'
-      className='border-destructive/50 text-destructive flex flex-col items-center gap-3 rounded-md border p-8 text-center'
+      className='flex flex-col items-center gap-3 px-7 py-12 text-center'
     >
-      <AlertCircle className='h-8 w-8' />
+      <AlertCircle className='text-destructive size-7' />
       <div>
-        <p className='font-medium'>No se pudo generar el informe</p>
+        <p className='font-medium'>No se pudo emitir el informe</p>
         <p className='text-muted-foreground mt-1 text-sm'>{error.message}</p>
       </div>
       <Button variant='outline' size='sm' onClick={onReintentar}>

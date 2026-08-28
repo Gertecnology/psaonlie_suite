@@ -9,11 +9,16 @@ import {
   type PuntoSerieTemporal,
   type SerieTemporal,
 } from '../../models/serie-temporal.model'
+import {
+  alcanceDeLosTotales,
+  rotuloDeLosTotales,
+  sumar,
+} from '../../models/totales'
 import { useFiltrosInforme } from '../../hooks/use-filtros-informe'
 import { useInforme } from '../../hooks/use-informe'
-import { exportarInformes } from '../../services/informes.service'
 import { FiltrosInformeControles } from '../filtros-informe'
 import { MarcoInforme } from '../marco-informe'
+import { TablaContable, type ColumnaContable } from '../tabla-contable'
 
 const DEFINICION = informePorRuta('serie-temporal')!
 
@@ -41,183 +46,155 @@ export function InformeSerieTemporal() {
       definicion={DEFINICION}
       filtros={aplicados}
       periodo={data?.periodo}
-      // La agrupación cambia qué es una fila. Sin decirlo en el encabezado, un
-      // informe semanal impreso es indistinguible de uno diario con pocos días.
+      // La agrupación cambia qué es una fila. Sin decirlo en la ficha técnica,
+      // un informe semanal impreso es indistinguible de uno diario con pocos
+      // días.
       filtrosDescritos={
         data
-          ? [{ etiqueta: 'Agrupado por', valor: etiquetaAgrupacion(data.agruparPor) }]
+          ? [
+              {
+                etiqueta: 'Agrupado por',
+                valor: etiquetaAgrupacion(data.agruparPor),
+              },
+            ]
           : undefined
       }
       isLoading={isLoading}
       error={error}
-      onGenerar={generar}
-      onExportar={() => void exportarInformes(aplicados)}
-      puedeGenerar={puedeGenerar}
+      onEmitir={generar}
+      puedeEmitir={puedeGenerar}
+      controles={
+        <FiltrosInformeControles
+          borrador={borrador}
+          onCambiar={cambiar}
+          extras={['agruparPor']}
+        />
+      }
       resultado={data ? <Cuerpo datos={data} /> : undefined}
-    >
-      <FiltrosInformeControles
-        borrador={borrador}
-        onCambiar={cambiar}
-        extras={['agruparPor']}
-      />
-    </MarcoInforme>
+    />
   )
 }
 
-/**
- * The report is its table.
- *
- * The closing paragraph glossed three columns — what counts as an started sale,
- * what counts as a completed one, and what "ingreso propio" is made of — and a
- * column that needs a sentence has the wrong header, so each of those now sits
- * under the header it explains. The empty period is a row inside the table
- * instead of a block that replaced it: the screen is filters and then one
- * table, whether or not the period sold anything.
- */
 function Cuerpo({ datos }: { datos: SerieTemporal }) {
-  const totales = calcularTotales(datos.data)
   const agrupacion = etiquetaAgrupacion(datos.agruparPor).toLowerCase()
+  const tramos = datos.data
 
-  return (
-    <section>
-      <table className='w-full text-sm'>
-        <caption className='sr-only'>
-          Evolución del período agrupada por {agrupacion}: ventas, cobrado al
-          cliente, neto a las empresas e ingreso propio de cada tramo
-        </caption>
-        <thead>
-          <tr className='border-b text-left'>
-            <th scope='col' className='py-2'>
-              Tramo
-              {/* La fecha es el COMIENZO del tramo, no un rango: bajo
-                  agrupación semanal, "2026-08-03" es la semana que arranca
-                  ahí. Sin decirlo, se lee como si fuera un solo día. */}
-              <span className='text-muted-foreground block text-xs font-normal'>
-                comienza (AAAA-MM-DD)
-              </span>
-            </th>
-            <Encabezado titulo='Iniciadas' unidad='ventas' />
-            <Encabezado titulo='Concretadas' unidad='ventas' />
-            <Encabezado titulo='Cobradas sin boleto' unidad='ventas' />
-            <Encabezado titulo='Pasajes' unidad='PYG' />
-            <Encabezado titulo='Cargo por servicio' unidad='PYG' />
-            <Encabezado titulo='Comisión' unidad='PYG' />
-            <Encabezado titulo='Cobrado al cliente' unidad='PYG' />
-            <Encabezado titulo='Neto a las empresas' unidad='PYG' />
-            <Encabezado titulo='Ingreso propio' unidad='PYG' />
-          </tr>
-        </thead>
-        <tbody>
-          {datos.data.map((punto) => (
-            <tr key={punto.periodo} className='border-b last:border-0'>
-              <th
-                scope='row'
-                className='py-2 text-left font-medium tabular-nums'
-              >
-                {formatearFechaISO(punto.periodo)}
-              </th>
-              <Celda>{formatearEntero(punto.ventasTotales)}</Celda>
-              <Celda>{formatearEntero(punto.ventasLiquidables)}</Celda>
-              <Celda>
-                {punto.pagadasSinBoleto === 0 ? (
-                  <span className='text-muted-foreground'>—</span>
-                ) : (
-                  <span className='text-destructive font-semibold'>
-                    {formatearEntero(punto.pagadasSinBoleto)}
-                    <span className='sr-only'>
-                      {' '}
-                      ventas cobradas al cliente sin pasaje entregado
-                    </span>
-                  </span>
-                )}
-              </Celda>
-              <Celda>{formatearGuaranies(punto.pasajes)}</Celda>
-              <Celda>{formatearGuaranies(punto.cargoServicio)}</Celda>
-              <Celda>{formatearGuaranies(punto.comision)}</Celda>
-              <Celda>{formatearGuaranies(punto.cobradoAlCliente)}</Celda>
-              <Celda>{formatearGuaranies(punto.netoATransferirEmpresas)}</Celda>
-              <Celda>{formatearGuaranies(punto.ingresoPropio)}</Celda>
-            </tr>
-          ))}
-        </tbody>
-        {/* El pie va en `tfoot` y no en una fila más del cuerpo: la hoja de
-            impresión lo repite al final de cada página. */}
-        <tfoot>
-          <tr className='border-t-2 font-medium'>
-            <th scope='row' className='py-2 text-left'>
-              Total del período
-            </th>
-            <Celda>{formatearEntero(totales.ventasTotales)}</Celda>
-            <Celda>{formatearEntero(totales.ventasLiquidables)}</Celda>
-            <Celda>{formatearEntero(totales.pagadasSinBoleto)}</Celda>
-            <Celda>{formatearGuaranies(totales.pasajes)}</Celda>
-            <Celda>{formatearGuaranies(totales.cargoServicio)}</Celda>
-            <Celda>{formatearGuaranies(totales.comision)}</Celda>
-            <Celda>{formatearGuaranies(totales.cobradoAlCliente)}</Celda>
-            <Celda>{formatearGuaranies(totales.netoATransferirEmpresas)}</Celda>
-            <Celda>{formatearGuaranies(totales.ingresoPropio)}</Celda>
-          </tr>
-        </tfoot>
-      </table>
+  // Sumar la columna acá es legítimo porque el endpoint **no pagina**: `data`
+  // trae todos los tramos del período, así que el total es la suma de lo que
+  // está a la vista y cualquiera lo verifica con una calculadora. Por lo mismo
+  // no hay un conteo del período contra el cual comparar: se pasa `undefined`.
+  const listados = tramos.length
+  const totalDelPeriodo = undefined
 
-    </section>
-  )
-}
+  const totales = {
+    ventasTotales: sumar(tramos, (tramo) => tramo.ventasTotales),
+    ventasLiquidables: sumar(tramos, (tramo) => tramo.ventasLiquidables),
+    pasajes: sumar(tramos, (tramo) => tramo.pasajes),
+    cargoServicio: sumar(tramos, (tramo) => tramo.cargoServicio),
+    cobradoAlCliente: sumar(tramos, (tramo) => tramo.cobradoAlCliente),
+    comision: sumar(tramos, (tramo) => tramo.comision),
+    netoATransferirEmpresas: sumar(
+      tramos,
+      (tramo) => tramo.netoATransferirEmpresas,
+    ),
+    ingresoPropio: sumar(tramos, (tramo) => tramo.ingresoPropio),
+  }
 
-/**
- * Totals for the footer.
- *
- * Summed here because the endpoint returns no totals object — and it can be
- * done honestly only because this report is **not paginated**: `data` carries
- * every bucket of the period, so the sum of the rows on screen is the sum of
- * the period. The same shortcut on a paginated report would state a page as if
- * it were the whole.
- */
-function calcularTotales(puntos: PuntoSerieTemporal[]) {
-  return puntos.reduce(
-    (acumulado, punto) => ({
-      ventasTotales: acumulado.ventasTotales + punto.ventasTotales,
-      ventasLiquidables: acumulado.ventasLiquidables + punto.ventasLiquidables,
-      pagadasSinBoleto: acumulado.pagadasSinBoleto + punto.pagadasSinBoleto,
-      pasajes: acumulado.pasajes + punto.pasajes,
-      cargoServicio: acumulado.cargoServicio + punto.cargoServicio,
-      comision: acumulado.comision + punto.comision,
-      cobradoAlCliente: acumulado.cobradoAlCliente + punto.cobradoAlCliente,
-      netoATransferirEmpresas:
-        acumulado.netoATransferirEmpresas + punto.netoATransferirEmpresas,
-      ingresoPropio: acumulado.ingresoPropio + punto.ingresoPropio,
-    }),
+  const columnas: ColumnaContable<PuntoSerieTemporal>[] = [
     {
-      ventasTotales: 0,
-      ventasLiquidables: 0,
-      pagadasSinBoleto: 0,
-      pasajes: 0,
-      cargoServicio: 0,
-      comision: 0,
-      cobradoAlCliente: 0,
-      netoATransferirEmpresas: 0,
-      ingresoPropio: 0,
+      clave: 'tramo',
+      titulo: 'Tramo',
+      // La fecha es el COMIENZO del tramo, no un rango: bajo agrupación
+      // semanal, "2026-08-03" es la semana que arranca ahí. Sin decirlo, se lee
+      // como si fuera un solo día.
+      unidad: 'comienza (AAAA-MM-DD)',
+      alinear: 'izquierda',
+      celda: (fila) => formatearFechaISO(fila.periodo),
     },
-  )
-}
+    {
+      clave: 'ventas-registradas',
+      titulo: 'Ventas registradas',
+      unidad: 'ventas',
+      ancho: 96,
+      celda: (fila) => formatearEntero(fila.ventasTotales),
+      total: formatearEntero(totales.ventasTotales),
+    },
+    {
+      clave: 'ventas-liquidables',
+      titulo: 'Ventas liquidables',
+      unidad: 'ventas',
+      ancho: 96,
+      celda: (fila) => formatearEntero(fila.ventasLiquidables),
+      total: formatearEntero(totales.ventasLiquidables),
+    },
+    {
+      clave: 'pasajes',
+      titulo: 'Pasajes',
+      unidad: 'Gs.',
+      ancho: 112,
+      celda: (fila) => formatearGuaranies(fila.pasajes),
+      total: formatearGuaranies(totales.pasajes),
+    },
+    {
+      clave: 'cargo-servicio',
+      titulo: 'Cargo por servicio',
+      unidad: 'Gs.',
+      ancho: 112,
+      celda: (fila) => formatearGuaranies(fila.cargoServicio),
+      total: formatearGuaranies(totales.cargoServicio),
+    },
+    {
+      clave: 'cobrado-al-cliente',
+      titulo: 'Cobrado al cliente',
+      unidad: 'Gs.',
+      ancho: 118,
+      celda: (fila) => (
+        <span className='font-semibold'>
+          {formatearGuaranies(fila.cobradoAlCliente)}
+        </span>
+      ),
+      total: formatearGuaranies(totales.cobradoAlCliente),
+    },
+    {
+      clave: 'comision',
+      titulo: 'Comisión',
+      unidad: 'Gs.',
+      ancho: 112,
+      celda: (fila) => formatearGuaranies(fila.comision),
+      total: formatearGuaranies(totales.comision),
+    },
+    // Cobrado al cliente es lo que entró; estas dos son cómo se repartió. Sin
+    // ellas la evolución dice cuánto se movió y no de quién es.
+    {
+      clave: 'neto-empresas',
+      titulo: 'Neto a las empresas',
+      unidad: 'Gs.',
+      ancho: 118,
+      celda: (fila) => formatearGuaranies(fila.netoATransferirEmpresas),
+      total: formatearGuaranies(totales.netoATransferirEmpresas),
+    },
+    {
+      clave: 'ingreso-propio',
+      titulo: 'Ingreso propio',
+      unidad: 'Gs.',
+      ancho: 112,
+      celda: (fila) => formatearGuaranies(fila.ingresoPropio),
+      total: formatearGuaranies(totales.ingresoPropio),
+    },
+  ]
 
-function Encabezado({ titulo, unidad }: { titulo: string; unidad: string }) {
   return (
-    <th scope='col' className='py-2 text-right' data-tipo='monto'>
-      {titulo}
-      {/* La unidad va declarada en el encabezado: "Cobrado 1.240" no dice si
-          son guaraníes o ventas, y un informe archivado no tiene contexto. */}
-      <span className='text-muted-foreground block text-xs font-normal'>
-        {unidad}
-      </span>
-    </th>
-  )
-}
-
-function Celda({ children }: { children: React.ReactNode }) {
-  return (
-    <td className='py-2 text-right tabular-nums' data-tipo='monto'>
-      {children}
-    </td>
+    <TablaContable
+      columnas={columnas}
+      filas={tramos}
+      claveFila={(fila) => fila.periodo}
+      rotuloTotales={rotuloDeLosTotales(listados, totalDelPeriodo)}
+      alcanceTotales={alcanceDeLosTotales(listados, totalDelPeriodo)}
+      // Lo que se le cobró al cliente en todo el período: es la única de las
+      // columnas que es un importe cobrado y no un reparto de ese importe.
+      sonImporte={totales.cobradoAlCliente}
+      descripcion={`Evolución del período agrupada por ${agrupacion}: ventas registradas y liquidables, pasajes, cargo por servicio, cobrado al cliente, comisión, neto a las empresas e ingreso propio de cada tramo`}
+      mensajeVacio='El período no tiene movimientos en ningún tramo.'
+    />
   )
 }
