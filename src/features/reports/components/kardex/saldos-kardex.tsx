@@ -39,8 +39,8 @@ import { TablaContable, type ColumnaContable } from '../tabla-contable'
  */
 const DEFINICION: DefinicionInforme = {
   id: 'kardex-saldos' as IdInforme,
-  ruta: 'kardex/saldos',
-  titulo: 'Kardex — Saldos',
+  ruta: 'movimientos',
+  titulo: 'Movimientos',
   codigo: 'INF-KDX-001',
   documento: 'SALDOS DEL LIBRO DE MOVIMIENTOS',
   // El kardex no cuelga de `/api/admin/informes`: sus saldos salen del libro de

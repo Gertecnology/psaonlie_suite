@@ -9,7 +9,6 @@ import {
   IconCurrencyDollar,
   IconUsers,
   IconFileReport,
-  IconBook,
 } from '@tabler/icons-react'
 import { Command } from 'lucide-react'
 import { type SidebarData } from '../types'
@@ -110,15 +109,13 @@ export const sidebarData: SidebarData = {
             { title: 'Conciliación', url: '/reports/conciliacion-bancard' },
             { title: 'Cobradas sin boleto', url: '/reports/ventas-sin-boleto' },
             { title: 'Anomalías', url: '/reports/anomalias' },
+            // Se llamaba «Kardex» y estaba en un grupo aparte. Kardex es el
+            // registro de entradas y salidas de mercadería en depósito, y acá
+            // no hay depósito: hay cuentas, y cada asiento es plata que se le
+            // debe o se le pagó a una transportista. Quien viniera de otra
+            // empresa buscaría stock.
+            { title: 'Movimientos', url: '/reports/movimientos' },
           ],
-        },
-        {
-          // El kardex va aparte: sus cifras salen del libro de movimientos y
-          // no de `ventas`, así que mezclarlo con los informes sugeriría que
-          // son intercambiables.
-          title: 'Kardex',
-          icon: IconBook,
-          items: [{ title: 'Saldos', url: '/reports/kardex-saldos' }],
         },
       ],
     },
