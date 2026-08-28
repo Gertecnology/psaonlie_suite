@@ -20,8 +20,10 @@ export interface VentaConfirmar {
   calidad: string
   origenId: string
   destinoId: string
-  metodoPago: string
-  estadoPago: string
+  /** Con qué se cobra. Opcional: se elige en el paso de cobro. */
+  metodoPago?: string
+  /** Sin método declarado la venta nace PENDIENTE. */
+  estadoPago?: string
   /**
    * Importe de los pasajes, sin cargo por servicio ni comisión.
    * El backend calcula el cargo por servicio y la comisión a partir de esto.

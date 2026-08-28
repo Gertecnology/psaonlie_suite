@@ -13,19 +13,6 @@ import type { CreateClientFormValues } from '@/features/clients/models/clients.m
 import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
 import { useLiberarBloqueosAlSalir } from '../../hooks/use-liberar-bloqueos-al-salir'
 import { mensajeParaOperador } from '../../services/confirmar-venta'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import {
-  OPCIONES_METODO_PAGO,
-  seCobraEnElActo,
-  type MetodoPago,
-} from '@/lib/metodo-pago'
 import { sumarPreciosAsientos } from '../../utils/money'
 import {
   deserializarServiceCharge,
@@ -59,12 +46,6 @@ export function CheckoutPage() {
   const [asientos, setAsientos] = useState<Asiento[]>([])
   const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
-
-  // Con qué se va a cobrar. Se elige acá y no en el paso siguiente porque la
-  // venta nace con este dato: mandarlo fijo obligaba a corregirlo después, y
-  // una venta que expira sin cobrarse quedaba registrada con el método
-  // equivocado para siempre.
-  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
 
   // A nombre de quién sale la factura. Faltaba en la caja: sin esto toda venta
   // de mostrador salía a consumidor final, y el cliente que pedía factura con
@@ -229,15 +210,9 @@ export function CheckoutPage() {
           calidad: search.calidad || '',
           origenId: search.origenId,
           destinoId: search.destinoId,
-          metodoPago,
-          // En efectivo la plata ya está: el vendedor aprieta confirmar con
-          // los billetes en la mano, y la API rechaza `PENDIENTE` porque no
-          // existe un canal por el que confirmarlo después —nadie manda un
-          // callback diciendo "ya te pagó en efectivo".
-          //
-          // Los demás quedan pendientes y se confirman en el paso de cobro:
-          // Bancard por su callback, transferencia y Wepa por verificación.
-          estadoPago: seCobraEnElActo(metodoPago) ? 'PAGADO' : 'PENDIENTE',
+          // Sin método de pago: en el mostrador se confirma la venta antes de
+          // que el cliente diga cómo paga, y eso se elige en el paso siguiente.
+          // Mandar uno acá obligaba a inventarlo.
           // Sólo pasajes: el cargo por servicio lo calcula el backend.
           importeTotal: sumarPreciosAsientos(asientos),
           // Se manda con la venta para que quede congelada en ella: lo que se
@@ -292,20 +267,11 @@ export function CheckoutPage() {
         numeroTransaccion: ventaExitosa.numeroTransaccion,
         estado: ventaExitosa.estado,
         mensaje: ventaExitosa.mensaje,
-        // Con qué se cobró y si ya está cobrada. Sin esto, el paso siguiente
-        // volvía a pedir el método —dejando cambiarlo después de hecha la
-        // venta— y a una venta en efectivo, que nace pagada, le intentaba
-        // registrar el cobro otra vez: «Transición de estado no válida:
-        // PAGADO → PAGADO».
-        metodoPago,
-        estadoPago: seCobraEnElActo(metodoPago) ? 'PAGADO' : 'PENDIENTE',
       })
       serializarServiceCharge(paymentParams, serviceCharge)
 
       toast.success('Venta confirmada', {
-        description: seCobraEnElActo(metodoPago)
-          ? `Transacción ${ventaExitosa.numeroTransaccion}. Cobrada en efectivo.`
-          : `Transacción ${ventaExitosa.numeroTransaccion}. Falta registrar el cobro.`,
+        description: `Transacción ${ventaExitosa.numeroTransaccion}. Falta registrar el cobro.`,
         duration: 6000,
       })
 
@@ -469,25 +435,9 @@ export function CheckoutPage() {
             deshabilitado={confirmando || ventaYaConfirmada}
           />
 
-          <div className="grid gap-2">
-            <Label htmlFor="metodo-de-pago">Cómo va a pagar</Label>
-            <Select
-              value={metodoPago}
-              onValueChange={(valor) => setMetodoPago(valor as MetodoPago)}
-              disabled={confirmando || ventaYaConfirmada}
-            >
-              <SelectTrigger id="metodo-de-pago" aria-label="Método de pago">
-                <SelectValue placeholder="Elegí el método de pago" />
-              </SelectTrigger>
-              <SelectContent>
-                {OPCIONES_METODO_PAGO.map((metodo) => (
-                  <SelectItem key={metodo.value} value={metodo.value}>
-                    {metodo.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <p className="text-muted-foreground text-xs">
+            Cómo paga el cliente se elige en el paso siguiente.
+          </p>
 
           {/* Action Button */}
           <Button
@@ -498,7 +448,6 @@ export function CheckoutPage() {
               faltanPasajeros ||
               confirmando ||
               ventaYaConfirmada ||
-              !metodoPago ||
               faltaFacturacion
             }
           >
@@ -511,11 +460,7 @@ export function CheckoutPage() {
                   ? `Faltan los datos de ${asientos.length - pasajeros.length} pasajero(s)`
                   : faltaFacturacion
                     ? 'Faltan los datos de facturación'
-                    : !metodoPago
-                    ? 'Elegí con qué va a pagar'
-                    : seCobraEnElActo(metodoPago)
-                      ? 'Cobrar en efectivo y emitir los boletos'
-                      : 'Confirmar venta y continuar al cobro'
+                    : 'Confirmar venta y continuar al cobro'
             }
           </Button>
         </div>

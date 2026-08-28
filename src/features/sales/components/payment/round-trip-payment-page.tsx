@@ -184,7 +184,7 @@ export function RoundTripPaymentPage() {
    * Bancard. Ofrecer «Confirmar cobro» acá dejaría marcar como cobrada una
    * venta que nunca se pagó.
    */
-  const conTarjeta = conQueSeCobro === 'BANCARD'
+  const conTarjeta = (conQueSeCobro || metodoPago) === 'BANCARD'
 
   /** Qué tramo se está cobrando con tarjeta, si hay alguno abierto. */
   const [cobrandoConTarjeta, setCobrandoConTarjeta] = useState<{
@@ -392,10 +392,10 @@ export function RoundTripPaymentPage() {
                 </Alert>
               )}
 
-              {/* El método ya se eligió en el checkout: acá sólo se muestra.
-                  Volver a preguntarlo dejaba cambiarlo después de hecha la
-                  venta, y la caja terminaba diciendo algo distinto de lo que
-                  pasó. */}
+              {/* Acá se elige cómo paga el cliente: la venta se confirmó antes,
+                  sin saberlo. Si ya trae método —una venta vieja, o una que se
+                  cobró en parte— sólo se muestra, para no dejar cambiarlo
+                  después de registrado el cobro. */}
               {conQueSeCobro ? (
                 <div className="grid gap-1">
                   <span className="text-sm font-medium">Método de pago</span>
