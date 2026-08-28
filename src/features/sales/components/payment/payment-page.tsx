@@ -8,11 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, Download, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, AlertTriangle } from 'lucide-react'
 import { useActualizarEstadoPago } from '@/features/sales/hooks/use-actualizar-estado-pago'
 import { ResumenPago } from '../pago/resumen-pago'
 import { deserializarServiceCharge } from '../../utils/service-charge-url'
-import { downloadInvoice, downloadBlobAsFile } from '@/features/dashboard/services/invoice.service'
 import type { Asiento, ServiceCharge } from '../../models/sales.model'
 import { toast } from 'sonner'
 import {
@@ -21,6 +20,7 @@ import {
   type MetodoPago,
 } from '@/lib/metodo-pago'
 import { BancardCheckout } from './bancard-checkout'
+import { EntregarLosDocumentos } from '../entrega/entregar-los-documentos'
 
 interface PaymentSearch {
   empresa: string
@@ -118,7 +118,6 @@ export function PaymentPage() {
   const conTarjeta = (conQueSeCobro || metodoPago) === 'BANCARD'
   const [bancardAbierto, setBancardAbierto] = useState(false)
   const [observaciones, setObservaciones] = useState('')
-  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false)
   const [cobroRegistrado, setCobroRegistrado] = useState(false)
 
   /** Cobrada: nació así —efectivo— o se registró en esta pantalla. */
@@ -166,26 +165,6 @@ export function PaymentPage() {
     )
   }
 
-  const handleDownloadInvoice = async () => {
-    if (isDownloadingInvoice) return
-    setIsDownloadingInvoice(true)
-
-    try {
-      const invoiceResponse = await downloadInvoice(search.numeroTransaccion)
-      downloadBlobAsFile(invoiceResponse.data, invoiceResponse.filename)
-
-      toast.success('Factura descargada exitosamente', {
-        description: `Archivo: ${invoiceResponse.filename}`,
-        duration: 3000,
-      })
-    } catch (error) {
-      toast.error('Error al descargar la factura', {
-        description: error instanceof Error ? error.message : 'Error desconocido'
-      })
-    } finally {
-      setIsDownloadingInvoice(false)
-    }
-  }
 
   /**
    * Registra el cobro.
@@ -430,22 +409,21 @@ export function PaymentPage() {
                 <>
                   <Separator />
                   <p className="text-sm font-medium text-green-700">
-                    Cobro registrado. Ya podés descargar la factura.
+                    Cobro registrado. Falta entregarle los documentos.
                   </p>
-                  <Button
-                    onClick={handleDownloadInvoice}
-                    variant="outline"
-                    className="w-full"
-                    size="sm"
-                    disabled={isDownloadingInvoice}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isDownloadingInvoice ? 'Descargando...' : 'Descargar Factura'}
-                  </Button>
                 </>
               )}
             </CardContent>
           </Card>
+
+          {/* El último paso, y el que faltaba: la venta se hacía bien y el
+              cliente se iba sin nada. Los documentos de una venta de caja se
+              generan recién cuando se piden. */}
+          {isPaid && (
+            <EntregarLosDocumentos
+              numeroTransaccion={search.numeroTransaccion}
+            />
+          )}
         </div>
       </div>
     </div>
