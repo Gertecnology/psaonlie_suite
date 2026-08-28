@@ -121,7 +121,7 @@ describe('Liquidación a empresas transportistas', () => {
   it('al entrar no consulta nada y lo dice', async () => {
     montar()
 
-    expect(await screen.findByText(/el informe no se emitió/i)).toBeInTheDocument()
+    expect(await screen.findByText(/todavía no hay nada que ver/i)).toBeInTheDocument()
     expect(
       fetchMock.mock.calls.filter(([url]) =>
         String(url).includes('/api/admin/informes/'),
@@ -129,10 +129,10 @@ describe('Liquidación a empresas transportistas', () => {
     ).toHaveLength(0)
   })
 
-  it('sin emitir no ofrece exportar: no hay nada que exportar todavía', async () => {
+  it('sin buscar no ofrece exportar: no hay nada que exportar todavía', async () => {
     montar()
 
-    await screen.findByText(/el informe no se emitió/i)
+    await screen.findByText(/todavía no hay nada que ver/i)
     expect(screen.queryByRole('button', { name: /exportar a pdf/i })).toBeNull()
   })
 
@@ -144,9 +144,12 @@ describe('Liquidación a empresas transportistas', () => {
         name: /liquidación a empresas transportistas/i,
       }),
     ).toBeInTheDocument()
-    // El código aparece dos veces a propósito: en la barra y en la hoja. La
-    // hoja se archiva sin la pantalla al lado.
-    expect(screen.getAllByText(/INF-ADM-002/).length).toBeGreaterThanOrEqual(2)
+    // El código va en la hoja —membrete y pie— y NO en el título de la
+    // pantalla: identifica al documento que se archiva, no a la pantalla que
+    // se mira.
+    expect(screen.getAllByText(/INF-ADM-002/).length).toBeGreaterThan(0)
+    const titulo = screen.getByRole('heading', { name: /saldo por empresa/i })
+    expect(titulo.textContent).not.toContain('INF-ADM-002')
   })
 
   it('la hoja dice con qué filtros se emitió, no muestra los filtros', async () => {
@@ -231,7 +234,7 @@ describe('Liquidación a empresas transportistas', () => {
     expect(screen.queryByRole('button', { name: /excel/i })).toBeNull()
   })
 
-  it('emitida, ofrece exportar a PDF y nada más', async () => {
+  it('con datos a la vista, ofrece exportar a PDF y nada más', async () => {
     montar(EMITIDO)
 
     expect(

@@ -118,8 +118,8 @@ export function SaldosKardex() {
       ]}
       isLoading={isLoading}
       error={error}
-      onEmitir={generar}
-      puedeEmitir={puedeEmitir}
+      onBuscar={generar}
+      puedeBuscar={puedeEmitir}
       controles={
         <>
           <FiltrosInformeControles borrador={borrador} onCambiar={cambiar} />
