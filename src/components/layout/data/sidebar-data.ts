@@ -4,6 +4,7 @@ import {
   IconSettings,
   IconUserCog,
   IconBuilding,
+  IconReceipt,
   IconShoppingCart,
   IconCurrencyDollar,
   IconUsers,
@@ -71,7 +72,15 @@ export const sidebarData: SidebarData = {
       title: 'Ventas',
       items: [
         {
-          title: 'Ventas',
+          // La entrada del vendedor: primero ve lo que vendió, y desde ahí
+          // abre el flujo. Antes la entrada era el buscador de servicios, que
+          // sirve para vender pero no para saber cómo viene el día.
+          title: 'Mis ventas',
+          url: '/caja',
+          icon: IconReceipt,
+        },
+        {
+          title: 'Vender',
           url: '/sales',
           icon: IconShoppingCart,
         },
