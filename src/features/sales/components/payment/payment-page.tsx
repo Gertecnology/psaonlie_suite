@@ -137,7 +137,9 @@ export function PaymentPage() {
   useEffect(() => {
     const leidos = leerParametros()
     setDatos(leidos)
-    setIsPaid(leidos.search.estado === 'PAGADO')
+    // Ya está cobrada: lo dice `estadoPago`, que viene del checkout. El
+    // `estado` de acá es el de la VENTA (CONFIRMADO/CANCELADO), no el del pago.
+    setCobroRegistrado(leidos.search.estadoPago === 'PAGADO')
   }, [])
 
   const handleGoBack = () => {
