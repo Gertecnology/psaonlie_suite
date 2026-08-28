@@ -1,5 +1,4 @@
 import * as React from 'react'
-import logoPasajeOnline from '@/assets/logo-pasaje-online.png'
 import { formatearFecha } from '@/lib/formato'
 import { useAuth } from '@/context/auth-context'
 import {
@@ -47,10 +46,15 @@ export function HojaInforme({
   return (
     <div className='informe-hoja bg-background border-border border shadow-sm'>
       <header className='flex items-start justify-between gap-8 px-7 pt-5 pb-3.5'>
-        <div className='flex items-start gap-3'>
-          <span className='flex size-[34px] shrink-0 items-center justify-center bg-[#1e2a5a]'>
-            <img src={logoPasajeOnline} alt='' className='w-[23px]' />
-          </span>
+        <div className='flex items-start gap-3.5'>
+          {/* El logo del panel, el mismo del sidebar y el mismo que ve el
+              pasajero. Un membrete con otra marca no es el membrete de la
+              empresa. Sin recuadro: la marca ya tiene su forma. */}
+          <img
+            src='/images/pasajeonline.svg'
+            alt=''
+            className='mt-0.5 h-8 w-auto shrink-0'
+          />
           <div className='flex flex-col gap-px'>
             <span className='text-sm font-bold tracking-wide text-[#1e2a5a]'>
               {EMISOR.razonSocial}

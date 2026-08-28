@@ -6,6 +6,7 @@ import { HeaderNotifications } from '@/components/notifications/header-notificat
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { DefinicionInforme, FiltrosInforme, PeriodoInforme } from '../models/informe.model'
 import { estaGenerado } from '../models/informe.model'
@@ -85,11 +86,9 @@ export function MarcoInforme({
             </span>
           </div>
 
-          <div className='flex flex-wrap items-center gap-2.5'>
+          <div className='flex flex-wrap items-center gap-3'>
             {controles}
             <Button
-              size='sm'
-              className='h-[30px] rounded-none bg-[#1e2a5a] px-4 text-xs font-semibold hover:bg-[#18224a]'
               onClick={onEmitir}
               disabled={!puedeEmitir || isLoading}
             >
@@ -97,14 +96,9 @@ export function MarcoInforme({
             </Button>
             {emitido && resultado && (
               <>
-                <span className='bg-border h-[22px] w-px' aria-hidden />
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='h-[30px] border-[#1e2a5a] text-xs font-semibold text-[#1e2a5a]'
-                  onClick={() => window.print()}
-                >
-                  <Download className='mr-1.5 size-3.5' />
+                <Separator orientation='vertical' className='h-6' />
+                <Button variant='outline' onClick={() => window.print()}>
+                  <Download />
                   Exportar a PDF
                 </Button>
               </>
