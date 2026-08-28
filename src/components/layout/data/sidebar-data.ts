@@ -47,7 +47,7 @@ export const sidebarData: SidebarData = {
           icon: IconChecklist,
         },
         {
-          title: 'Empresas y agencias',
+          title: 'Empresas',
           url: '/agencias',
           icon: IconBuilding,
         },

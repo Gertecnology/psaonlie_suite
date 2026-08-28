@@ -264,5 +264,11 @@ export function useFormularioAgencia(agenciaId?: string) {
     elegirLogo,
     volverAlListado,
     hayCambiosSinGuardar: form.formState.isDirty,
+    /**
+     * El nombre tal como está guardado. Titula la página: usar el del
+     * formulario haría que el encabezado se reescriba letra por letra mientras
+     * se corrige el nombre.
+     */
+    nombreGuardado: consulta.data?.nombre ?? null,
   }
 }

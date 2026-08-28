@@ -213,3 +213,61 @@ export async function actualizarLogoAgencia(
     },
   )
 }
+
+export interface HijaDeEmpresa {
+  id: string
+  /** Puede venir vacío: la sincronización crea la agencia aunque el web service no reporte nombre. */
+  nombre: string | null
+  codigo: string | null
+  activo: boolean
+  boletosDisponibles: number | null
+  /** Si cobra la comisión de su empresa en vez de una propia. */
+  heredaComision: boolean
+  /** Su porcentaje propio. Sólo se cobra si no hereda. */
+  porcentajeVentas: number | null
+  /** El que realmente cobra, ya resuelto por el servidor. */
+  comisionEfectiva: number | null
+}
+
+export interface HijasDeEmpresaPage {
+  items: HijaDeEmpresa[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  /** Cuántas de las que cumplen los filtros venden. */
+  activas: number
+}
+
+export interface HijasDeEmpresaParams {
+  page: number
+  limit: number
+  search?: string
+  activo?: boolean
+}
+
+/**
+ * Una página de las agencias de una empresa, filtrada en el servidor.
+ *
+ * La comisión llega ya resuelta: recalcularla acá sería la forma segura de que
+ * el panel y el informe muestren números distintos por la misma venta.
+ */
+export async function obtenerHijasPaginadas(
+  padreId: string,
+  params: HijasDeEmpresaParams,
+): Promise<HijasDeEmpresaPage> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+  })
+
+  // Los vacíos no se mandan: `search=` haría filtrar por cadena vacía en vez
+  // de no filtrar.
+  if (params.search?.trim()) query.set('search', params.search.trim())
+  if (params.activo !== undefined) query.set('activo', String(params.activo))
+
+  return apiFetch<HijasDeEmpresaPage>(
+    `/agencias/${encodeURIComponent(padreId)}/hijas?${query.toString()}`,
+    { fallbackMessage: 'Error al obtener las agencias de la empresa.' },
+  )
+}
