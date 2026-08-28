@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { ApiError } from '@/utils/api-client'
 import { AuthErrorHandler } from '@/utils/auth-error-handler'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -18,12 +19,12 @@ export abstract class BaseApiService {
       // Import refreshToken function dynamically to avoid circular dependencies
       const { refreshToken } = await import('@/services/auth')
       const data = await refreshToken(storedRefreshToken)
-      
+
       // Update tokens in localStorage
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('user', JSON.stringify(data.user))
-      
+
       return true
     } catch (error) {
       console.error('Error al renovar token:', error)
@@ -35,24 +36,24 @@ export abstract class BaseApiService {
     const token = localStorage.getItem('accessToken')
     return {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     }
   }
 
   protected getAuthHeadersForFormData(): HeadersInit {
     const token = localStorage.getItem('accessToken')
     return {
-      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     }
   }
 
   protected async request<T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {},
     retryCount: number = 0
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
-    
+
     const response = await fetch(url, {
       headers: {
         ...this.getAuthHeaders(),
@@ -70,18 +71,22 @@ export abstract class BaseApiService {
           return this.request<T>(endpoint, options, retryCount + 1)
         } else {
           // If refresh fails, use authentication error handler
-          const authError = new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+          const authError = new Error(
+            'Sesión expirada. Por favor, inicia sesión nuevamente.'
+          )
           AuthErrorHandler.handleAuthError(authError)
           throw authError
         }
       }
-      
+
       if (response.status === 401) {
-        const authError = new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        const authError = new Error(
+          'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        )
         AuthErrorHandler.handleAuthError(authError)
         throw authError
       }
-      
+
       // Try to get error message from server
       let errorMessage = `Error ${response.status}: ${response.statusText}`
       try {
@@ -94,8 +99,8 @@ export abstract class BaseApiService {
       } catch {
         // If can't parse JSON, use default message
       }
-      
-      throw new Error(errorMessage)
+
+      throw new ApiError(errorMessage, response.status)
     }
 
     return response.json()
@@ -108,7 +113,7 @@ export abstract class BaseApiService {
     retryCount: number = 0
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
-    
+
     const response = await fetch(url, {
       method,
       headers: this.getAuthHeadersForFormData(),
@@ -121,21 +126,30 @@ export abstract class BaseApiService {
         const refreshSuccess = await this.attemptTokenRefresh()
         if (refreshSuccess) {
           // Retry the request with the new token
-          return this.requestWithFormData<T>(endpoint, formData, method, retryCount + 1)
+          return this.requestWithFormData<T>(
+            endpoint,
+            formData,
+            method,
+            retryCount + 1
+          )
         } else {
           // If refresh fails, use authentication error handler
-          const authError = new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+          const authError = new Error(
+            'Sesión expirada. Por favor, inicia sesión nuevamente.'
+          )
           AuthErrorHandler.handleAuthError(authError)
           throw authError
         }
       }
-      
+
       if (response.status === 401) {
-        const authError = new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        const authError = new Error(
+          'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        )
         AuthErrorHandler.handleAuthError(authError)
         throw authError
       }
-      
+
       // Try to get error message from server
       let errorMessage = `Error ${response.status}: ${response.statusText}`
       try {
@@ -148,8 +162,8 @@ export abstract class BaseApiService {
       } catch {
         // If can't parse JSON, use default message
       }
-      
-      throw new Error(errorMessage)
+
+      throw new ApiError(errorMessage, response.status)
     }
 
     return response.json()

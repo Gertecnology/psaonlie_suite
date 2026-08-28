@@ -63,6 +63,7 @@ export function UserForm({ userId }: UserFormProps) {
     loadingRoles,
     loading,
     error,
+    cargado,
     fotoPreview,
     errorFoto,
     elegirFoto,
@@ -95,7 +96,15 @@ export function UserForm({ userId }: UserFormProps) {
     )
   }
 
-  if (error) {
+  /**
+   * Un formulario en blanco no se distingue de uno cuyos datos están vacíos.
+   *
+   * Mientras `GET /api/usuarios/:id` no existió, la pantalla dibujaba los campos
+   * sin nada adentro —sin correo, sin nombre, sin rol— y guardar desde ahí
+   * escribía ese vacío encima de lo que la persona tenía. Que falle no puede
+   * parecerse a que esté vacío.
+   */
+  if (error || !cargado) {
     return (
       <PageLayout title={titulo} showSearch={false}>
         <div
@@ -103,7 +112,10 @@ export function UserForm({ userId }: UserFormProps) {
           className='border-destructive/50 text-destructive max-w-2xl rounded-md border p-6'
         >
           <p className='font-medium'>No se pudo cargar el usuario</p>
-          <p className='text-muted-foreground mt-1 text-sm'>{error.message}</p>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            {error?.message ??
+              'El servidor no devolvió sus datos. No se muestra el formulario para no guardar campos vacíos encima de los suyos.'}
+          </p>
           <Button variant='outline' className='mt-4' asChild>
             <Link to='/users'>Volver al listado</Link>
           </Button>
@@ -111,7 +123,6 @@ export function UserForm({ userId }: UserFormProps) {
       </PageLayout>
     )
   }
-
 
   return (
     <PageLayout
