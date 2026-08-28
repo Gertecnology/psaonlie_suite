@@ -1,16 +1,23 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/caja/services/caja.service', () => ({
   enviarDocumentos: vi.fn(() => Promise.resolve({ enviado: true, mensaje: '' })),
   descargarFactura: vi.fn(() => Promise.resolve()),
+  // El listado de documentos vive dentro de esta tarjeta: sin estos dobles, la
+  // pantalla no llega a montarse y todo lo de abajo falla por una razón que no
+  // tiene que ver con entregar nada.
+  obtenerFacturasDeLaVenta: vi.fn(() => Promise.resolve([])),
+  verDocumento: vi.fn(),
+  descargarDocumento: vi.fn(),
 }))
 
 import {
   descargarFactura,
   enviarDocumentos,
 } from '@/features/caja/services/caja.service'
+import { renderConProveedores } from '@/test/utils'
 import { EntregarLosDocumentos } from './entregar-los-documentos'
 
 /**
@@ -24,7 +31,9 @@ import { EntregarLosDocumentos } from './entregar-los-documentos'
  */
 describe('entregar los documentos', () => {
   const montar = () =>
-    render(<EntregarLosDocumentos numeroTransaccion='TXN11311703245' />)
+    renderConProveedores(
+      <EntregarLosDocumentos numeroTransaccion='TXN11311703245' />,
+    )
 
   beforeEach(() => {
     vi.mocked(enviarDocumentos).mockClear()

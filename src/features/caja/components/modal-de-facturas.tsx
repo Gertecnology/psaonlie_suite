@@ -1,6 +1,5 @@
-import { AlertTriangle, Download, Printer } from 'lucide-react'
+import { Download, Printer } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,21 +8,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Skeleton } from '@/components/ui/skeleton'
-import { formatearFechaHora } from '@/lib/formato'
-import { useDescargarFactura, useFacturasDeLaVenta } from '../hooks/use-caja'
+import { useDescargarFactura } from '../hooks/use-caja'
+import { LosDocumentosDeLaVenta } from './los-documentos-de-la-venta'
 
 /**
- * Los documentos fiscales de una venta.
+ * Los documentos de una venta ya hecha.
  *
- * Una factura por pasaje —la transportista factura cada boleto por separado— y
- * un solo comprobante del cargo por servicio, que Pasaje Online cobra una vez.
+ * El boleto de cada pasajero, una factura por pasaje —la transportista factura
+ * cada boleto por separado— y un solo comprobante del cargo por servicio, que
+ * Pasaje Online cobra una vez.
  *
- * Y arriba de todo, el aviso cuando no son fiscales de verdad. Eso pasa hoy en
- * todos: la transportista responde `Boleto_FE: N` y no manda timbrado, CDC ni
- * QR. El documento reproduce la venta, pero archivarlo creyendo que es una
- * factura ante la SET es un problema del contador, no del sistema — así que la
- * pantalla lo dice.
+ * El listado y la vista previa viven en `LosDocumentosDeLaVenta`, porque son los
+ * mismos que ve el vendedor al terminar la venta: si acá se pudiera abrir un
+ * documento y allá no, sería la misma pantalla contando dos cosas distintas.
+ *
+ * Lo que este modal agrega es la impresión de la venta entera, que sólo tiene
+ * sentido sobre una venta cerrada.
  */
 export function ModalDeFacturas({
   numeroTransaccion,
@@ -32,14 +32,11 @@ export function ModalDeFacturas({
   numeroTransaccion: string | null
   onClose: () => void
 }) {
-  const { data: facturas, isLoading, error } = useFacturasDeLaVenta(numeroTransaccion)
   const descargar = useDescargarFactura()
-
-  const ningunaEsFiscal = facturas?.length ? facturas.every((f) => !f.esFiscal) : false
 
   return (
     <Dialog open={!!numeroTransaccion} onOpenChange={(abierto) => !abierto && onClose()}>
-      <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
+      <DialogContent className='max-h-[85vh] max-w-3xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Documentos de la venta</DialogTitle>
           <DialogDescription className='font-mono text-xs'>
@@ -47,61 +44,13 @@ export function ModalDeFacturas({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading && <Skeleton className='h-32 w-full' />}
-
-        {error && (
-          <p className='text-destructive text-sm'>{(error as Error).message}</p>
-        )}
-
-        {ningunaEsFiscal && (
-          <div className='flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs'>
-            <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-600' />
-            <p>
-              La transportista todavía no informa timbrado, CDC ni código QR.
-              Estos documentos reproducen la venta, pero{' '}
-              <strong>no son facturas ante la SET</strong>.
-            </p>
-          </div>
-        )}
-
-        {facturas?.length === 0 && (
-          <p className='text-muted-foreground py-8 text-center text-sm'>
-            Esta venta todavía no tiene documentos generados.
-          </p>
-        )}
-
-        <div className='grid gap-2'>
-          {facturas?.map((factura) => (
-            <div
-              key={factura.id}
-              className='flex flex-wrap items-center justify-between gap-3 rounded-md border p-3'
-            >
-              <div className='min-w-0'>
-                <p className='truncate text-sm font-medium'>
-                  {factura.tipo === 'CARGO_SERVICIO'
-                    ? 'Cargo por servicio'
-                    : `Factura del pasaje ${factura.numeroBoleto ?? ''}`}
-                </p>
-                <p className='text-muted-foreground text-xs'>
-                  {factura.razonSocial ?? 'Sin razón social'}
-                  {factura.documento && ` · ${factura.documento}`}
-                  {' · '}
-                  {formatearFechaHora(factura.emitidaEn)}
-                </p>
-              </div>
-
-              <Badge variant={factura.esFiscal ? 'default' : 'outline'}>
-                {factura.esFiscal ? 'Fiscal' : 'No fiscal'}
-              </Badge>
-            </div>
-          ))}
-        </div>
+        <LosDocumentosDeLaVenta numeroTransaccion={numeroTransaccion} />
 
         {/*
           Las dos impresiones conviven: se le imprime el térmico al cliente que
           está enfrente, y la A4 queda para el archivo. No son alternativas.
         */}
-        {!!facturas?.length && numeroTransaccion && (
+        {numeroTransaccion && (
           <div className='flex flex-wrap gap-2 border-t pt-3'>
             <Button
               variant='outline'
