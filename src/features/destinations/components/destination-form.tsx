@@ -266,17 +266,21 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
                           disabled={saving}
                           alto='100%'
                           onChange={(nueva) => {
-                            // Las dos coordenadas se mueven juntas, y con
                             // `shouldDirty` para que el aviso de cambios sin
                             // guardar cuente también mover el pin.
                             form.setValue('latitud', nueva?.lat ?? null, {
                               shouldDirty: true,
-                              shouldValidate: true,
                             })
                             form.setValue('longitud', nueva?.lng ?? null, {
                               shouldDirty: true,
-                              shouldValidate: true,
                             })
+                            // Se valida DESPUÉS de mover las dos, y las dos
+                            // juntas. Con `shouldValidate` en cada `setValue`,
+                            // el primero corría la regla de "las dos o ninguna"
+                            // con la longitud todavía vieja y dejaba el error
+                            // «La ubicación necesita las dos coordenadas»
+                            // pegado en un formulario que ya estaba completo.
+                            void form.trigger(['latitud', 'longitud'])
                           }}
                         />
                       </FormControl>
