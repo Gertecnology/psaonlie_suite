@@ -19,10 +19,42 @@ export interface FiltrosDeCaja {
   hasta?: string
   busqueda?: string
   estadoPago?: string
+  /**
+   * Estado de la venta, aparte del estado del pago: una venta anulada pudo
+   * haberse cobrado, y una pagada pudo no confirmarse nunca con la
+   * transportista.
+   */
+  estadoVenta?: string
   emisorId?: string
+  /**
+   * Sólo surte efecto para quien ve todas las ventas. A un vendedor el backend
+   * se lo ignora, y sigue viendo únicamente las suyas.
+   */
+  vendedorId?: string
+  /** Sobre lo que pagó el cliente: pasajes más cargo por servicio. */
+  montoMin?: number
+  montoMax?: number
   origen?: OrigenDeVenta
   pagina?: number
   tamano?: number
+}
+
+/** Una opción de un desplegable de filtro. */
+export interface OpcionDeCaja {
+  id: string
+  nombre: string
+}
+
+/**
+ * Lo que se ofrece en los desplegables.
+ *
+ * Sale de las ventas que existen, no del catálogo completo. `vendedores` llega
+ * vacío para quien ve sólo las suyas: no tiene a quién filtrar más que a sí
+ * mismo, y los nombres de sus compañeros no son parte de su pantalla.
+ */
+export interface OpcionesDeCaja {
+  empresas: OpcionDeCaja[]
+  vendedores: OpcionDeCaja[]
 }
 
 /** Una fila de la tabla. */
