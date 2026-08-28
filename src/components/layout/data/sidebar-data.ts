@@ -99,6 +99,10 @@ export const sidebarData: SidebarData = {
           items: [
             { title: 'Resumen financiero', url: '/reports/resumen-financiero' },
             { title: 'Saldo por empresa', url: '/reports/por-agencia' },
+            {
+              title: 'Comisiones por vendedor',
+              url: '/reports/por-vendedor',
+            },
             { title: 'Estado de ventas', url: '/reports/estado-ventas' },
             { title: 'Por método de pago', url: '/reports/por-metodo-pago' },
             { title: 'Por ruta', url: '/reports/por-ruta' },
