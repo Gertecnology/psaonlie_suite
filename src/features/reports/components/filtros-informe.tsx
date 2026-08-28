@@ -14,7 +14,7 @@ import {
   type Periodo,
   type PresetPeriodo,
 } from '@/lib/periodo'
-import { SelectorRangoFechas } from '@/features/dashboard/components/selector-rango-fechas'
+import { SelectorRangoFechas } from '@/components/filtros/selector-rango-fechas'
 import { useAgenciasPanel } from '@/features/dashboard/hooks/use-agencias-panel'
 import type { FiltrosInforme } from '../models/informe.model'
 
