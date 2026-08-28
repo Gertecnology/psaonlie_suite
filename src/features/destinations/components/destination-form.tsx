@@ -25,6 +25,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { useDestinationForm } from '../hooks/use-destination-form'
 import { DestinationMapPicker } from './destination-map-picker'
+import { DestinationParadasTable } from './destination-paradas-table'
+
+/** Alto compartido por las dos tarjetas de arriba, de donde sale la simetría. */
+const ALTO_DE_LA_FILA = 'lg:h-[460px]'
+
+const ID_DEL_FORM = 'destino-form'
 
 interface DestinationFormProps {
   /** Absent when creating. */
@@ -38,10 +44,10 @@ interface DestinationFormProps {
  * link, a reload loses it, and the back button closes the whole panel instead of
  * undoing the last step.
  *
- * Las tres secciones responden tres preguntas distintas —cómo se llama, dónde
- * queda, con qué paradas se corresponde—. Cuando eran campos sueltos uno abajo
- * del otro, nada decía que el selector de paradas es homologación y no un
- * adorno: por eso cada bloque explica su consecuencia arriba.
+ * El nombre y el mapa van lado a lado y miden lo mismo: ubicar es la mitad del
+ * trabajo de esta pantalla, y con el mapa apilado abajo quedaba fuera de vista
+ * en cuanto la ventana era normal. El listado de paradas va debajo, a todo el
+ * ancho, porque es tabla y no campo.
  *
  * All the logic lives in `use-destination-form`; this file only renders.
  */
@@ -58,9 +64,10 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
     backToList,
     hasUnsavedChanges,
     precisionUbicacion,
+    nombreGuardado,
   } = useDestinationForm(destinationId)
 
-  const titulo = isEdit ? 'Editar destino' : 'Crear destino'
+  const titulo = isEdit ? (nombreGuardado ?? 'Editar destino') : 'Crear destino'
 
   // Un cierre accidental con el formulario a medias pierde todo lo cargado.
   React.useEffect(() => {
@@ -73,11 +80,13 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
 
   if (loading) {
     return (
-      <PageLayout title={titulo} showSearch={false}>
-        <div className='max-w-3xl space-y-6'>
-          <Skeleton className='h-40 w-full' />
-          <Skeleton className='h-[420px] w-full' />
-          <Skeleton className='h-32 w-full' />
+      <PageLayout title='Cargando destino…' showSearch={false}>
+        <div className='space-y-5'>
+          <div className='grid gap-5 lg:grid-cols-2'>
+            <Skeleton className='h-[460px] w-full' />
+            <Skeleton className='h-[460px] w-full' />
+          </div>
+          <Skeleton className='h-64 w-full' />
         </div>
       </PageLayout>
     )
@@ -85,10 +94,10 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
 
   if (isEdit && error) {
     return (
-      <PageLayout title={titulo} showSearch={false}>
+      <PageLayout title='Editar destino' showSearch={false}>
         <div
           role='alert'
-          className='border-destructive/50 text-destructive max-w-3xl rounded-md border p-6'
+          className='border-destructive/50 text-destructive max-w-2xl rounded-md border p-6'
         >
           <p className='font-medium'>No se pudo cargar el destino</p>
           <p className='text-muted-foreground mt-1 text-sm'>{error.message}</p>
@@ -100,7 +109,6 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
     )
   }
 
-  const cantidadParadas = form.watch('paradasHomologadasIds').length
   const latitud = form.watch('latitud')
   const longitud = form.watch('longitud')
   const coordenada =
@@ -113,189 +121,193 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
       title={titulo}
       description={
         isEdit
-          ? 'Modificá cómo se llama, dónde queda y qué paradas lo representan.'
+          ? 'Editando un destino que ya existe.'
           : 'Un destino agrupa las paradas que las empresas reportan con nombres distintos.'
       }
       showSearch={false}
       actions={
-        <Button variant='ghost' size='sm' asChild>
-          <Link to='/destinations'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Destinos
-          </Link>
-        </Button>
+        <div className='flex flex-col items-end gap-1'>
+          <div className='flex items-center gap-2'>
+            <Button variant='ghost' size='sm' asChild>
+              <Link to='/destinations'>
+                <ArrowLeft className='mr-1.5 h-4 w-4' />
+                Destinos
+              </Link>
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={backToList}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            {/* Fuera del <form> pero atado a él por id: así el botón puede vivir
+                en el encabezado y seguir enviando. */}
+            <Button type='submit' form={ID_DEL_FORM} disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </div>
+          {hasUnsavedChanges && !saving && (
+            <span className='text-muted-foreground text-xs'>
+              Hay cambios sin guardar
+            </span>
+          )}
+        </div>
       }
     >
       <Form {...form}>
-        {/* El submit vive en el <form>, así que Enter guarda desde cualquier
-            campo — antes el botón estaba fuera y Enter no hacía nada. */}
-        <form onSubmit={save} className='max-w-3xl space-y-6 pb-24'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Identificación</CardTitle>
-              <CardDescription>
-                El nombre es el que ve quien compra cuando elige origen y
-                destino.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <FormField
-                control={form.control}
-                name='nombre'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del destino</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        autoFocus
-                        placeholder='Ej: Asunción Terminal'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <form id={ID_DEL_FORM} onSubmit={save} className='space-y-5'>
+          <div className='grid gap-5 lg:grid-cols-2'>
+            <Card className={`flex flex-col ${ALTO_DE_LA_FILA}`}>
+              <CardHeader>
+                <CardTitle>Datos del destino</CardTitle>
+                <CardDescription>
+                  El nombre es el que ve quien compra cuando elige origen y
+                  destino.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='flex-1 space-y-5'>
+                <FormField
+                  control={form.control}
+                  name='nombre'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoFocus
+                          placeholder='Ej: Asunción Terminal'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name='activo'
-                render={({ field }) => (
-                  <FormItem className='flex items-start justify-between gap-6 rounded-md border p-4'>
-                    <div className='space-y-1'>
-                      <FormLabel>Se ofrece en la búsqueda</FormLabel>
+                <FormField
+                  control={form.control}
+                  name='paradasHomologadasIds'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Agregar una parada homologada</FormLabel>
+                      <FormControl>
+                        {/* Controlado por `value`: con `defaultValue` el selector se
+                            quedaba con lo que hubiera al montar e ignoraba el registro
+                            que llegaba después. */}
+                        <MultiSelect
+                          options={paradaOptions}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={loadingOptions || saving}
+                          placeholder={
+                            loadingOptions
+                              ? 'Cargando paradas…'
+                              : 'Buscar entre las paradas que reportan las empresas…'
+                          }
+                          maxCount={3}
+                        />
+                      </FormControl>
                       <FormDescription>
-                        Apagado, el destino deja de aparecer cuando alguien
-                        busca un pasaje. Los que ya lo compraron no se ven
-                        afectados.
+                        Cada una que elijas aparece en el listado de abajo. Si
+                        hoy está en otro destino, se mueve a éste.
                       </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
-                <MapPin className='h-4 w-4' />
-                Dónde queda
-              </CardTitle>
-              <CardDescription>
-                Se usa para proponerle este destino como origen a quien entra a
-                comprar desde cerca. Es opcional: sin ubicación el destino
-                funciona igual, sólo que no aparece por cercanía.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name='latitud'
-                render={() => (
-                  <FormItem>
-                    <FormControl>
-                      <DestinationMapPicker
-                        valor={coordenada}
-                        precision={precisionUbicacion}
-                        nombreDestino={form.watch('nombre')}
-                        disabled={saving}
-                        onChange={(nueva) => {
-                          // Las dos coordenadas se mueven juntas, y con
-                          // `shouldDirty` para que el aviso de cambios sin
-                          // guardar cuente también mover el pin.
-                          form.setValue('latitud', nueva?.lat ?? null, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                          form.setValue('longitud', nueva?.lng ?? null, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                <FormField
+                  control={form.control}
+                  name='activo'
+                  render={({ field }) => (
+                    <FormItem className='flex items-start justify-between gap-6 rounded-md border p-4'>
+                      <div className='space-y-1'>
+                        <FormLabel>Se ofrece en la búsqueda</FormLabel>
+                        <FormDescription>
+                          Apagado, deja de aparecer cuando alguien busca un
+                          pasaje. Los que ya compraron no se ven afectados.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-          <Card>
+            <Card className={`flex flex-col overflow-hidden ${ALTO_DE_LA_FILA}`}>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <MapPin className='h-4 w-4' />
+                  Dónde queda
+                </CardTitle>
+                <CardDescription>
+                  Se usa para proponer este destino como origen a quien compra
+                  desde cerca. Es opcional.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='flex min-h-0 flex-1 flex-col'>
+                <FormField
+                  control={form.control}
+                  name='latitud'
+                  render={() => (
+                    <FormItem className='flex min-h-0 flex-1 flex-col'>
+                      <FormControl>
+                        <DestinationMapPicker
+                          valor={coordenada}
+                          precision={precisionUbicacion}
+                          disabled={saving}
+                          alto='100%'
+                          onChange={(nueva) => {
+                            // Las dos coordenadas se mueven juntas, y con
+                            // `shouldDirty` para que el aviso de cambios sin
+                            // guardar cuente también mover el pin.
+                            form.setValue('latitud', nueva?.lat ?? null, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                            form.setValue('longitud', nueva?.lng ?? null, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className='overflow-hidden'>
             <CardHeader>
               <CardTitle>Paradas homologadas</CardTitle>
               <CardDescription>
-                Cada empresa reporta la misma parada con su propio nombre.
-                Elegir una acá es decir «todas estas son este lugar».
+                Cada empresa reporta esta misma parada con su propio nombre.
+                Todas son este lugar. El estado que se muestra es el de la
+                empresa que la reporta.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name='paradasHomologadasIds'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className='sr-only'>
-                      Paradas homologadas
-                    </FormLabel>
-                    <FormControl>
-                      {/* Controlado por `value`: con `defaultValue` el selector se
-                          quedaba con lo que hubiera al montar e ignoraba el registro
-                          que llegaba después. */}
-                      <MultiSelect
-                        options={paradaOptions}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={loadingOptions || saving}
-                        placeholder={
-                          loadingOptions
-                            ? 'Cargando paradas...'
-                            : 'Seleccioná las paradas...'
-                        }
-                        maxCount={10}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {cantidadParadas === 0
-                        ? 'Sin paradas todavía. El destino se puede guardar igual y homologarlo después.'
-                        : `${cantidadParadas} parada${cantidadParadas === 1 ? '' : 's'} seleccionada${cantidadParadas === 1 ? '' : 's'}. Una parada que hoy está en otro destino se mueve a éste.`}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
+            {destinationId ? (
+              <DestinationParadasTable destinationId={destinationId} />
+            ) : (
+              <CardContent>
+                <p className='text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
+                  El listado aparece una vez que el destino exista. Elegí las
+                  paradas arriba y guardá.
+                </p>
+              </CardContent>
+            )}
           </Card>
-
-          {/* Fija abajo: con el mapa en el medio, el formulario pasó a ser más
-              alto que la pantalla y el botón de guardar quedaba fuera de vista. */}
-          <div className='bg-background/95 fixed inset-x-0 bottom-0 border-t backdrop-blur md:left-(--sidebar-width)'>
-            <div className='mx-auto flex max-w-3xl items-center gap-3 px-4 py-3 md:px-8'>
-              <Button type='submit' disabled={saving}>
-                {saving ? 'Guardando…' : 'Guardar'}
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                onClick={backToList}
-                disabled={saving}
-              >
-                Cancelar
-              </Button>
-              {hasUnsavedChanges && !saving && (
-                <span className='text-muted-foreground ml-auto text-sm'>
-                  Hay cambios sin guardar
-                </span>
-              )}
-            </div>
-          </div>
         </form>
       </Form>
     </PageLayout>

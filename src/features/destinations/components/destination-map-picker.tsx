@@ -27,9 +27,9 @@ interface DestinationMapPickerProps {
   onChange: (coordenada: Coordenada | null) => void
   /** De dónde salió la coordenada guardada: `MANUAL`, `ROOFTOP`, `APPROXIMATE`… */
   precision?: string | null
-  /** Se usa como término inicial del buscador. */
-  nombreDestino?: string
   disabled?: boolean
+  /** Alto del mapa. En la columna lateral ocupa lo que sobra. */
+  alto?: string
 }
 
 /**
@@ -80,11 +80,9 @@ function SeguirCoordenada({ coordenada }: { coordenada: Coordenada | null }) {
  */
 function BuscadorDeLugares({
   onElegir,
-  valorInicial,
   disabled,
 }: {
   onElegir: (coordenada: Coordenada) => void
-  valorInicial?: string
   disabled?: boolean
 }) {
   const places = useMapsLibrary('places')
@@ -129,7 +127,6 @@ function BuscadorDeLugares({
           ref={inputRef}
           className='pl-9'
           placeholder='Escribí la ciudad o la terminal…'
-          defaultValue={valorInicial}
           disabled={disabled || !places}
           // Places usa Enter para elegir de su lista; sin esto, Enter
           // enviaría el formulario con la búsqueda a medio hacer.
@@ -157,8 +154,8 @@ export function DestinationMapPicker({
   valor,
   onChange,
   precision,
-  nombreDestino,
   disabled,
+  alto = '340px',
 }: DestinationMapPickerProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
 
@@ -217,15 +214,11 @@ export function DestinationMapPicker({
   return (
     <APIProvider apiKey={apiKey} libraries={['places']}>
       <div className='space-y-4'>
-        <BuscadorDeLugares
-          onElegir={elegirEnMapa}
-          valorInicial={nombreDestino}
-          disabled={disabled}
-        />
+        <BuscadorDeLugares onElegir={elegirEnMapa} disabled={disabled} />
 
         <div className='relative overflow-hidden rounded-md border'>
           <Map
-            style={{ width: '100%', height: '340px' }}
+            style={{ width: '100%', height: alto }}
             defaultCenter={valor ?? CENTRO_PARAGUAY}
             defaultZoom={valor ? ZOOM_CIUDAD : ZOOM_PAIS}
             gestureHandling='cooperative'

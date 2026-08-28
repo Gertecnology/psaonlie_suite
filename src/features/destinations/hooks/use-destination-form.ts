@@ -136,6 +136,12 @@ export function useDestinationForm(destinationId?: string) {
     save,
     /** De dónde salió la ubicación guardada, para poder decirlo en pantalla. */
     precisionUbicacion: destination?.geocodingPrecision ?? null,
+    /**
+     * El nombre tal como está guardado. Titula la página: usar el del
+     * formulario haría que el encabezado se reescriba letra por letra mientras
+     * se corrige el nombre.
+     */
+    nombreGuardado: destination?.nombre ?? null,
     saving: create.isPending || update.isPending,
     isEdit,
     paradaOptions,

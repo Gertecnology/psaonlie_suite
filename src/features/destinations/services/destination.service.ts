@@ -147,3 +147,60 @@ export async function createClient(data: z.infer<typeof clientSchema>): Promise<
     fallbackMessage: 'Error al crear cliente',
   })
 }
+
+export interface ParadaDeDestino {
+  id: string
+  /** Cómo la reporta la empresa. */
+  nombre: string
+  empresaNombre: string
+  /**
+   * Si la empresa que la reporta está activa. La parada no tiene estado propio:
+   * `paradas_homologadas` no guarda uno.
+   */
+  activo: boolean
+}
+
+export interface ParadasDeDestinoPage {
+  items: ParadaDeDestino[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  /** Las empresas de este destino, para llenar el filtro. */
+  empresas: string[]
+}
+
+export interface ParadasDeDestinoParams {
+  page: number
+  limit: number
+  search?: string
+  activo?: boolean
+  empresa?: string
+}
+
+/**
+ * Una página de las paradas de un destino, filtrada en el servidor.
+ *
+ * `GET /destinos/:id` las trae todas juntas y sin filtro — sirve para editar el
+ * destino, no para buscar dentro de su listado.
+ */
+export async function getParadasDeDestino(
+  destinoId: string,
+  params: ParadasDeDestinoParams,
+): Promise<ParadasDeDestinoPage> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+  })
+
+  // Los vacíos no se mandan: `search=` haría que el backend filtre por cadena
+  // vacía en vez de no filtrar.
+  if (params.search?.trim()) query.set('search', params.search.trim())
+  if (params.empresa) query.set('empresa', params.empresa)
+  if (params.activo !== undefined) query.set('activo', String(params.activo))
+
+  return apiFetch<ParadasDeDestinoPage>(
+    `/destinos/${encodeURIComponent(destinoId)}/paradas?${query.toString()}`,
+    { fallbackMessage: 'Error al obtener las paradas del destino' },
+  )
+}
