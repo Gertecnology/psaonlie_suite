@@ -1,9 +1,14 @@
 import * as React from 'react'
-import { ArrowLeft, ImagePlus } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { PageLayout } from '@/components/layout/page-layout'
-import { PasswordInput } from '@/components/password-input'
+import { ArrowLeft, ImagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -23,8 +28,15 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { PageLayout } from '@/components/layout/page-layout'
+import { PasswordInput } from '@/components/password-input'
 import { useUserForm } from '../hooks/use-user-form'
 import { UserPasswordForm } from './user-password-form'
+
+/** Alto compartido por las dos tarjetas de arriba, de donde sale la simetría. */
+const ALTO_DE_LA_FILA = 'lg:min-h-[480px]'
+
+const ID_DEL_FORM = 'usuario-form'
 
 interface UserFormProps {
   /** Absent when creating. */
@@ -100,296 +112,317 @@ export function UserForm({ userId }: UserFormProps) {
     )
   }
 
+
   return (
     <PageLayout
       title={titulo}
-      description='Los roles definen qué puede hacer la persona dentro del panel.'
+      description={
+        isEdit
+          ? 'Editando un usuario que ya existe.'
+          : 'Los roles definen qué puede hacer la persona dentro del panel.'
+      }
       showSearch={false}
       actions={
-        <Button variant='ghost' size='sm' asChild>
-          <Link to='/users'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Usuarios
-          </Link>
-        </Button>
+        <div className='flex flex-col items-end gap-1'>
+          <div className='flex items-center gap-2'>
+            <Button variant='ghost' size='sm' asChild>
+              <Link to='/users'>
+                <ArrowLeft className='mr-1.5 h-4 w-4' />
+                Usuarios
+              </Link>
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={backToList}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            {/* Fuera del <form> pero atado por id: el botón vive arriba y
+                sigue enviando. */}
+            <Button type='submit' form={ID_DEL_FORM} disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </div>
+          {hasUnsavedChanges && !saving && (
+            <span className='text-muted-foreground text-xs'>
+              Hay cambios sin guardar
+            </span>
+          )}
+        </div>
       }
     >
-      <div className='max-w-2xl space-y-8'>
-        <Form {...form}>
-          {/* El submit vive en el <form>, así que Enter guarda desde cualquier
-              campo — antes el botón estaba en el pie del modal. */}
-          <form onSubmit={save} className='space-y-6'>
-            <div className='flex items-start gap-6'>
-              <div className='space-y-2'>
-                {/* La foto sólo se puede cargar al crear: `PUT /api/usuarios/:id`
-                    manda JSON y no acepta archivos, así que en edición el
-                    selector prometía algo que nunca se guardaba. */}
-                {isEdit ? (
-                  <div className='border-accent bg-muted flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2'>
-                    {fotoPreview ? (
-                      <img
-                        src={fotoPreview}
-                        alt=''
-                        className='h-full w-full rounded-full object-cover'
-                      />
+      <Form {...form}>
+        <form id={ID_DEL_FORM} onSubmit={save} className='space-y-5'>
+          <div className='grid gap-5 lg:grid-cols-2'>
+            <Card className={`flex flex-col ${ALTO_DE_LA_FILA}`}>
+              <CardHeader>
+                <CardTitle>Quién es</CardTitle>
+                <CardDescription>Con el correo entra al panel.</CardDescription>
+              </CardHeader>
+              <CardContent className='flex-1 space-y-5'>
+                <div className='space-y-2'>
+                  <FormLabel>Foto</FormLabel>
+                  <div className='flex items-center gap-4'>
+                    {/* La foto sólo se puede cargar al crear: `PUT /api/usuarios/:id`
+                        manda JSON y no acepta archivos, así que en edición el
+                        selector prometía algo que nunca se guardaba. */}
+                    {isEdit ? (
+                      <div className='border-accent bg-muted flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2'>
+                        {fotoPreview ? (
+                          <img
+                            src={fotoPreview}
+                            alt=''
+                            className='h-full w-full object-cover'
+                          />
+                        ) : (
+                          <span className='text-muted-foreground text-xs'>
+                            Sin foto
+                          </span>
+                        )}
+                      </div>
                     ) : (
-                      <span className='text-muted-foreground text-xs'>
-                        Sin foto
-                      </span>
+                      <button
+                        type='button'
+                        onClick={() => entradaArchivo.current?.click()}
+                        aria-label='Elegir la foto'
+                        className='border-accent bg-muted focus-visible:ring-ring group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 focus-visible:ring-2 focus-visible:outline-none'
+                      >
+                        {fotoPreview ? (
+                          <img
+                            src={fotoPreview}
+                            alt=''
+                            className='h-full w-full object-cover'
+                          />
+                        ) : (
+                          <ImagePlus className='text-muted-foreground h-5 w-5' />
+                        )}
+                        <span className='absolute inset-0 flex items-center justify-center bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100'>
+                          Cambiar
+                        </span>
+                      </button>
                     )}
+                    <p className='text-muted-foreground text-sm'>
+                      {isEdit
+                        ? 'La foto sólo se carga al crear el usuario.'
+                        : 'Opcional. Se ve en el menú del panel.'}
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    {/* Es un <button> y no un <div onClick>: así se llega con
-                        Tab y se activa con Enter. */}
-                    <button
-                      type='button'
-                      onClick={() => entradaArchivo.current?.click()}
-                      aria-label='Elegir la foto de perfil'
-                      className='border-accent bg-muted focus-visible:ring-ring group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 focus-visible:ring-2 focus-visible:outline-none'
-                    >
-                      {fotoPreview ? (
-                        <img
-                          src={fotoPreview}
-                          alt=''
-                          className='h-full w-full rounded-full object-cover'
-                        />
-                      ) : (
-                        <ImagePlus className='text-muted-foreground h-6 w-6' />
-                      )}
-                      <span className='absolute inset-0 flex items-center justify-center bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100'>
-                        Cambiar
-                      </span>
-                    </button>
+                  {!isEdit && (
                     <input
                       ref={entradaArchivo}
                       type='file'
-                      accept='image/jpeg,image/png,image/webp,image/svg+xml'
+                      accept='image/jpeg,image/png,image/webp'
                       className='sr-only'
                       onChange={(evento) =>
                         elegirFoto(evento.target.files?.[0])
                       }
                     />
-                    {errorFoto && (
-                      <p className='text-destructive max-w-[10rem] text-xs'>
-                        {errorFoto}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+                  )}
+                  {errorFoto && (
+                    <p className='text-destructive text-xs'>{errorFoto}</p>
+                  )}
+                </div>
 
-              <div className='flex-1'>
                 <FormField
                   control={form.control}
                   name='email'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Correo</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type='email'
                           autoFocus={!isEdit}
-                          // El endpoint de actualización no acepta el email, así
-                          // que en edición se muestra pero no se edita.
-                          disabled={isEdit}
-                          autoComplete='email'
-                          placeholder='juan.perez@ejemplo.com'
+                          placeholder='nombre@gertecnology.com'
                         />
                       </FormControl>
-                      {isEdit && (
-                        <FormDescription>
-                          El email identifica la cuenta y no se puede cambiar.
-                        </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='grid grid-cols-2 gap-4'>
+                  <FormField
+                    control={form.control}
+                    name='firstName'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name='lastName'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Apellido</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={`flex flex-col ${ALTO_DE_LA_FILA}`}>
+              <CardHeader>
+                <CardTitle>Qué puede hacer</CardTitle>
+                <CardDescription>
+                  El rol define qué pantallas ve y qué puede tocar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='flex-1 space-y-5'>
+                <FormField
+                  control={form.control}
+                  name='roleId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rol</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={loadingRoles}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                loadingRoles
+                                  ? 'Cargando roles…'
+                                  : 'Elegí un rol'
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {roles.map((rol) => (
+                            <SelectItem key={rol.id} value={rol.id}>
+                              {rol.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {!isEdit && (
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control}
+                      name='password'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contraseña</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='firstName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input {...field} autoFocus={isEdit} placeholder='Juan' />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    />
+                    <FormField
+                      control={form.control}
+                      name='confirmPassword'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirmar</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name='lastName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Apellido</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder='Pérez' />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {isEdit && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name='isActive'
+                      render={({ field }) => (
+                        <FormItem className='flex items-start justify-between gap-6 rounded-md border p-4'>
+                          <div className='space-y-1'>
+                            <FormLabel>Puede entrar</FormLabel>
+                            <FormDescription>
+                              Apagado, no puede iniciar sesión. Sus ventas
+                              quedan igual.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name='isVerified'
+                      render={({ field }) => (
+                        <FormItem className='flex items-start justify-between gap-6 rounded-md border p-4'>
+                          <div className='space-y-1'>
+                            <FormLabel>Correo verificado</FormLabel>
+                            <FormDescription>
+                              Se enciende solo cuando la persona confirma su
+                              correo.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
-              />
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            <FormField
-              control={form.control}
-              name='roleId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Rol</FormLabel>
-                  {/* `value` y no `defaultValue`: los roles llegan por red
-                      después del primer render, y un Select no controlado se
-                      quedaba vacío aunque el usuario ya tuviera rol. */}
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={loadingRoles}
-                  >
-                    <FormControl>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue
-                          placeholder={
-                            loadingRoles ? 'Cargando roles…' : 'Elegí un rol'
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {roles.map((rol) => (
-                        <SelectItem key={rol.id} value={rol.id}>
-                          {rol.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Sólo al crear: la API no devuelve la contraseña ni la acepta en
-                la actualización. Para cambiarla está la sección de abajo. */}
-            {!isEdit && (
-              <fieldset className='space-y-4 rounded-md border p-4'>
-                <legend className='px-1 text-sm font-medium'>Contraseña</legend>
-
-                <FormField
-                  control={form.control}
-                  name='password'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contraseña</FormLabel>
-                      <FormControl>
-                        <PasswordInput
-                          {...field}
-                          autoComplete='new-password'
-                          placeholder='ej.: S3cur3P@ssw0rd'
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Mínimo 8 caracteres, con una minúscula y un número.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='confirmPassword'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmar contraseña</FormLabel>
-                      <FormControl>
-                        <PasswordInput
-                          {...field}
-                          autoComplete='new-password'
-                          placeholder='Repetí la contraseña'
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </fieldset>
-            )}
-
-            {isEdit && (
-              <>
-                <FormField
-                  control={form.control}
-                  name='isActive'
-                  render={({ field }) => (
-                    <FormItem className='flex items-center justify-between rounded-md border p-4'>
-                      <div className='space-y-0.5'>
-                        <FormLabel>Activo</FormLabel>
-                        <FormDescription>
-                          Un usuario inactivo no puede entrar al panel.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='isVerified'
-                  render={({ field }) => (
-                    <FormItem className='flex items-center justify-between rounded-md border p-4'>
-                      <div className='space-y-0.5'>
-                        <FormLabel>Verificado</FormLabel>
-                        <FormDescription>
-                          Marcalo si ya confirmó su email por otro medio.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            <div className='flex items-center gap-3 border-t pt-4'>
-              <Button type='submit' disabled={saving}>
-                {saving ? 'Guardando…' : 'Guardar'}
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                onClick={backToList}
-                disabled={saving}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </form>
-        </Form>
-
-        {/* Un <form> hermano y no anidado: el HTML no permite un formulario
-            dentro de otro, y cambiar la contraseña es una operación aparte con
-            su propio endpoint. */}
-        {isEdit && userId && <UserPasswordForm userId={userId} />}
-      </div>
+          {/* El cambio de contraseña va por su propio endpoint, así que vive
+              fuera del formulario y tiene su propio botón. */}
+          {isEdit && userId && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cambiar la contraseña</CardTitle>
+                <CardDescription>
+                  Se guarda por separado, apenas la confirmás.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserPasswordForm userId={userId} />
+              </CardContent>
+            </Card>
+          )}
+        </form>
+      </Form>
     </PageLayout>
   )
 }

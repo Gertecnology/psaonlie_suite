@@ -3,10 +3,42 @@ import * as SelectPrimitive from '@radix-ui/react-select'
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+/**
+ * Dentro de un `<form>`, Radix monta un `<select>` oculto para que el control
+ * participe del formulario nativo, y cada vez que el valor cambia se lo asigna
+ * y dispara un `change` que vuelve como `onValueChange`.
+ *
+ * Ese `<select>` sólo conoce las opciones que ya se registraron. Cuando el
+ * valor llega antes que ellas —el caso de todo formulario que se rellena con lo
+ * que responde el backend— asignarle un valor sin opción correspondiente lo
+ * deja vacío, y ese vacío vuelve como si la persona hubiera deseleccionado:
+ * el campo recién cargado se borra solo y el formulario después se queja de que
+ * falta.
+ *
+ * Un `''` nunca puede venir de elegir algo: Radix rechaza los items con valor
+ * vacío. Así que se descarta cuando ya había un valor, y lo demás pasa igual.
+ */
 function Select({
+  value,
+  onValueChange,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot='select' {...props} />
+  const avisarDelCambio = React.useCallback(
+    (elegido: string) => {
+      if (elegido === '' && value !== undefined && value !== '') return
+      onValueChange?.(elegido)
+    },
+    [onValueChange, value]
+  )
+
+  return (
+    <SelectPrimitive.Root
+      data-slot='select'
+      value={value}
+      onValueChange={onValueChange ? avisarDelCambio : undefined}
+      {...props}
+    />
+  )
 }
 
 function SelectGroup({

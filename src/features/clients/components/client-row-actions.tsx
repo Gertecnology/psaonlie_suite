@@ -1,19 +1,17 @@
-import { Edit, MoreHorizontal, ShoppingCart } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { MoreHorizontal, SquareArrowOutUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { type ClienteConEstadisticas } from '../models/clients.model'
 
 interface ClientRowActionsProps {
   cliente: ClienteConEstadisticas
-  onVerDetalles: (cliente: ClienteConEstadisticas) => void
 }
 
 /**
@@ -22,11 +20,12 @@ interface ClientRowActionsProps {
  * It lives in its own file so `clients-columns.tsx` exports only the column
  * factory: a module that exports a component next to a plain function loses
  * fast refresh, which is why agencias keeps its row actions apart too.
+ *
+ * Antes ofrecía «Ver detalles» y «Editar» por separado, que abrían dos
+ * pantallas distintas del mismo cliente sin forma de pasar de una a la otra.
+ * Ahora hay una sola ficha.
  */
-export function ClientRowActions({
-  cliente,
-  onVerDetalles,
-}: ClientRowActionsProps) {
+export function ClientRowActions({ cliente }: ClientRowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,21 +38,13 @@ export function ClientRowActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => onVerDetalles(cliente)}>
-          <ShoppingCart className='mr-2 h-4 w-4' />
-          Ver detalles
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {/* Un enlace y no un `onClick`: se puede abrir en otra pestaña y el
-            formulario tiene una dirección propia. El parámetro es el email
-            porque es la clave con la que la API identifica al cliente. */}
+        {/* Un enlace y no un `onClick`: se puede abrir en otra pestaña y la
+            ficha tiene una dirección propia. El parámetro es el email porque es
+            la clave con la que la API identifica al cliente. */}
         <DropdownMenuItem asChild>
-          <Link
-            to='/clients/$email/editar'
-            params={{ email: cliente.cliente.email }}
-          >
-            <Edit className='mr-2 h-4 w-4' />
-            Editar
+          <Link to='/clients/$email' params={{ email: cliente.cliente.email }}>
+            <SquareArrowOutUpRight className='mr-2 h-4 w-4' />
+            Abrir ficha
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
