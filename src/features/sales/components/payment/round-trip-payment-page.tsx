@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, Bus, CheckCircle, AlertTriangle, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,7 @@ import { useRoundTrip } from '../../context/round-trip-context'
 import { useActualizarEstadoPago } from '../../hooks/use-actualizar-estado-pago'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { EntregarLosDocumentos } from '../entrega/entregar-los-documentos'
+import { ModalDeBancard } from './modal-de-bancard'
 import { toast } from 'sonner'
 import {
   ETIQUETAS_METODO_PAGO,
@@ -177,6 +178,19 @@ export function RoundTripPaymentPage() {
    * venta, y la caja terminaba diciendo algo distinto de lo que pasó.
    */
   const conQueSeCobro = ventasAConfirmar[0]?.venta.metodoPago
+
+  /**
+   * Con tarjeta el cobro no se registra a mano: lo confirma el callback de
+   * Bancard. Ofrecer «Confirmar cobro» acá dejaría marcar como cobrada una
+   * venta que nunca se pagó.
+   */
+  const conTarjeta = conQueSeCobro === 'BANCARD'
+
+  /** Qué tramo se está cobrando con tarjeta, si hay alguno abierto. */
+  const [cobrandoConTarjeta, setCobrandoConTarjeta] = useState<{
+    ventaId: string
+    etiqueta: string
+  } | null>(null)
 
   return (
     <div className="space-y-4">
@@ -428,7 +442,42 @@ export function RoundTripPaymentPage() {
                 />
               </div>
 
-              {!todoCobrado && (
+              {/* Con tarjeta se abre la pasarela; el cobro lo confirma el
+                  callback de Bancard. Un tramo por vez: son dos ventas
+                  distintas y la empresa las cobra por separado. */}
+              {!todoCobrado && conTarjeta && (
+                <div className="grid gap-2">
+                  {ventasAConfirmar.map(({ etiqueta, venta }) =>
+                    yaEstaCobrada(venta) ? (
+                      <p
+                        key={venta.ventaId}
+                        className="text-sm font-medium text-green-700"
+                      >
+                        {etiqueta}: cobrada
+                      </p>
+                    ) : (
+                      <Button
+                        key={venta.ventaId}
+                        onClick={() =>
+                          setCobrandoConTarjeta({
+                            ventaId: venta.ventaId,
+                            etiqueta,
+                          })
+                        }
+                        className="w-full"
+                        size="sm"
+                      >
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        {ventasAConfirmar.length > 1
+                          ? `Cobrar ${etiqueta} con tarjeta`
+                          : 'Cobrar con tarjeta'}
+                      </Button>
+                    ),
+                  )}
+                </div>
+              )}
+
+              {!todoCobrado && !conTarjeta && (
                 <Button
                   onClick={handleConfirmPayment}
                   className="w-full"
@@ -460,6 +509,15 @@ export function RoundTripPaymentPage() {
           </Card>
         </div>
       </div>
+      <ModalDeBancard
+        ventaId={cobrandoConTarjeta?.ventaId ?? null}
+        titulo={
+          ventasAConfirmar.length > 1 ? cobrandoConTarjeta?.etiqueta : undefined
+        }
+        abierto={cobrandoConTarjeta !== null}
+        onClose={() => setCobrandoConTarjeta(null)}
+        onError={(mensaje) => setErrorPago(mensaje)}
+      />
     </div>
   )
 }
