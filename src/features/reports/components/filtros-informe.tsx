@@ -1,4 +1,4 @@
-import { Label } from '@/components/ui/label'
+import * as React from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -11,7 +11,7 @@ import { METODOS_PAGO, ETIQUETAS_METODO_PAGO } from '@/lib/metodo-pago'
 import { useAgenciasPanel } from '@/features/dashboard/hooks/use-agencias-panel'
 import type { FiltrosInforme } from '../models/informe.model'
 
-/** Select value meaning "no filter". */
+/** Valor del select que significa «sin filtrar». */
 const TODAS = 'all'
 
 interface FiltrosInformeProps {
@@ -20,17 +20,21 @@ interface FiltrosInformeProps {
     clave: K,
     valor: FiltrosInforme[K],
   ) => void
-  /** Extra filters this particular report offers. */
+  /** Los que este informe acepta además del período y la empresa. */
   extras?: Array<'metodoPago' | 'agruparPor' | 'comparativo'>
 }
 
 /**
- * Period and agency, plus whatever else the report accepts.
+ * Los controles de la barra de arriba.
  *
- * Native date inputs on purpose: they take `YYYY-MM-DD` — exactly the format
- * the API demands, which rejects ISO timestamps with a zone — and they carry
- * their own keyboard handling and locale-aware display. A custom picker here
- * would only add a conversion step that can get the format wrong.
+ * Van fuera de la hoja: el informe emitido lleva los filtros **aplicados** en
+ * su ficha técnica, no los controles. Por eso son compactos y de una sola
+ * línea — comparten fila con el título y con el botón de exportar.
+ *
+ * Los campos de fecha son nativos a propósito: toman `YYYY-MM-DD`, que es
+ * exactamente el formato que la API exige y que rechaza si viene con zona
+ * horaria. Un date picker propio sólo agregaría un paso de conversión que
+ * puede equivocar el formato.
  */
 export function FiltrosInformeControles({
   borrador,
@@ -45,10 +49,10 @@ export function FiltrosInformeControles({
         <Input
           id='filtro-desde'
           type='date'
-          className='h-9 w-[160px]'
+          className='h-[30px] w-[130px] rounded-none px-2 text-xs tabular-nums'
           value={borrador.desde ?? ''}
           // `max` evita el rango invertido en el propio control, en vez de
-          // dejar que el servidor lo rechace después de un viaje de ida y vuelta.
+          // dejar que el servidor lo rechace tras un viaje de ida y vuelta.
           max={borrador.hasta}
           onChange={(evento) =>
             onCambiar('desde', evento.target.value || undefined)
@@ -60,7 +64,7 @@ export function FiltrosInformeControles({
         <Input
           id='filtro-hasta'
           type='date'
-          className='h-9 w-[160px]'
+          className='h-[30px] w-[130px] rounded-none px-2 text-xs tabular-nums'
           value={borrador.hasta ?? ''}
           min={borrador.desde}
           onChange={(evento) =>
@@ -76,11 +80,14 @@ export function FiltrosInformeControles({
             onCambiar('agenciaId', valor === TODAS ? undefined : valor)
           }
         >
-          <SelectTrigger id='filtro-agencia' className='h-9 w-[200px]'>
+          <SelectTrigger
+            id='filtro-agencia'
+            className='h-[30px] w-[170px] rounded-none px-2 text-xs'
+          >
             <SelectValue placeholder='Todas' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={TODAS}>Todas las empresas</SelectItem>
+            <SelectItem value={TODAS}>Todas</SelectItem>
             {(agencias ?? []).map((agencia) => (
               <SelectItem key={agencia.id} value={agencia.id}>
                 {agencia.nombre}
@@ -91,7 +98,7 @@ export function FiltrosInformeControles({
       </Campo>
 
       {extras.includes('metodoPago') && (
-        <Campo etiqueta='Método de pago' htmlFor='filtro-metodo'>
+        <Campo etiqueta='Medio de cobro' htmlFor='filtro-metodo'>
           <Select
             value={borrador.metodoPago ?? TODAS}
             onValueChange={(valor) =>
@@ -103,11 +110,14 @@ export function FiltrosInformeControles({
               )
             }
           >
-            <SelectTrigger id='filtro-metodo' className='h-9 w-[180px]'>
+            <SelectTrigger
+              id='filtro-metodo'
+              className='h-[30px] w-[150px] rounded-none px-2 text-xs'
+            >
               <SelectValue placeholder='Todos' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={TODAS}>Todos los métodos</SelectItem>
+              <SelectItem value={TODAS}>Todos</SelectItem>
               {METODOS_PAGO.map((metodo) => (
                 <SelectItem key={metodo} value={metodo}>
                   {ETIQUETAS_METODO_PAGO[metodo]}
@@ -126,7 +136,10 @@ export function FiltrosInformeControles({
               onCambiar('agruparPor', valor as FiltrosInforme['agruparPor'])
             }
           >
-            <SelectTrigger id='filtro-agrupar' className='h-9 w-[140px]'>
+            <SelectTrigger
+              id='filtro-agrupar'
+              className='h-[30px] w-[110px] rounded-none px-2 text-xs'
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -144,7 +157,7 @@ export function FiltrosInformeControles({
             <Input
               id='filtro-comp-desde'
               type='date'
-              className='h-9 w-[160px]'
+              className='h-[30px] w-[130px] rounded-none px-2 text-xs tabular-nums'
               value={borrador.comparativoDesde ?? ''}
               max={borrador.comparativoHasta}
               onChange={(evento) =>
@@ -152,11 +165,11 @@ export function FiltrosInformeControles({
               }
             />
           </Campo>
-          <Campo etiqueta='Comparar hasta' htmlFor='filtro-comp-hasta'>
+          <Campo etiqueta='hasta' htmlFor='filtro-comp-hasta'>
             <Input
               id='filtro-comp-hasta'
               type='date'
-              className='h-9 w-[160px]'
+              className='h-[30px] w-[130px] rounded-none px-2 text-xs tabular-nums'
               value={borrador.comparativoHasta ?? ''}
               min={borrador.comparativoDesde}
               onChange={(evento) =>
@@ -170,6 +183,13 @@ export function FiltrosInformeControles({
   )
 }
 
+/**
+ * Etiqueta y control en una línea.
+ *
+ * `<label>` y no un `<span>`: el nombre del campo tiene que llegarle a un
+ * lector de pantalla, y en una barra tan compacta no hay lugar para repetirlo
+ * como texto de ayuda.
+ */
 function Campo({
   etiqueta,
   htmlFor,
@@ -180,10 +200,10 @@ function Campo({
   children: React.ReactNode
 }) {
   return (
-    <div className='space-y-1'>
-      <Label htmlFor={htmlFor} className='text-xs'>
+    <div className='flex items-center gap-1.5'>
+      <label htmlFor={htmlFor} className='text-muted-foreground text-[11px]'>
         {etiqueta}
-      </Label>
+      </label>
       {children}
     </div>
   )
