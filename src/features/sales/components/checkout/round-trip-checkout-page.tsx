@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, CreditCard, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CreditCard, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { cn } from '@/lib/utils'
+import { OPCIONES_METODO_PAGO, type MetodoPago } from '@/lib/metodo-pago'
 import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
-import { PlanillaDePasajeros } from './planilla-de-pasajeros'
+import { LoQueSeLleva } from './lo-que-se-lleva'
 import { FacturacionCard, type DatosDeFacturacion } from './facturacion-card'
 import {
   cuantasCompletas,
@@ -22,7 +22,11 @@ import {
   VentaConfirmacionError,
   type VentaConfirmar,
 } from '../../services/confirmar-venta'
-import { sumarPreciosAsientos } from '../../utils/money'
+import {
+  calcularCargoServicio,
+  formatearGuaranies,
+  sumarPreciosAsientos,
+} from '../../utils/money'
 import type { PasajeroRegistrado } from '../../models/sales.model'
 import { toast } from 'sonner'
 
@@ -34,10 +38,23 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
   const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
 
-  /** Lo cargado en la planilla, tal como está. */
-  const [filasDePasajeros, setFilasDePasajeros] = useState<DatosDelPasajero[]>(
-    [],
-  )
+  /**
+   * Lo cargado en la planilla del paso anterior.
+   *
+   * Vive en el contexto y no acá: volver a corregir un apellido no puede
+   * costar dieciocho filas de tipeo.
+   */
+  const filasDePasajeros: DatosDelPasajero[] = roundTripData.pasajeros ?? []
+
+  /**
+   * Con qué paga el cliente. Obligatorio antes de confirmar.
+   *
+   * El checkout mandaba `EFECTIVO` fijo y el paso siguiente lo corregía: una
+   * venta que expiraba sin cobrarse quedaba registrada como efectivo para
+   * siempre, y el informe por método contaba como efectivo algo que nadie
+   * pagó nunca.
+   */
+  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
 
   // A nombre de quién sale la factura. También faltaba: toda venta de ida y
@@ -55,15 +72,18 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
    * Lo que se manda igual en los dos tramos.
    *
    * Es una compra sola partida en dos ventas —así lo exige la transportista—,
-   * pero el cliente factura una vez.
+   * pero el cliente factura una vez y paga una vez.
    *
-   * **Sin método de pago**: en el mostrador se confirma la venta antes de que
-   * el cliente diga cómo paga, y eso se elige en el paso siguiente. Mandar uno
-   * acá obligaba a inventarlo, y lo que se inventaba era `'EFECTIVO'`: la caja
-   * terminaba diciendo que había entrado efectivo por ventas pagadas con
-   * tarjeta.
+   * El método de pago va acá y no en el paso de cobro. Antes se mandaba
+   * `'EFECTIVO'` fijo y el paso siguiente lo corregía: una venta que expiraba
+   * sin cobrarse quedaba registrada como efectivo para siempre, y la caja
+   * decía que había entrado efectivo por ventas pagadas con tarjeta. La
+   * respuesta no es dejarlo vacío —una venta sin método es una venta que no se
+   * sabe cómo se cobró— sino que lo elija el vendedor antes de confirmar, que
+   * es cuando todavía puede volver atrás.
    */
   const comoSeCobra = () => ({
+    metodoPago,
     // Se congela en la venta: lo que se facturó no cambia si el cliente
     // después edita sus datos.
     facturacion: {
@@ -156,6 +176,11 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
 
     if (cuantasCompletas(filasDePasajeros) !== passengerForms.length) {
       toast.error('Completá los datos de todos los pasajeros antes de continuar')
+      return
+    }
+
+    if (!metodoPago) {
+      toast.error('Elegí cómo paga el cliente antes de confirmar')
       return
     }
 
@@ -312,11 +337,9 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
   }
 
   const handleGoBack = () => {
-    if (roundTripData.vuelta?.asientos) {
-      setCurrentStep('vuelta-seats')
-    } else {
-      setCurrentStep('ida-seats')
-    }
+    // Vuelve a la planilla, que es el paso anterior. Lo cargado sigue en el
+    // contexto: corregir un apellido no cuesta dieciocho filas de tipeo.
+    setCurrentStep('checkout')
   }
 
   if (!roundTripData.ida.servicio) {
@@ -337,147 +360,111 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
 
   const confirmando = confirmarVentaMutation.isPending
   const completas = cuantasCompletas(filasDePasajeros)
+
+  // Lo que el cliente paga: los pasajes de todos los tramos más su cargo por
+  // servicio. La comisión no entra: es un acuerdo con la empresa, no algo que
+  // pague el cliente.
+  const totalACobrar = tramos.reduce((total, tramo) => {
+    const pasajes = sumarPreciosAsientos(tramo.asientos)
+    return total + pasajes + calcularCargoServicio(pasajes, tramo.serviceCharge)
+  }, 0)
   const faltanPasajeros = completas !== passengerForms.length
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleGoBack} disabled={confirmando}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight">Pasajeros</h1>
-            <p className="text-muted-foreground mt-0.5 truncate text-[12.5px]">
-              {[
-                roundTripData.ida.servicio?.Emp,
-                `${roundTripData.ida.origen?.nombre} → ${roundTripData.ida.destino?.nombre}`,
-                (roundTripData.ida.asientos ?? []).length > 0 &&
-                  `butacas ${(roundTripData.ida.asientos ?? [])
-                    .map((asiento) => asiento.numero)
-                    .join(', ')}`,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-          </div>
+    <div className="flex flex-col gap-3.5">
+      <div className="flex items-start gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-3 text-xs"
+          onClick={handleGoBack}
+          disabled={confirmando}
+        >
+          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+          Volver
+        </Button>
+
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight">Resumen y cobro</h1>
+          <p className="text-muted-foreground mt-0.5 truncate text-[12.5px]">
+            {[
+              roundTripData.ida.servicio?.Emp,
+              `${roundTripData.ida.origen?.nombre} → ${roundTripData.ida.destino?.nombre}`,
+              roundTripData.vuelta?.fecha && 'ida y vuelta',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
         </div>
-        <TiempoBloqueo expiraEn={roundTripData.ida.bloqueoExpiraEn} />
+
+        <div className="ml-auto flex flex-none items-center gap-3">
+          <TiempoBloqueo expiraEn={roundTripData.ida.bloqueoExpiraEn} />
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Left Column - Trip Info & Payment Summary */}
-        <div className="space-y-4">
-          {/* Trip Information */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Detalles del Viaje
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-4">
-                {/* Viaje de Ida */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm text-blue-600">Viaje de Ida</h4>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div>
-                        <p className="text-sm font-medium">{roundTripData.ida.origen?.nombre}</p>
-                        <p className="text-xs text-muted-foreground">Origen</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <div>
-                        <p className="text-sm font-medium">{roundTripData.ida.destino?.nombre}</p>
-                        <p className="text-xs text-muted-foreground">Destino</p>
-                      </div>
-                    </div>
-                  </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <LoQueSeLleva
+          asientos={roundTripData.ida.asientos ?? []}
+          filas={roundTripData.pasajeros ?? []}
+        />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{roundTripData.ida.fecha?.toISOString().split('T')[0]}</p>
-                        <p className="text-xs text-muted-foreground">Fecha</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{roundTripData.ida.servicio.Embarque}</p>
-                        <p className="text-xs text-muted-foreground">Hora</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Viaje de Vuelta */}
-                {roundTripData.vuelta && (
-                  <>
-                    <Separator />
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm text-purple-600">Viaje de Vuelta</h4>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <div>
-                            <p className="text-sm font-medium">{roundTripData.vuelta.origen?.nombre}</p>
-                            <p className="text-xs text-muted-foreground">Origen</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          <div>
-                            <p className="text-sm font-medium">{roundTripData.vuelta.destino?.nombre}</p>
-                            <p className="text-xs text-muted-foreground">Destino</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3 w-3 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">{roundTripData.vuelta.fecha?.toISOString().split('T')[0]}</p>
-                            <p className="text-xs text-muted-foreground">Fecha</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">{roundTripData.vuelta.servicio?.Embarque}</p>
-                            <p className="text-xs text-muted-foreground">Hora</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Desglose de lo que paga el cliente */}
+        <div className="flex flex-col gap-2.5">
           <ResumenPago tramos={tramos} />
-        </div>
 
-        {/* La planilla: una fila por butaca en vez de un formulario por
-            pasajero. Con dieciocho, las tarjetas eran dieciocho despliegues y
-            dieciocho botones de guardar. */}
-        <div className="space-y-4">
-          <PlanillaDePasajeros
-            butacas={passengerForms.map((form) =>
-              form.asientoIda?.numero ?? String(form.passengerNumber)
-            )}
-            agenciaId={roundTripData.ida.agenciaId ?? ''}
-            onCambio={setFilasDePasajeros}
+          {/* Cómo paga se elige ACÁ, antes de confirmar. El checkout mandaba
+              EFECTIVO fijo y el paso siguiente lo corregía: una venta que
+              expiraba sin cobrarse quedaba registrada como efectivo para
+              siempre, y el informe por método contaba como efectivo algo que
+              nadie pagó nunca. */}
+          <div className="border-border rounded-xl border p-4">
+            <h2 className="text-[13px] font-semibold">Cómo paga</h2>
+            <p className="text-muted-foreground mt-0.5 mb-3 text-[11.5px]">
+              Se elige antes de confirmar, no después.
+            </p>
+
+            <div
+              role="radiogroup"
+              aria-label="Cómo paga"
+              className="grid gap-1.5"
+            >
+              {OPCIONES_METODO_PAGO.map((opcion) => (
+                <button
+                  key={opcion.value}
+                  role="radio"
+                  aria-checked={metodoPago === opcion.value}
+                  onClick={() => setMetodoPago(opcion.value)}
+                  disabled={confirmando || ventaYaConfirmada}
+                  className={cn(
+                    'flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-[13px] transition-colors disabled:opacity-60',
+                    metodoPago === opcion.value
+                      ? 'border-foreground font-semibold'
+                      : 'border-border text-muted-foreground hover:bg-accent/60'
+                  )}
+                >
+                  <i
+                    className={cn(
+                      'block h-3 w-3 flex-none rounded-full border-[1.5px]',
+                      metodoPago === opcion.value
+                        ? 'border-foreground bg-foreground ring-background ring-2 ring-inset'
+                        : 'border-muted-foreground'
+                    )}
+                    aria-hidden="true"
+                  />
+                  {opcion.label}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-muted-foreground mt-2.5 text-[11px] leading-relaxed">
+              Con efectivo la venta nace cobrada y pasás directo a entregar los
+              documentos.
+            </p>
+          </div>
+
+          <FacturacionCard
+            valor={facturacion}
+            onChange={setFacturacion}
+            deshabilitado={confirmando || ventaYaConfirmada}
           />
 
           {/* La venta falló: el operador puede corregir y reintentar sin
@@ -489,41 +476,29 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
             </Alert>
           )}
 
-          <FacturacionCard
-            valor={facturacion}
-            onChange={setFacturacion}
-            deshabilitado={confirmando || ventaYaConfirmada}
-          />
-
-          <p className="text-muted-foreground text-xs">
-            Ida y vuelta se cobran juntas: es una sola compra partida en dos
-            ventas porque así lo exige la empresa. Cómo paga el cliente se elige
-            en el paso siguiente.
-          </p>
-
-          {/* Action Button */}
           <Button
             onClick={handleProceedToPayment}
-            className="w-full"
-            size="lg"
+            className="h-11 w-full text-sm"
             disabled={
               faltanPasajeros ||
               confirmando ||
               ventaYaConfirmada ||
-              faltaFacturacion
+              faltaFacturacion ||
+              !metodoPago
             }
           >
-            <CreditCard className="h-4 w-4 mr-2" />
+            <CreditCard className="mr-2 h-4 w-4" />
             {confirmando
-              ? 'Confirmando venta con la empresa...'
+              ? 'Confirmando venta con la empresa…'
               : ventaYaConfirmada
                 ? 'Venta ya confirmada'
                 : faltanPasajeros
                   ? `Faltan ${passengerForms.length - completas} ${passengerForms.length - completas === 1 ? 'pasajero' : 'pasajeros'}`
-                  : faltaFacturacion
-                    ? 'Faltan los datos de facturación'
-                    : 'Confirmar venta y continuar al cobro'
-            }
+                  : !metodoPago
+                    ? 'Elegí cómo paga'
+                    : faltaFacturacion
+                      ? 'Faltan los datos de facturación'
+                      : `Cobrar ${formatearGuaranies(totalACobrar)}`}
           </Button>
         </div>
       </div>
