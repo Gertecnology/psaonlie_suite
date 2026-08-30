@@ -410,7 +410,7 @@ export function RoundTripSeatSelectionPage({
       )}
 
       {asientosData && !isLoading && !error && (
-        <div className='grid items-start gap-4 xl:grid-cols-[auto_minmax(22rem,40rem)]'>
+        <div className='grid items-start gap-4 xl:grid-cols-2'>
           {/* El plano toma sólo el ancho que necesita: es un colectivo, no una
               grilla que deba estirarse a media pantalla. Lo que sobra se lo
               queda el panel, que es el que lista las butacas una por una. */}
@@ -444,7 +444,7 @@ export function RoundTripSeatSelectionPage({
               </div>
             )}
 
-            <div className='overflow-auto'>
+            <div className='flex justify-center overflow-auto'>
               <SeatGrid
                 asientos={asientosData.asientos}
                 onSeatSelect={handleSeatSelect}
