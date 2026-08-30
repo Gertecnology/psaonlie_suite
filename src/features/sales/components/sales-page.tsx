@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar as CalendarIcon, RotateCcw, Search, X } from 'lucide-react'
+import { Calendar as CalendarIcon, Plus, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Input } from '@/components/ui/input'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useSidebar } from '@/components/ui/sidebar'
+import {
+  BarraDeFiltros,
+  FiltroDeSeleccion,
+  type FiltroAplicado,
+  type OpcionDeFiltro,
+} from '@/components/filtros'
 import { useRoundTrip } from '../context/round-trip-context'
 import { useGetServicios } from '../hooks/use-get-servicios'
 import type { SearchFilters, SearchFormData } from '../models/sales.model'
@@ -37,14 +37,16 @@ const FILTROS_INICIALES: SearchFilters = {
  * 08:00–22:00 y escondía los servicios de madrugada.
  */
 const FRANJAS = [
-  { valor: 'cualquiera', etiqueta: 'Cualquier hora', desde: 0, hasta: 24 },
   { valor: 'madrugada', etiqueta: 'Madrugada · 00 a 06', desde: 0, hasta: 6 },
   { valor: 'manana', etiqueta: 'Mañana · 06 a 12', desde: 6, hasta: 12 },
   { valor: 'tarde', etiqueta: 'Tarde · 12 a 18', desde: 12, hasta: 18 },
   { valor: 'noche', etiqueta: 'Noche · 18 a 24', desde: 18, hasta: 24 },
 ] as const
 
-const TODAS = 'todas'
+const OPCIONES_DE_FRANJA: OpcionDeFiltro[] = FRANJAS.map((f) => ({
+  valor: f.valor,
+  etiqueta: f.etiqueta,
+}))
 
 export function SalesPage() {
   const { roundTripData, setRoundTripData } = useRoundTrip()
@@ -73,9 +75,9 @@ export function SalesPage() {
   const [showVuelta, setShowVuelta] = useState(!!roundTripData.vuelta?.fecha)
   const [shouldSearch, setShouldSearch] = useState(false)
   const [filters, setFilters] = useState<SearchFilters>(FILTROS_INICIALES)
-  const [franja, setFranja] = useState<string>('cualquiera')
-  const [empresa, setEmpresa] = useState<string>(TODAS)
-  const [calidad, setCalidad] = useState<string>(TODAS)
+  const [franja, setFranja] = useState<string | undefined>()
+  const [empresa, setEmpresa] = useState<string | undefined>()
+  const [calidad, setCalidad] = useState<string | undefined>()
 
   const canSearch = Boolean(
     searchData.origen && searchData.destino && searchData.fechaIda
@@ -134,20 +136,23 @@ export function SalesPage() {
     setShowVuelta(false)
     setShouldSearch(false)
     setFilters(FILTROS_INICIALES)
-    setFranja('cualquiera')
-    setEmpresa(TODAS)
-    setCalidad(TODAS)
+    setFranja(undefined)
+    setEmpresa(undefined)
+    setCalidad(undefined)
     setRoundTripData({ ida: { origen: null, destino: null, fecha: null } })
   }
 
   // Las opciones salen de lo que vino, no de una lista fija: una empresa que no
   // vuela esa ruta no tiene por qué aparecer en el filtro.
-  const empresas = useMemo(
-    () => [...new Set((servicios ?? []).map((e) => e.empresa))].sort(),
+  const opcionesDeEmpresa: OpcionDeFiltro[] = useMemo(
+    () =>
+      [...new Set((servicios ?? []).map((e) => e.empresa))]
+        .sort()
+        .map((nombre) => ({ valor: nombre, etiqueta: nombre })),
     [servicios]
   )
 
-  const calidades = useMemo(
+  const opcionesDeCalidad: OpcionDeFiltro[] = useMemo(
     () =>
       [
         ...new Set(
@@ -155,20 +160,22 @@ export function SalesPage() {
         ),
       ]
         .filter(Boolean)
-        .sort(),
+        .sort()
+        .map((codigo) => ({ valor: codigo, etiqueta: codigo })),
     [servicios]
   )
 
   /** El filtrado de franja, empresa y calidad se hace acá: ya vino todo el día. */
   const resultados = useMemo(() => {
-    const rango = FRANJAS.find((f) => f.valor === franja) ?? FRANJAS[0]
+    const rango = FRANJAS.find((f) => f.valor === franja)
 
     return (servicios ?? [])
-      .filter((e) => empresa === TODAS || e.empresa === empresa)
+      .filter((e) => !empresa || e.empresa === empresa)
       .map((e) => ({
         ...e,
         data: e.data.filter((servicio) => {
-          if (calidad !== TODAS && servicio.Calidad !== calidad) return false
+          if (calidad && servicio.Calidad !== calidad) return false
+          if (!rango) return true
 
           const hora = parseInt(
             leerHorario(servicio.Embarque, servicio.Desembarque).sale.slice(
@@ -186,238 +193,211 @@ export function SalesPage() {
 
   const cuantas = resultados.reduce((total, e) => total + e.data.length, 0)
 
+  const aplicados: FiltroAplicado[] = [
+    searchData.origen && {
+      clave: 'origen',
+      etiqueta: 'Origen',
+      valor: searchData.origen.nombre,
+    },
+    searchData.destino && {
+      clave: 'destino',
+      etiqueta: 'Destino',
+      valor: searchData.destino.nombre,
+    },
+    searchData.fechaIda && {
+      clave: 'fechaIda',
+      etiqueta: 'Salida',
+      valor: format(searchData.fechaIda, 'dd/MM/yy', { locale: es }),
+    },
+    searchData.fechaVuelta && {
+      clave: 'fechaVuelta',
+      etiqueta: 'Vuelta',
+      valor: format(searchData.fechaVuelta, 'dd/MM/yy', { locale: es }),
+    },
+    (filters.asientosMinimos ?? 1) > 1 && {
+      clave: 'pasajeros',
+      etiqueta: 'Pasajeros',
+      valor: String(filters.asientosMinimos),
+    },
+    franja && {
+      clave: 'franja',
+      etiqueta: 'Sale',
+      valor: FRANJAS.find((f) => f.valor === franja)?.etiqueta ?? franja,
+    },
+    empresa && { clave: 'empresa', etiqueta: 'Empresa', valor: empresa },
+    calidad && { clave: 'calidad', etiqueta: 'Calidad', valor: calidad },
+  ].filter(Boolean) as FiltroAplicado[]
+
+  const quitarFiltro = (clave: string) => {
+    if (clave === 'origen') setSearchData((p) => ({ ...p, origen: null }))
+    if (clave === 'destino') setSearchData((p) => ({ ...p, destino: null }))
+    if (clave === 'fechaIda') setSearchData((p) => ({ ...p, fechaIda: null }))
+    if (clave === 'fechaVuelta') {
+      setSearchData((p) => ({ ...p, fechaVuelta: null }))
+      setShowVuelta(false)
+    }
+    if (clave === 'pasajeros') setFilters(FILTROS_INICIALES)
+    if (clave === 'franja') setFranja(undefined)
+    if (clave === 'empresa') setEmpresa(undefined)
+    if (clave === 'calidad') setCalidad(undefined)
+  }
+
   return (
     <div className='space-y-4'>
-      {/* Los diez controles en una línea.
-          Los anchos son distintos a propósito: lo que se lee —origen y
-          destino— se estira, y lo que se elige de una lista corta queda fijo y
-          angosto. Una grilla de columnas iguales los tira a dos filas. */}
-      <div className='border-border flex flex-wrap items-end gap-2.5 border-b pb-4'>
-        <div className='max-w-[16rem] min-w-[9rem] flex-1'>
-          <ParadaSearch
-            value={searchData.origen}
-            onValueChange={(origen) =>
-              setSearchData((prev) => ({ ...prev, origen }))
-            }
-            placeholder='Elegí el origen...'
-            label='Origen'
-          />
-        </div>
+      {/* Los mismos filtros de la caja: una línea, sin etiquetas dibujadas
+          —el control se explica con su propio texto— y los chips debajo
+          diciendo qué quedó puesto. */}
+      <BarraDeFiltros
+        aplicados={aplicados}
+        onQuitar={quitarFiltro}
+        onLimpiar={limpiar}
+        actualizando={isLoading}
+      >
+        <ParadaSearch
+          value={searchData.origen}
+          onValueChange={(origen) =>
+            setSearchData((prev) => ({ ...prev, origen }))
+          }
+          placeholder='Origen'
+          className='w-[13rem]'
+        />
 
-        <div className='max-w-[16rem] min-w-[9rem] flex-1'>
-          <ParadaSearch
-            value={searchData.destino}
-            onValueChange={(destino) =>
-              setSearchData((prev) => ({ ...prev, destino }))
-            }
-            placeholder='Elegí el destino...'
-            label='Destino'
-          />
-        </div>
+        <ParadaSearch
+          value={searchData.destino}
+          onValueChange={(destino) =>
+            setSearchData((prev) => ({ ...prev, destino }))
+          }
+          placeholder='Destino'
+          className='w-[13rem]'
+        />
 
-        <div className='w-[7.5rem] flex-none space-y-1'>
-          <span className='text-muted-foreground text-xs font-medium'>
-            Salida
-          </span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant='outline'
+              className='h-9 w-[8.5rem] justify-start px-3 text-left font-normal'
+            >
+              <CalendarIcon className='mr-2 h-4 w-4 flex-none' />
+              {searchData.fechaIda ? (
+                format(searchData.fechaIda, 'dd/MM/yy', { locale: es })
+              ) : (
+                <span className='text-muted-foreground'>Salida</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className='w-auto p-0' align='start'>
+            <Calendar
+              mode='single'
+              selected={searchData.fechaIda || undefined}
+              onSelect={(fecha) =>
+                setSearchData((prev) => ({ ...prev, fechaIda: fecha || null }))
+              }
+              disabled={(fecha) => {
+                const hoy = new Date()
+                hoy.setHours(0, 0, 0, 0)
+                return fecha < hoy
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {showVuelta ? (
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant='outline'
-                className='h-9 w-full justify-start px-2.5 text-left text-sm font-normal'
+                className='h-9 w-[8.5rem] justify-start px-3 text-left font-normal'
               >
-                <CalendarIcon className='mr-1.5 h-4 w-4 flex-none' />
-                {searchData.fechaIda ? (
-                  format(searchData.fechaIda, 'dd/MM/yy', { locale: es })
+                <CalendarIcon className='mr-2 h-4 w-4 flex-none' />
+                {searchData.fechaVuelta ? (
+                  format(searchData.fechaVuelta, 'dd/MM/yy', { locale: es })
                 ) : (
-                  <span className='text-muted-foreground'>dd/mm/aa</span>
+                  <span className='text-muted-foreground'>Vuelta</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className='w-auto p-0' align='start'>
               <Calendar
                 mode='single'
-                selected={searchData.fechaIda || undefined}
+                selected={searchData.fechaVuelta || undefined}
                 onSelect={(fecha) =>
                   setSearchData((prev) => ({
                     ...prev,
-                    fechaIda: fecha || null,
+                    fechaVuelta: fecha || null,
                   }))
                 }
-                disabled={(fecha) => {
-                  const hoy = new Date()
-                  hoy.setHours(0, 0, 0, 0)
-                  return fecha < hoy
-                }}
+                disabled={(fecha) =>
+                  fecha < (searchData.fechaIda || new Date())
+                }
               />
             </PopoverContent>
           </Popover>
-        </div>
-
-        <div className='w-[7.5rem] flex-none space-y-1'>
-          <span className='text-muted-foreground text-xs font-medium'>
-            Vuelta
-          </span>
-          {showVuelta ? (
-            <div className='flex items-center gap-1'>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    className='h-9 flex-1 justify-start px-2.5 text-left text-sm font-normal'
-                  >
-                    {searchData.fechaVuelta ? (
-                      format(searchData.fechaVuelta, 'dd/MM/yy', {
-                        locale: es,
-                      })
-                    ) : (
-                      <span className='text-muted-foreground'>dd/mm/aa</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0' align='start'>
-                  <Calendar
-                    mode='single'
-                    selected={searchData.fechaVuelta || undefined}
-                    onSelect={(fecha) =>
-                      setSearchData((prev) => ({
-                        ...prev,
-                        fechaVuelta: fecha || null,
-                      }))
-                    }
-                    disabled={(fecha) =>
-                      fecha < (searchData.fechaIda || new Date())
-                    }
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='h-9 w-7 flex-none'
-                aria-label='Sacar la vuelta'
-                onClick={() => {
-                  setShowVuelta(false)
-                  setSearchData((prev) => ({ ...prev, fechaVuelta: null }))
-                }}
-              >
-                <X className='h-3.5 w-3.5' />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant='outline'
-              className='text-muted-foreground h-9 w-full justify-start px-2.5 text-sm font-normal'
-              onClick={() => setShowVuelta(true)}
-            >
-              + agregar
-            </Button>
-          )}
-        </div>
-
-        <div className='w-[6rem] flex-none space-y-1'>
-          <label
-            htmlFor='pasajeros'
-            className='text-muted-foreground text-xs font-medium'
+        ) : (
+          <Button
+            variant='outline'
+            className='text-muted-foreground h-9 px-3 font-normal'
+            onClick={() => setShowVuelta(true)}
           >
-            Pasajeros
-          </label>
-          <input
-            id='pasajeros'
+            <Plus className='mr-1.5 h-3.5 w-3.5' />
+            Vuelta
+          </Button>
+        )}
+
+        <div className='relative w-[7.5rem]'>
+          <Users className='text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
+          <Input
             type='number'
             min='1'
-            value={filters.asientosMinimos}
+            aria-label='Cuántos pasajeros'
+            value={filters.asientosMinimos ?? 1}
             onChange={(e) =>
               setFilters((prev) => ({
                 ...prev,
                 asientosMinimos: parseInt(e.target.value) || 1,
               }))
             }
-            className='border-input bg-background h-9 w-full rounded-md border px-2.5 text-sm'
+            className='h-9 pl-8'
           />
         </div>
 
-        <div className='w-[9.5rem] flex-none space-y-1'>
-          <span className='text-muted-foreground text-xs font-medium'>
-            Horario
-          </span>
-          <Select value={franja} onValueChange={setFranja}>
-            <SelectTrigger className='h-9 w-full'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FRANJAS.map((f) => (
-                <SelectItem key={f.valor} value={f.valor}>
-                  {f.etiqueta}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroDeSeleccion
+          id='franja'
+          etiqueta='Horario de salida'
+          etiquetaDeTodos='Cualquier hora'
+          placeholder='Cualquier hora'
+          opciones={OPCIONES_DE_FRANJA}
+          valor={franja}
+          onCambiar={setFranja}
+          className='w-[11rem]'
+        />
 
-        <div className='w-[7.5rem] flex-none space-y-1'>
-          <span className='text-muted-foreground text-xs font-medium'>
-            Empresa
-          </span>
-          <Select
-            value={empresa}
-            onValueChange={setEmpresa}
-            disabled={empresas.length === 0}
-          >
-            <SelectTrigger className='h-9 w-full'>
-              <SelectValue placeholder='Todas' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODAS}>Todas</SelectItem>
-              {empresas.map((nombre) => (
-                <SelectItem key={nombre} value={nombre}>
-                  {nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroDeSeleccion
+          id='empresa'
+          etiqueta='Empresa'
+          etiquetaDeTodos='Todas las empresas'
+          placeholder='Empresa'
+          opciones={opcionesDeEmpresa}
+          valor={empresa}
+          onCambiar={setEmpresa}
+          className='w-[10rem]'
+        />
 
-        <div className='w-[7.5rem] flex-none space-y-1'>
-          <span className='text-muted-foreground text-xs font-medium'>
-            Calidad
-          </span>
-          <Select
-            value={calidad}
-            onValueChange={setCalidad}
-            disabled={calidades.length === 0}
-          >
-            <SelectTrigger className='h-9 w-full'>
-              <SelectValue placeholder='Cualquiera' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODAS}>Cualquiera</SelectItem>
-              {calidades.map((codigo) => (
-                <SelectItem key={codigo} value={codigo}>
-                  {codigo}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroDeSeleccion
+          id='calidad'
+          etiqueta='Calidad'
+          etiquetaDeTodos='Cualquier calidad'
+          placeholder='Calidad'
+          opciones={opcionesDeCalidad}
+          valor={calidad}
+          onCambiar={setCalidad}
+          className='w-[10rem]'
+        />
 
-        <Button
-          onClick={buscar}
-          disabled={!canSearch}
-          className='h-9 flex-none'
-        >
+        <Button onClick={buscar} disabled={!canSearch} className='h-9'>
           <Search className='mr-1.5 h-4 w-4' />
           Buscar
         </Button>
-
-        <Button
-          variant='ghost'
-          onClick={limpiar}
-          className='text-muted-foreground h-9 flex-none px-2.5'
-        >
-          <RotateCcw className='mr-1.5 h-4 w-4' />
-          Limpiar
-        </Button>
-      </div>
+      </BarraDeFiltros>
 
       {shouldSearch && canSearch && (
         <div className='space-y-3'>
