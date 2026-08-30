@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar as CalendarIcon, Plus, Search, Users } from 'lucide-react'
+import { Calendar as CalendarIcon, Plus, Search, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
@@ -289,44 +289,58 @@ export function SalesPage() {
         </Popover>
 
         {showVuelta ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant='outline'
-                className='h-9 w-[8.5rem] justify-start px-3 text-left font-normal'
-              >
-                <CalendarIcon className='mr-2 h-4 w-4 flex-none' />
-                {searchData.fechaVuelta ? (
-                  format(searchData.fechaVuelta, 'dd/MM/yy', { locale: es })
-                ) : (
-                  <span className='text-muted-foreground'>Vuelta</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-auto p-0' align='start'>
-              <Calendar
-                mode='single'
-                selected={searchData.fechaVuelta || undefined}
-                onSelect={(fecha) =>
-                  setSearchData((prev) => ({
-                    ...prev,
-                    fechaVuelta: fecha || null,
-                  }))
-                }
-                disabled={(fecha) =>
-                  fecha < (searchData.fechaIda || new Date())
-                }
-              />
-            </PopoverContent>
-          </Popover>
+          <div className='flex items-center'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant='outline'
+                  className='h-9 w-[8.5rem] justify-start rounded-r-none border-r-0 px-3 text-left font-normal'
+                >
+                  <CalendarIcon className='mr-2 h-4 w-4 flex-none' />
+                  {searchData.fechaVuelta ? (
+                    format(searchData.fechaVuelta, 'dd/MM/yy', { locale: es })
+                  ) : (
+                    <span className='text-muted-foreground'>Vuelta</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-auto p-0' align='start'>
+                <Calendar
+                  mode='single'
+                  selected={searchData.fechaVuelta || undefined}
+                  onSelect={(fecha) =>
+                    setSearchData((prev) => ({
+                      ...prev,
+                      fechaVuelta: fecha || null,
+                    }))
+                  }
+                  disabled={(fecha) =>
+                    fecha < (searchData.fechaIda || new Date())
+                  }
+                />
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant='outline'
+              size='icon'
+              aria-label='Sacar la vuelta'
+              className='h-9 w-8 rounded-l-none'
+              onClick={() => {
+                setShowVuelta(false)
+                setSearchData((prev) => ({ ...prev, fechaVuelta: null }))
+              }}
+            >
+              <X className='h-3.5 w-3.5' />
+            </Button>
+          </div>
         ) : (
           <Button
-            variant='outline'
-            className='text-muted-foreground h-9 px-3 font-normal'
+            variant='ghost'
+            className='text-muted-foreground border-input hover:text-foreground h-9 border border-dashed px-3 font-normal'
             onClick={() => setShowVuelta(true)}
           >
             <Plus className='mr-1.5 h-3.5 w-3.5' />
-            Vuelta
+            Agregar vuelta
           </Button>
         )}
 
