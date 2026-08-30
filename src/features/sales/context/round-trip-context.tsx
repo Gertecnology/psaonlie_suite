@@ -40,7 +40,18 @@ export function RoundTripProvider({
       ...data,
       // Merge nested objects properly
       ida: data.ida ? { ...prev.ida, ...data.ida } : prev.ida,
-      vuelta: data.vuelta ? { ...prev.vuelta, ...data.vuelta } : prev.vuelta
+      // `'vuelta' in data` distingue no tocarla de borrarla. Con un ternario
+      // sobre el valor, mandar `vuelta: undefined` caía en `prev.vuelta` y la
+      // vuelta anterior quedaba pegada: quien buscaba ida y vuelta, la sacaba
+      // y volvía a buscar, seguía teniendo vuelta —y como la pantalla arranca
+      // con `showVuelta` en `!!roundTripData.vuelta?.fecha`, al volver del
+      // paso de butacas reaparecía sola.
+      vuelta:
+        'vuelta' in data
+          ? data.vuelta
+            ? { ...prev.vuelta, ...data.vuelta }
+            : undefined
+          : prev.vuelta
     }))
   }
 
