@@ -259,6 +259,7 @@ export function SalesPage() {
             setSearchData((prev) => ({ ...prev, origen }))
           }
           placeholder='Origen'
+          label=''
           className='w-[13rem]'
         />
 
@@ -268,6 +269,7 @@ export function SalesPage() {
             setSearchData((prev) => ({ ...prev, destino }))
           }
           placeholder='Destino'
+          label=''
           className='w-[13rem]'
         />
 
