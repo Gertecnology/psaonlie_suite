@@ -4,7 +4,6 @@ import { es } from 'date-fns/locale'
 import { Calendar as CalendarIcon, RotateCcw, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Popover,
   PopoverContent,
@@ -193,231 +192,232 @@ export function SalesPage() {
           Los anchos son distintos a propósito: lo que se lee —origen y
           destino— se estira, y lo que se elige de una lista corta queda fijo y
           angosto. Una grilla de columnas iguales los tira a dos filas. */}
-      <Card>
-        <CardContent className='flex flex-wrap items-end gap-2.5 p-4'>
-          <div className='min-w-[9rem] max-w-[16rem] flex-1'>
-            <ParadaSearch
-              value={searchData.origen}
-              onValueChange={(origen) =>
-                setSearchData((prev) => ({ ...prev, origen }))
-              }
-              placeholder='Elegí el origen...'
-              label='Origen'
-            />
-          </div>
+      <div className='border-border flex flex-wrap items-end gap-2.5 border-b pb-4'>
+        <div className='max-w-[16rem] min-w-[9rem] flex-1'>
+          <ParadaSearch
+            value={searchData.origen}
+            onValueChange={(origen) =>
+              setSearchData((prev) => ({ ...prev, origen }))
+            }
+            placeholder='Elegí el origen...'
+            label='Origen'
+          />
+        </div>
 
-          <div className='min-w-[9rem] max-w-[16rem] flex-1'>
-            <ParadaSearch
-              value={searchData.destino}
-              onValueChange={(destino) =>
-                setSearchData((prev) => ({ ...prev, destino }))
-              }
-              placeholder='Elegí el destino...'
-              label='Destino'
-            />
-          </div>
+        <div className='max-w-[16rem] min-w-[9rem] flex-1'>
+          <ParadaSearch
+            value={searchData.destino}
+            onValueChange={(destino) =>
+              setSearchData((prev) => ({ ...prev, destino }))
+            }
+            placeholder='Elegí el destino...'
+            label='Destino'
+          />
+        </div>
 
-          <div className='w-[7.5rem] flex-none space-y-1'>
-            <span className='text-muted-foreground text-xs font-medium'>
-              Salida
-            </span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant='outline'
-                  className='h-9 w-full justify-start px-2.5 text-left text-sm font-normal'
-                >
-                  <CalendarIcon className='mr-1.5 h-4 w-4 flex-none' />
-                  {searchData.fechaIda ? (
-                    format(searchData.fechaIda, 'dd/MM/yy', { locale: es })
-                  ) : (
-                    <span className='text-muted-foreground'>dd/mm/aa</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-auto p-0' align='start'>
-                <Calendar
-                  mode='single'
-                  selected={searchData.fechaIda || undefined}
-                  onSelect={(fecha) =>
-                    setSearchData((prev) => ({ ...prev, fechaIda: fecha || null }))
-                  }
-                  disabled={(fecha) => {
-                    const hoy = new Date()
-                    hoy.setHours(0, 0, 0, 0)
-                    return fecha < hoy
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className='w-[7.5rem] flex-none space-y-1'>
-            <span className='text-muted-foreground text-xs font-medium'>
-              Vuelta
-            </span>
-            {showVuelta ? (
-              <div className='flex items-center gap-1'>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant='outline'
-                      className='h-9 flex-1 justify-start px-2.5 text-left text-sm font-normal'
-                    >
-                      {searchData.fechaVuelta ? (
-                        format(searchData.fechaVuelta, 'dd/MM/yy', {
-                          locale: es,
-                        })
-                      ) : (
-                        <span className='text-muted-foreground'>dd/mm/aa</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className='w-auto p-0' align='start'>
-                    <Calendar
-                      mode='single'
-                      selected={searchData.fechaVuelta || undefined}
-                      onSelect={(fecha) =>
-                        setSearchData((prev) => ({
-                          ...prev,
-                          fechaVuelta: fecha || null,
-                        }))
-                      }
-                      disabled={(fecha) =>
-                        fecha < (searchData.fechaIda || new Date())
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-9 w-7 flex-none'
-                  aria-label='Sacar la vuelta'
-                  onClick={() => {
-                    setShowVuelta(false)
-                    setSearchData((prev) => ({ ...prev, fechaVuelta: null }))
-                  }}
-                >
-                  <X className='h-3.5 w-3.5' />
-                </Button>
-              </div>
-            ) : (
+        <div className='w-[7.5rem] flex-none space-y-1'>
+          <span className='text-muted-foreground text-xs font-medium'>
+            Salida
+          </span>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
                 variant='outline'
-                className='text-muted-foreground h-9 w-full justify-start px-2.5 text-sm font-normal'
-                onClick={() => setShowVuelta(true)}
+                className='h-9 w-full justify-start px-2.5 text-left text-sm font-normal'
               >
-                + agregar
+                <CalendarIcon className='mr-1.5 h-4 w-4 flex-none' />
+                {searchData.fechaIda ? (
+                  format(searchData.fechaIda, 'dd/MM/yy', { locale: es })
+                ) : (
+                  <span className='text-muted-foreground'>dd/mm/aa</span>
+                )}
               </Button>
-            )}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent className='w-auto p-0' align='start'>
+              <Calendar
+                mode='single'
+                selected={searchData.fechaIda || undefined}
+                onSelect={(fecha) =>
+                  setSearchData((prev) => ({
+                    ...prev,
+                    fechaIda: fecha || null,
+                  }))
+                }
+                disabled={(fecha) => {
+                  const hoy = new Date()
+                  hoy.setHours(0, 0, 0, 0)
+                  return fecha < hoy
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-          <div className='w-[6rem] flex-none space-y-1'>
-            <label
-              htmlFor='pasajeros'
-              className='text-muted-foreground text-xs font-medium'
+        <div className='w-[7.5rem] flex-none space-y-1'>
+          <span className='text-muted-foreground text-xs font-medium'>
+            Vuelta
+          </span>
+          {showVuelta ? (
+            <div className='flex items-center gap-1'>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant='outline'
+                    className='h-9 flex-1 justify-start px-2.5 text-left text-sm font-normal'
+                  >
+                    {searchData.fechaVuelta ? (
+                      format(searchData.fechaVuelta, 'dd/MM/yy', {
+                        locale: es,
+                      })
+                    ) : (
+                      <span className='text-muted-foreground'>dd/mm/aa</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-auto p-0' align='start'>
+                  <Calendar
+                    mode='single'
+                    selected={searchData.fechaVuelta || undefined}
+                    onSelect={(fecha) =>
+                      setSearchData((prev) => ({
+                        ...prev,
+                        fechaVuelta: fecha || null,
+                      }))
+                    }
+                    disabled={(fecha) =>
+                      fecha < (searchData.fechaIda || new Date())
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-7 flex-none'
+                aria-label='Sacar la vuelta'
+                onClick={() => {
+                  setShowVuelta(false)
+                  setSearchData((prev) => ({ ...prev, fechaVuelta: null }))
+                }}
+              >
+                <X className='h-3.5 w-3.5' />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant='outline'
+              className='text-muted-foreground h-9 w-full justify-start px-2.5 text-sm font-normal'
+              onClick={() => setShowVuelta(true)}
             >
-              Pasajeros
-            </label>
-            <input
-              id='pasajeros'
-              type='number'
-              min='1'
-              value={filters.asientosMinimos}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  asientosMinimos: parseInt(e.target.value) || 1,
-                }))
-              }
-              className='border-input bg-background h-9 w-full rounded-md border px-2.5 text-sm'
-            />
-          </div>
+              + agregar
+            </Button>
+          )}
+        </div>
 
-          <div className='w-[9.5rem] flex-none space-y-1'>
-            <span className='text-muted-foreground text-xs font-medium'>
-              Horario
-            </span>
-            <Select value={franja} onValueChange={setFranja}>
-              <SelectTrigger className='h-9 w-full'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FRANJAS.map((f) => (
-                  <SelectItem key={f.valor} value={f.valor}>
-                    {f.etiqueta}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className='w-[7.5rem] flex-none space-y-1'>
-            <span className='text-muted-foreground text-xs font-medium'>
-              Empresa
-            </span>
-            <Select
-              value={empresa}
-              onValueChange={setEmpresa}
-              disabled={empresas.length === 0}
-            >
-              <SelectTrigger className='h-9 w-full'>
-                <SelectValue placeholder='Todas' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TODAS}>Todas</SelectItem>
-                {empresas.map((nombre) => (
-                  <SelectItem key={nombre} value={nombre}>
-                    {nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className='w-[7.5rem] flex-none space-y-1'>
-            <span className='text-muted-foreground text-xs font-medium'>
-              Calidad
-            </span>
-            <Select
-              value={calidad}
-              onValueChange={setCalidad}
-              disabled={calidades.length === 0}
-            >
-              <SelectTrigger className='h-9 w-full'>
-                <SelectValue placeholder='Cualquiera' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TODAS}>Cualquiera</SelectItem>
-                {calidades.map((codigo) => (
-                  <SelectItem key={codigo} value={codigo}>
-                    {codigo}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button
-            onClick={buscar}
-            disabled={!canSearch}
-            className='h-9 flex-none'
+        <div className='w-[6rem] flex-none space-y-1'>
+          <label
+            htmlFor='pasajeros'
+            className='text-muted-foreground text-xs font-medium'
           >
-            <Search className='mr-1.5 h-4 w-4' />
-            Buscar
-          </Button>
+            Pasajeros
+          </label>
+          <input
+            id='pasajeros'
+            type='number'
+            min='1'
+            value={filters.asientosMinimos}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                asientosMinimos: parseInt(e.target.value) || 1,
+              }))
+            }
+            className='border-input bg-background h-9 w-full rounded-md border px-2.5 text-sm'
+          />
+        </div>
 
-          <Button
-            variant='ghost'
-            onClick={limpiar}
-            className='text-muted-foreground h-9 flex-none px-2.5'
+        <div className='w-[9.5rem] flex-none space-y-1'>
+          <span className='text-muted-foreground text-xs font-medium'>
+            Horario
+          </span>
+          <Select value={franja} onValueChange={setFranja}>
+            <SelectTrigger className='h-9 w-full'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FRANJAS.map((f) => (
+                <SelectItem key={f.valor} value={f.valor}>
+                  {f.etiqueta}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='w-[7.5rem] flex-none space-y-1'>
+          <span className='text-muted-foreground text-xs font-medium'>
+            Empresa
+          </span>
+          <Select
+            value={empresa}
+            onValueChange={setEmpresa}
+            disabled={empresas.length === 0}
           >
-            <RotateCcw className='mr-1.5 h-4 w-4' />
-            Limpiar
-          </Button>
-        </CardContent>
-      </Card>
+            <SelectTrigger className='h-9 w-full'>
+              <SelectValue placeholder='Todas' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODAS}>Todas</SelectItem>
+              {empresas.map((nombre) => (
+                <SelectItem key={nombre} value={nombre}>
+                  {nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='w-[7.5rem] flex-none space-y-1'>
+          <span className='text-muted-foreground text-xs font-medium'>
+            Calidad
+          </span>
+          <Select
+            value={calidad}
+            onValueChange={setCalidad}
+            disabled={calidades.length === 0}
+          >
+            <SelectTrigger className='h-9 w-full'>
+              <SelectValue placeholder='Cualquiera' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODAS}>Cualquiera</SelectItem>
+              {calidades.map((codigo) => (
+                <SelectItem key={codigo} value={codigo}>
+                  {codigo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          onClick={buscar}
+          disabled={!canSearch}
+          className='h-9 flex-none'
+        >
+          <Search className='mr-1.5 h-4 w-4' />
+          Buscar
+        </Button>
+
+        <Button
+          variant='ghost'
+          onClick={limpiar}
+          className='text-muted-foreground h-9 flex-none px-2.5'
+        >
+          <RotateCcw className='mr-1.5 h-4 w-4' />
+          Limpiar
+        </Button>
+      </div>
 
       {shouldSearch && canSearch && (
         <div className='space-y-3'>
