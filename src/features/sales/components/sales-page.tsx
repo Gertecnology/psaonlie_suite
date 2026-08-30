@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar as CalendarIcon, Plus, Search, Users } from 'lucide-react'
@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { useSidebar } from '@/components/ui/sidebar'
 import {
   BarraDeFiltros,
   FiltroDeSeleccion,
@@ -50,20 +49,6 @@ const OPCIONES_DE_FRANJA: OpcionDeFiltro[] = FRANJAS.map((f) => ({
 
 export function SalesPage() {
   const { roundTripData, setRoundTripData } = useRoundTrip()
-  const { setOpen } = useSidebar()
-
-  /**
-   * Mientras se vende, el menú queda en íconos.
-   *
-   * En una notebook de 1366 px el menú abierto se lleva 210: con eso los
-   * controles de búsqueda no entran en una línea y se parten en dos. Al salir
-   * de la pantalla se devuelve como estaba, porque es una preferencia del
-   * vendedor y no algo que ventas deba decidirle para todo el panel.
-   */
-  useEffect(() => {
-    setOpen(false)
-    return () => setOpen(true)
-  }, [setOpen])
 
   const [searchData, setSearchData] = useState<SearchFormData>({
     origen: roundTripData.ida.origen || null,
