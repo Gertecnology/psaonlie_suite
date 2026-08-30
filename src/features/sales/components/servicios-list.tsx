@@ -128,7 +128,7 @@ function TarjetaDeServicio({
     <Card className='hover:border-foreground/25 transition-colors'>
       <CardContent className='flex flex-wrap items-center gap-4 p-4'>
         {/* La empresa. Ancho fijo: es lo que ancla la lectura de la fila. */}
-        <div className='flex w-[9.5rem] min-w-0 flex-none items-center gap-2.5'>
+        <div className='flex w-[11.5rem] min-w-0 flex-none items-center gap-2.5'>
           <div className='border-border flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-lg border'>
             {empresaLogo ? (
               <img
@@ -153,7 +153,7 @@ function TarjetaDeServicio({
         </div>
 
         {/* El viaje. Se estira: es lo que más cambia entre una fila y otra. */}
-        <div className='min-w-[15rem] flex-1'>
+        <div className='min-w-[15rem] max-w-[28rem] flex-1'>
           <div className='mb-1.5 flex items-center gap-1.5 text-sm font-medium'>
             <MapPin className='text-muted-foreground h-3.5 w-3.5 flex-none' />
             <span className='truncate'>{origen?.nombre}</span>
@@ -191,7 +191,7 @@ function TarjetaDeServicio({
         </div>
 
         {/* El precio y la acción. Alineados a la derecha, pegados entre sí. */}
-        <div className='flex flex-none items-center gap-4'>
+        <div className='ml-auto flex flex-none items-center gap-4'>
           <div
             className='text-right'
             title={`${formatearGuaranies(servicio.Tarifa)} de pasaje + ${formatearGuaranies(cargo)} de ${describirCargoServicio(serviceCharge).toLowerCase()}`}
@@ -228,7 +228,7 @@ function TarjetaFantasma() {
           <div className='bg-muted h-3 w-3/5 animate-pulse rounded' />
           <div className='bg-muted h-3 w-4/5 animate-pulse rounded' />
         </div>
-        <div className='flex flex-none items-center gap-4'>
+        <div className='ml-auto flex flex-none items-center gap-4'>
           <div className='space-y-1.5'>
             <div className='bg-muted h-4 w-20 animate-pulse rounded' />
             <div className='bg-muted h-2.5 w-24 animate-pulse rounded' />
