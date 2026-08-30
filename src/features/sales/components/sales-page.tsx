@@ -260,7 +260,7 @@ export function SalesPage() {
           }
           placeholder='Origen'
           label=''
-          className='w-[13rem]'
+          className='min-w-[11rem] flex-1'
         />
 
         <ParadaSearch
@@ -270,7 +270,7 @@ export function SalesPage() {
           }
           placeholder='Destino'
           label=''
-          className='w-[13rem]'
+          className='min-w-[11rem] flex-1'
         />
 
         <Popover>
@@ -345,7 +345,7 @@ export function SalesPage() {
           </Button>
         )}
 
-        <div className='relative w-[7.5rem]'>
+        <div className='relative w-[6rem]'>
           <Users className='text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2' />
           <Input
             type='number'
@@ -370,7 +370,7 @@ export function SalesPage() {
           opciones={OPCIONES_DE_FRANJA}
           valor={franja}
           onCambiar={setFranja}
-          className='w-[11rem]'
+          className='w-[10rem]'
         />
 
         <FiltroDeSeleccion
@@ -381,7 +381,7 @@ export function SalesPage() {
           opciones={opcionesDeEmpresa}
           valor={empresa}
           onCambiar={setEmpresa}
-          className='w-[10rem]'
+          className='w-[8.5rem]'
         />
 
         <FiltroDeSeleccion
@@ -392,7 +392,7 @@ export function SalesPage() {
           opciones={opcionesDeCalidad}
           valor={calidad}
           onCambiar={setCalidad}
-          className='w-[10rem]'
+          className='w-[8.5rem]'
         />
 
         <Button onClick={buscar} disabled={!canSearch} className='h-9'>
