@@ -48,32 +48,26 @@ function rutasBase() {
 }
 
 /** Completa y envía el formulario del único pasajero. */
+/**
+ * Carga la fila de un pasajero en la planilla.
+ *
+ * Ya no hay un formulario por pasajero con su botón de guardar: es una fila
+ * por butaca, y los clientes se dan de alta todos juntos al confirmar.
+ */
 async function registrarPasajero(usuario: ReturnType<typeof userEvent.setup>) {
-  await usuario.type(screen.getByPlaceholderText('Nombres'), 'Ana')
-  await usuario.type(screen.getByPlaceholderText('Apellidos'), 'Pérez')
-  await usuario.type(screen.getByPlaceholderText('Número'), '1234567')
-  await usuario.type(screen.getByPlaceholderText('Ej: Paraguay'), 'Paraguay')
-  await usuario.type(screen.getByPlaceholderText('Ej: 975622233'), '0981111111')
-  await usuario.type(
-    screen.getByPlaceholderText('ejemplo@correo.com'),
-    'pasajero@test.com',
-  )
+  await usuario.type(screen.getByLabelText('Documento'), '1234567')
+  await usuario.type(screen.getByLabelText('Nombres'), 'Ana')
+  await usuario.type(screen.getByLabelText('Apellidos'), 'Pérez')
+  await usuario.selectOptions(screen.getByLabelText('Tipo doc.'), 'CI')
+  await usuario.selectOptions(screen.getByLabelText('Nacionalidad'), 'PY')
+  await usuario.type(screen.getByLabelText('Residencia'), 'Paraguay')
+  await usuario.type(screen.getByLabelText('F. nacim.'), '1990-05-10')
+  await usuario.selectOptions(screen.getByLabelText('Género'), 'M')
+  await usuario.selectOptions(screen.getByLabelText('Ocupación'), 'Empleado')
+  await usuario.type(screen.getByLabelText('Teléfono'), '0981111111')
+  await usuario.type(screen.getByLabelText('Email'), 'pasajero@test.com')
 
-  const fecha = document.querySelector('input[type="date"]') as HTMLInputElement
-  await usuario.type(fecha, '1990-05-10')
-
-  // Los combos de Radix se identifican por su posición en el formulario:
-  // tipo de documento, nacionalidad, género y ocupación.
-  await elegirOpcion(usuario, 0, 'Cédula de identidad')
-  await elegirOpcion(usuario, 1, 'Paraguay')
-  await elegirOpcion(usuario, 2, 'Masculino')
-  await elegirOpcion(usuario, 3, 'Empleado')
-
-  await usuario.click(
-    screen.getByRole('button', { name: /Registrar pasajero/i }),
-  )
-
-  return screen.findByText(/Pasajero registrado/i)
+  return screen.findByText('1 de 1 completos')
 }
 
 /**
@@ -91,15 +85,6 @@ async function completarLaFacturacion(
     screen.getByLabelText(/Razón social o nombre/i),
     'Sebastian Castro',
   )
-}
-
-async function elegirOpcion(
-  usuario: ReturnType<typeof userEvent.setup>,
-  indice: number,
-  opcion: string,
-) {
-  await usuario.click(screen.getAllByRole('combobox')[indice])
-  await usuario.click(await screen.findByRole('option', { name: opcion }))
 }
 
 describe('RoundTripCheckoutPage', () => {
@@ -128,7 +113,7 @@ describe('RoundTripCheckoutPage', () => {
       pasoInicial: 'checkout',
     })
 
-    const boton = screen.getByRole('button', { name: /Faltan los datos de/i })
+    const boton = screen.getByRole('button', { name: /Faltan 1 pasajero/i })
     expect(boton).toBeDisabled()
   })
 
@@ -246,7 +231,8 @@ describe('RoundTripCheckoutPage', () => {
     ).toBeInTheDocument()
 
     // El pasajero sigue registrado: se puede corregir y reintentar.
-    expect(screen.getByText(/Pasajero registrado/i)).toBeInTheDocument()
+    // La fila cargada sigue completa: el rechazo no borró lo tipeado.
+    expect(screen.getByText('1 de 1 completos')).toBeInTheDocument()
     expect(api.llamadasA('confirmar-nueva')).toBe(1)
   })
 

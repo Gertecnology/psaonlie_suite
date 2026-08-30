@@ -1,11 +1,17 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, Users, CreditCard, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Clock, CreditCard, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ClientForm } from './client-form'
+import { useCreateClient } from '@/features/clients/hooks/use-client-mutations'
+import { PlanillaDePasajeros } from './planilla-de-pasajeros'
 import { FacturacionCard, type DatosDeFacturacion } from './facturacion-card'
+import {
+  cuantasCompletas,
+  estaCompleta,
+  type DatosDelPasajero,
+} from '../../utils/los-datos-del-pasajero'
 import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { useRoundTrip } from '../../context/round-trip-context'
@@ -18,7 +24,6 @@ import {
 } from '../../services/confirmar-venta'
 import { sumarPreciosAsientos } from '../../utils/money'
 import type { PasajeroRegistrado } from '../../models/sales.model'
-import type { CreateClientFormValues } from '@/features/clients/models/clients.model'
 import { toast } from 'sonner'
 
 interface RoundTripCheckoutPageProps {
@@ -28,6 +33,11 @@ interface RoundTripCheckoutPageProps {
 export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripCheckoutPageProps) {
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
   const [pasajeros, setPasajeros] = useState<PasajeroRegistrado[]>([])
+
+  /** Lo cargado en la planilla, tal como está. */
+  const [filasDePasajeros, setFilasDePasajeros] = useState<DatosDelPasajero[]>(
+    [],
+  )
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
 
   // A nombre de quién sale la factura. También faltaba: toda venta de ida y
@@ -64,6 +74,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
     },
   })
 
+  const crearCliente = useCreateClient()
   const confirmarVentaMutation = useConfirmarVenta()
   const liberarBloqueoMutation = useLiberarBloqueo()
 
@@ -116,35 +127,6 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
     return lista
   }, [roundTripData])
 
-  const handleClientCreated = (
-    clienteId: string,
-    client: CreateClientFormValues,
-    passengerNumber: number,
-    seatNumber?: number,
-  ) => {
-    setErrorVenta(null)
-    setPasajeros(prev => {
-      const registrado: PasajeroRegistrado = {
-        clienteId,
-        passengerNumber,
-        seatNumber,
-        nombre: client.nombre,
-        apellido: client.apellido,
-        email: client.email,
-        numeroDocumento: client.numeroDocumento,
-      }
-
-      const existente = prev.findIndex(p => p.passengerNumber === passengerNumber)
-      if (existente >= 0) {
-        const actualizado = [...prev]
-        actualizado[existente] = registrado
-        return actualizado
-      }
-
-      return [...prev, registrado]
-    })
-  }
-
   /** Libera los bloqueos de los tramos cuya venta no llegó a confirmarse. */
   const liberarBloqueosSinVenta = async (indicesFallidos: number[]) => {
     const codigos: Array<string | undefined> = [
@@ -172,8 +154,8 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
       return
     }
 
-    if (pasajeros.length !== passengerForms.length) {
-      toast.error('Registrá los datos de todos los pasajeros antes de continuar')
+    if (cuantasCompletas(filasDePasajeros) !== passengerForms.length) {
+      toast.error('Completá los datos de todos los pasajeros antes de continuar')
       return
     }
 
@@ -181,12 +163,49 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
     setErrorVenta(null)
 
     try {
-      // Los pasajeros ya están creados: el formulario devolvió el id de cada
-      // uno. Antes se los volvía a crear acá, duplicando el alta y la
-      // sincronización con la empresa.
+      // La planilla no tiene un botón de guardar por fila, así que los
+      // pasajeros se dan de alta acá, todos juntos. Los que ya se registraron
+      // en un intento anterior no se vuelven a crear: repetir el alta duplica
+      // el cliente y su sincronización con la empresa.
       const clientePorPasajero = new Map(
         pasajeros.map(pasajero => [pasajero.passengerNumber, pasajero.clienteId]),
       )
+
+      for (const [indice, form] of passengerForms.entries()) {
+        if (clientePorPasajero.has(form.passengerNumber)) continue
+
+        const fila = filasDePasajeros[indice]
+        if (!fila || !estaCompleta(fila)) continue
+
+        const respuesta = await crearCliente.mutateAsync({
+          ...fila,
+          agenciaId: form.agenciaIdIda || roundTripData.ida.agenciaId || '',
+        })
+
+        const clienteId = respuesta?.cliente?.id
+
+        // Sin id no hay forma de asociar el pasajero a su butaca: seguir
+        // armaría una venta a nombre de nadie.
+        if (!clienteId) {
+          throw new Error(
+            `No se pudo registrar al pasajero de la butaca ${form.asientoIda?.numero ?? form.passengerNumber}.`,
+          )
+        }
+
+        clientePorPasajero.set(form.passengerNumber, clienteId)
+        setPasajeros(antes => [
+          ...antes,
+          {
+            clienteId,
+            passengerNumber: form.passengerNumber,
+            seatNumber: form.asientoIda ? Number(form.asientoIda.numero) : undefined,
+            nombre: fila.nombre,
+            apellido: fila.apellido,
+            email: fila.email,
+            numeroDocumento: fila.numeroDocumento,
+          },
+        ])
+      }
 
       const ventas: VentaConfirmar[] = []
 
@@ -317,7 +336,8 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
   }
 
   const confirmando = confirmarVentaMutation.isPending
-  const faltanPasajeros = pasajeros.length !== passengerForms.length
+  const completas = cuantasCompletas(filasDePasajeros)
+  const faltanPasajeros = completas !== passengerForms.length
 
   return (
     <div className="space-y-4">
@@ -439,50 +459,17 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
           <ResumenPago tramos={tramos} />
         </div>
 
-        {/* Right Column - Client Forms */}
+        {/* La planilla: una fila por butaca en vez de un formulario por
+            pasajero. Con dieciocho, las tarjetas eran dieciocho despliegues y
+            dieciocho botones de guardar. */}
         <div className="space-y-4">
-          {passengerForms.map((form) => {
-            const registrado = pasajeros.find(p => p.passengerNumber === form.passengerNumber)
-            return (
-              <Card key={`passenger-${form.passengerNumber}`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Pasajero {form.passengerNumber}
-                    <div className="flex gap-1">
-                      {form.asientoIda && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          Ida: Asiento {form.asientoIda.numero}
-                        </span>
-                      )}
-                      {form.asientoVuelta && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Vuelta: Asiento {form.asientoVuelta.numero}
-                        </span>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ClientForm
-                    agenciaId={form.agenciaIdIda || ''}
-                    empresaNombre={form.empresaNombreIda}
-                    onClientCreated={(clienteId, client) =>
-                      handleClientCreated(
-                        clienteId,
-                        client,
-                        form.passengerNumber,
-                        form.asientoIda ? Number(form.asientoIda.numero) : undefined,
-                      )
-                    }
-                    isClientCreated={!!registrado}
-                    seatNumber={form.asientoIda ? Number(form.asientoIda.numero) : 0}
-                    passengerNumber={form.passengerNumber}
-                  />
-                </CardContent>
-              </Card>
-            )
-          })}
+          <PlanillaDePasajeros
+            butacas={passengerForms.map((form) =>
+              form.asientoIda?.numero ?? String(form.passengerNumber)
+            )}
+            agenciaId={roundTripData.ida.agenciaId ?? ''}
+            onCambio={setFilasDePasajeros}
+          />
 
           {/* La venta falló: el operador puede corregir y reintentar sin
               perder los pasajeros ya cargados. */}
@@ -523,7 +510,7 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
               : ventaYaConfirmada
                 ? 'Venta ya confirmada'
                 : faltanPasajeros
-                  ? `Faltan los datos de ${passengerForms.length - pasajeros.length} pasajero(s)`
+                  ? `Faltan ${passengerForms.length - completas} ${passengerForms.length - completas === 1 ? 'pasajero' : 'pasajeros'}`
                   : faltaFacturacion
                     ? 'Faltan los datos de facturación'
                     : 'Confirmar venta y continuar al cobro'
