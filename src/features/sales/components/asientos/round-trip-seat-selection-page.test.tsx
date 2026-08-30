@@ -76,7 +76,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     // Y no aparece ningún indicio de reserva conseguida.
     expect(screen.queryByText(/Asientos Reservados/i)).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /Continuar al Checkout/i }),
+      screen.queryByRole('button', { name: /cargar los pasajeros/i }),
     ).not.toBeInTheDocument()
     expect(api.llamadasA('bloquear-asientos')).toBe(1)
   })
@@ -111,7 +111,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     await waitFor(() => expect(api.llamadasA('liberar-bloqueo')).toBe(1))
 
     expect(
-      screen.queryByRole('button', { name: /Continuar al Checkout/i }),
+      screen.queryByRole('button', { name: /cargar los pasajeros/i }),
     ).not.toBeInTheDocument()
   })
 
@@ -133,7 +133,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     )
 
     expect(
-      await screen.findByRole('button', { name: /Continuar al Checkout/i }),
+      await screen.findByRole('button', { name: /cargar los pasajeros/i }),
     ).toBeInTheDocument()
   })
 
@@ -154,7 +154,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
 
     await Promise.all([usuario.click(boton), usuario.click(boton)])
 
-    await screen.findByRole('button', { name: /Continuar al Checkout/i })
+    await screen.findByRole('button', { name: /cargar los pasajeros/i })
     expect(api.llamadasA('bloquear-asientos')).toBe(1)
   })
 
