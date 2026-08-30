@@ -348,10 +348,19 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
-          <div>
-            <h1 className="text-xl font-bold">Checkout - Viaje Completo</h1>
-            <p className="text-sm text-muted-foreground">
-              Completa la información de los pasajeros para ambos viajes
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight">Pasajeros</h1>
+            <p className="text-muted-foreground mt-0.5 truncate text-[12.5px]">
+              {[
+                roundTripData.ida.servicio?.Emp,
+                `${roundTripData.ida.origen?.nombre} → ${roundTripData.ida.destino?.nombre}`,
+                (roundTripData.ida.asientos ?? []).length > 0 &&
+                  `butacas ${(roundTripData.ida.asientos ?? [])
+                    .map((asiento) => asiento.numero)
+                    .join(', ')}`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
           </div>
         </div>
