@@ -71,7 +71,7 @@ export function RoundTripPaymentPage() {
   )
 
   const handleGoBack = () => {
-    setCurrentStep('checkout')
+    setCurrentStep('resumen')
   }
 
 
