@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Filter, RotateCcw, Calendar as CalendarIcon, X } from 'lucide-react'
+import { Search, RotateCcw, Calendar as CalendarIcon, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,11 @@ import { useGetServicios } from '../hooks/use-get-servicios'
 import { useRoundTrip } from '../context/round-trip-context'
 import type { SearchFormData, SearchFilters } from '../models/sales.model'
 
+/** Con qué arranca la pantalla, y a qué vuelve «Limpiar». */
+const FILTROS_INICIALES: SearchFilters = {
+  asientosMinimos: 1,
+}
+
 export function SalesPage() {
   const { roundTripData, setRoundTripData } = useRoundTrip()
   
@@ -24,11 +29,16 @@ export function SalesPage() {
   })
   
   const [showVuelta, setShowVuelta] = useState(!!roundTripData.vuelta?.fecha)
-  const [showFilters, setShowFilters] = useState(false)
   const [shouldSearch, setShouldSearch] = useState(false)
-  const [filters, setFilters] = useState<SearchFilters>({
-    asientosMinimos: 2,
-  })
+  /**
+   * Arranca en 1, y a la vista.
+   *
+   * Estaba en 2 y escondido detrás de «Filtros»: una persona que viaja sola
+   * —el caso más común del mostrador— recibía «No se encontraron servicios»
+   * sin que nada en pantalla explicara por qué. Un filtro que no se ve es un
+   * filtro que miente.
+   */
+  const [filters, setFilters] = useState<SearchFilters>(FILTROS_INICIALES)
 
   // Build search parameters for the API
   const searchParams = useMemo(() => {
@@ -80,11 +90,7 @@ export function SalesPage() {
     })
     setShowVuelta(false)
     setShouldSearch(false)
-    setFilters({
-      horaDesde: '08:00',
-      horaHasta: '22:00',
-      asientosMinimos: 2,
-    })
+    setFilters(FILTROS_INICIALES)
     // Limpiar también el contexto
     setRoundTripData({
       ida: {
@@ -359,82 +365,74 @@ export function SalesPage() {
             </div>
           </div>
 
-          {/* Secondary Controls Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="vuelta"
-                checked={showVuelta}
-                onCheckedChange={handleVueltaToggle}
+          {/* Los filtros, a la vista y en una línea */}
+          <div className="flex flex-wrap items-end gap-3 border-t pt-3">
+            <div className="w-[7.5rem] space-y-1">
+              <label htmlFor="hora-desde" className="text-muted-foreground text-xs font-medium">
+                Sale desde
+              </label>
+              <input
+                id="hora-desde"
+                type="time"
+                value={filters.horaDesde ?? ''}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, horaDesde: e.target.value || undefined }))
+                }
+                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
               />
+            </div>
+
+            <div className="w-[7.5rem] space-y-1">
+              <label htmlFor="hora-hasta" className="text-muted-foreground text-xs font-medium">
+                hasta
+              </label>
+              <input
+                id="hora-hasta"
+                type="time"
+                value={filters.horaHasta ?? ''}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, horaHasta: e.target.value || undefined }))
+                }
+                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
+              />
+            </div>
+
+            <div className="w-[6.5rem] space-y-1">
+              <label htmlFor="pasajeros" className="text-muted-foreground text-xs font-medium">
+                Pasajeros
+              </label>
+              <input
+                id="pasajeros"
+                type="number"
+                min="1"
+                value={filters.asientosMinimos}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    asientosMinimos: parseInt(e.target.value) || 1,
+                  }))
+                }
+                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pb-1.5">
+              <Checkbox id="vuelta" checked={showVuelta} onCheckedChange={handleVueltaToggle} />
               <label htmlFor="vuelta" className="text-sm font-medium">
                 Incluir vuelta
               </label>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="h-8 flex-1 sm:flex-none"
-              >
-                <Filter className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Filtros</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClear}
-                className="h-8 flex-1 sm:flex-none"
-              >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Limpiar</span>
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClear}
+              className="ml-auto h-9"
+            >
+              <RotateCcw className="mr-1 h-4 w-4" />
+              Limpiar filtros
+            </Button>
           </div>
-
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="pt-2 border-t">
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Filtros Avanzados</h4>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Hora desde</label>
-                    <input
-                      type="time"
-                      value={filters.horaDesde}
-                      onChange={(e) => setFilters(prev => ({ ...prev, horaDesde: e.target.value }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Hora hasta</label>
-                    <input
-                      type="time"
-                      value={filters.horaHasta}
-                      onChange={(e) => setFilters(prev => ({ ...prev, horaHasta: e.target.value }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Asientos mínimos</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={filters.asientosMinimos}
-                      onChange={(e) => setFilters(prev => ({ ...prev, asientosMinimos: parseInt(e.target.value) || 1 }))}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm h-9"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
