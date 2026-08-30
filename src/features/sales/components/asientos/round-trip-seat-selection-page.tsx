@@ -33,7 +33,17 @@ import { SeatLegend } from './seat-legend'
 import { ServiceInfo } from './service-info'
 import { TiempoBloqueo } from './tiempo-bloqueo'
 
-const MAX_ASIENTOS_POR_TRAMO = 2
+/**
+ * A partir de acá se avisa antes de reservar.
+ *
+ * No es un tope: el backend nunca tuvo uno —sólo valida que no se mande cero—
+ * y una delegación de veinte butacas es una venta legítima. El aviso está para
+ * que nadie bloquee medio colectivo de un click por error.
+ *
+ * Antes había un máximo de 2, que obligaba a partir una familia de cuatro en
+ * dos ventas, con dos facturas y dos cobros.
+ */
+const BUTACAS_QUE_MERECEN_AVISO = 10
 
 interface SeatSelectionPageProps {
   tripType?: 'ida' | 'vuelta'
@@ -114,10 +124,6 @@ export function RoundTripSeatSelectionPage({
     setSelectedSeats((prev) => {
       if (prev.some((seat) => seat.numero === asiento.numero)) {
         return prev.filter((seat) => seat.numero !== asiento.numero)
-      }
-
-      if (prev.length >= MAX_ASIENTOS_POR_TRAMO) {
-        return prev
       }
 
       return [...prev, asiento]
@@ -397,14 +403,16 @@ export function RoundTripSeatSelectionPage({
                     {blockedSeats.length > 0 ? (
                       <>
                         <Lock className='text-estado-ok h-4 w-4' />
-                        Asientos Reservados ({blockedSeats.length}/
-                        {MAX_ASIENTOS_POR_TRAMO})
+                        {blockedSeats.length === 1
+                          ? '1 butaca reservada'
+                          : `${blockedSeats.length} butacas reservadas`}
                       </>
                     ) : (
                       <>
                         <CheckCircle className='text-primary h-4 w-4' />
-                        Asientos Seleccionados ({selectedSeats.length}/
-                        {MAX_ASIENTOS_POR_TRAMO})
+                        {selectedSeats.length === 1
+                          ? '1 butaca elegida'
+                          : `${selectedSeats.length} butacas elegidas`}
                       </>
                     )}
                   </CardTitle>
@@ -506,26 +514,42 @@ export function RoundTripSeatSelectionPage({
                   </Button>
                 </>
               ) : (
-                <Button
-                  onClick={handleConfirmSelection}
-                  disabled={selectedSeats.length === 0 || bloqueando}
-                  className='w-full'
-                  size='lg'
-                >
-                  {bloqueando ? (
-                    <>
-                      <div className='mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
-                      Reservando asientos con la empresa...
-                    </>
-                  ) : selectedSeats.length > 0 ? (
-                    <>
-                      <Lock className='mr-2 h-4 w-4' />
-                      Reservar asientos ({selectedSeats.length})
-                    </>
-                  ) : (
-                    'Selecciona al menos un asiento'
+                <>
+                  {selectedSeats.length >= BUTACAS_QUE_MERECEN_AVISO && (
+                    <Alert>
+                      <AlertTriangle className='h-4 w-4' />
+                      <AlertDescription>
+                        Vas a reservar {selectedSeats.length} butacas. Confirmá
+                        que es lo que querés antes de bloquearlas.
+                      </AlertDescription>
+                    </Alert>
                   )}
-                </Button>
+                  <Button
+                    onClick={handleConfirmSelection}
+                    disabled={selectedSeats.length === 0 || bloqueando}
+                    className='w-full'
+                    size='lg'
+                  >
+                    {bloqueando ? (
+                      <>
+                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
+                        Reservando con la empresa...
+                      </>
+                    ) : selectedSeats.length === 1 ? (
+                      <>
+                        <Lock className='mr-2 h-4 w-4' />
+                        Reservar 1 butaca
+                      </>
+                    ) : selectedSeats.length > 1 ? (
+                      <>
+                        <Lock className='mr-2 h-4 w-4' />
+                        Reservar {selectedSeats.length} butacas
+                      </>
+                    ) : (
+                      'Elegí al menos una butaca'
+                    )}
+                  </Button>
+                </>
               )}
             </div>
           </div>
