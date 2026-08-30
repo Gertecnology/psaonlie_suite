@@ -43,11 +43,6 @@ export function ParadaSearch({
     setSearchTerm('')
   }
 
-  const handleClear = () => {
-    onValueChange(null)
-    setSearchTerm('')
-  }
-
   return (
     <div className={cn("space-y-1", className)}>
       {label && (
@@ -128,16 +123,6 @@ export function ParadaSearch({
         </PopoverContent>
         </Popover>
         
-        {value && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="absolute -bottom-6 left-0 h-5 px-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Limpiar
-          </Button>
-        )}
       </div>
     </div>
   )
