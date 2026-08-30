@@ -1,5 +1,11 @@
 import { cn } from '@/lib/utils'
 import type { Asiento, ConfiguracionBus } from '../../models/sales.model'
+import { formatearGuaranies } from '../../utils/money'
+import {
+  armarPlanoDelPiso,
+  hayPosiciones,
+  type Celda,
+} from '../../utils/plano-del-colectivo'
 import { SEAT_STATE_CLASSES } from './seat-states'
 
 interface SeatGridProps {
@@ -31,10 +37,6 @@ const getSeatTypeColor = (
   return SEAT_STATE_CLASSES.libre
 }
 
-const getSeatTypeLabel = (_tipo: string) => {
-  // Todos los asientos son de tipo ventana según los datos
-  return 'Ventana'
-}
 
 function FloorGrid({
   floorSeats,
@@ -42,20 +44,24 @@ function FloorGrid({
   onSeatSelect,
   selectedSeats,
   blockedSeats,
-  columnas,
+  configuracionBus,
 }: {
   floorSeats: Asiento[]
   piso: number
   onSeatSelect: (asiento: Asiento) => void
   selectedSeats?: Asiento[]
   blockedSeats?: Asiento[]
-  columnas: number
+  configuracionBus: ConfiguracionBus
 }) {
-  // Group seats by row using the actual column configuration
-  const rows: Asiento[][] = []
-  for (let i = 0; i < floorSeats.length; i += columnas) {
-    rows.push(floorSeats.slice(i, i + columnas))
-  }
+  const conPosicion = hayPosiciones(floorSeats)
+
+  // Con posición, cada butaca va donde la transportista dice que va. Sin ella
+  // —una empresa que no informa la fila— se cae a filas del ancho declarado,
+  // que es lo que hacía antes: no es un plano, pero al menos no miente sobre
+  // dónde está cada una.
+  const filas = conPosicion
+    ? armarPlanoDelPiso(floorSeats, piso, configuracionBus).filas
+    : porTandas(floorSeats, configuracionBus.columnas || 4)
 
   return (
     <div className='space-y-3'>
@@ -67,15 +73,46 @@ function FloorGrid({
       </div>
 
       <div className='space-y-2'>
-        {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className='flex justify-center gap-2'>
-            {row.map((asiento) => {
+        {filas.map((fila, indiceDeFila) => (
+          <div key={indiceDeFila} className='flex justify-center gap-2'>
+            {fila.map((celda, indiceDeCelda) => {
+              if (celda.tipo === 'pasillo') {
+                // El pasillo es el hueco, no un ícono: con la línea a los
+                // costados el ojo lee dos bloques de butacas en vez de una
+                // grilla, que es lo que se ve al subir a un colectivo.
+                return (
+                  <div
+                    key={`pasillo-${indiceDeCelda}`}
+                    className='border-border mx-1 h-12 w-4 border-r border-l border-dashed'
+                    aria-hidden='true'
+                  />
+                )
+              }
+
+              if (celda.tipo === 'hueco') {
+                return (
+                  <div
+                    key={`hueco-${indiceDeCelda}`}
+                    className='h-12 w-12'
+                    aria-hidden='true'
+                  />
+                )
+              }
+
+              const asiento = celda.asiento
               const isSelected =
                 selectedSeats?.some((seat) => seat.numero === asiento.numero) ||
                 false
               const isBlocked =
                 blockedSeats?.some((seat) => seat.numero === asiento.numero) ||
                 false
+
+              const estado = isBlocked
+                ? 'Reservada para vos'
+                : asiento.disponible
+                  ? 'Libre'
+                  : 'Ocupada'
+
               return (
                 <button
                   key={asiento.numero}
@@ -91,13 +128,8 @@ function FloorGrid({
                       !isBlocked &&
                       'cursor-pointer hover:scale-105 hover:shadow-md'
                   )}
-                  title={`Asiento ${asiento.numero} - ${getSeatTypeLabel(asiento.tipo)} - ${
-                    isBlocked
-                      ? 'Bloqueado'
-                      : asiento.disponible
-                        ? 'Disponible'
-                        : 'Ocupado'
-                  }`}
+                  title={`Butaca ${asiento.numero} · ${estado} · ${formatearGuaranies(asiento.precio)}`}
+                  aria-label={`Butaca ${asiento.numero}, ${estado}`}
                 >
                   {asiento.numero}
                 </button>
@@ -106,8 +138,25 @@ function FloorGrid({
           </div>
         ))}
       </div>
+
+      <p className='text-muted-foreground text-center text-[11px]'>
+        ▲ frente
+      </p>
     </div>
   )
+}
+
+/** El reparto viejo, para cuando la empresa no informa dónde va cada butaca. */
+function porTandas(asientos: Asiento[], ancho: number): Celda[][] {
+  const filas: Celda[][] = []
+  for (let i = 0; i < asientos.length; i += ancho) {
+    filas.push(
+      asientos
+        .slice(i, i + ancho)
+        .map((asiento) => ({ tipo: 'butaca', asiento }) as Celda)
+    )
+  }
+  return filas
 }
 
 export function SeatGrid({
@@ -132,7 +181,7 @@ export function SeatGrid({
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
+          configuracionBus={configuracionBus}
         />
         <FloorGrid
           floorSeats={piso2}
@@ -140,7 +189,7 @@ export function SeatGrid({
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
+          configuracionBus={configuracionBus}
         />
       </div>
     )
@@ -155,7 +204,7 @@ export function SeatGrid({
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
+          configuracionBus={configuracionBus}
         />
       </div>
     </div>
