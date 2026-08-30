@@ -15,14 +15,16 @@ import type {
 } from '../../models/sales.model'
 import { buscarJuntas, rangoEntre } from '../../utils/butacas-juntas'
 import { leerHorario } from '../../utils/el-horario-del-servicio'
-import { leerCalidades } from '../../utils/las-calidades-del-servicio'
+import {
+  leerCalidades,
+  nombrarCalidad,
+} from '../../utils/las-calidades-del-servicio'
 import {
   calcularCargoServicio,
   formatearGuaranies,
   sumarPreciosAsientos,
   describirCargoServicio,
 } from '../../utils/money'
-import { PasoDeLaVenta } from '../paso-de-la-venta'
 import { SeatGrid } from './seat-grid'
 import { SeatLegend } from './seat-legend'
 import { TiempoBloqueo } from './tiempo-bloqueo'
@@ -344,7 +346,7 @@ export function RoundTripSeatSelectionPage({
     .map((calidad) => ({
       ...calidad,
       butacas: asientosVisibles.filter(
-        (asiento) => (asiento.calidad ?? '').trim() === calidad.calidad
+        (asiento) => nombrarCalidad(asiento.calidad ?? '') === calidad.calidad
       ).length,
     }))
     .filter((calidad) => calidad.butacas > 0)
@@ -387,7 +389,6 @@ export function RoundTripSeatSelectionPage({
             expiraEn={currentTripData.bloqueoExpiraEn}
             onExpirado={handleBloqueoVencido}
           />
-          <PasoDeLaVenta />
         </div>
       </div>
 
@@ -409,7 +410,7 @@ export function RoundTripSeatSelectionPage({
       )}
 
       {asientosData && !isLoading && !error && (
-        <div className='grid items-start gap-4 xl:grid-cols-[auto_minmax(0,1fr)]'>
+        <div className='grid items-start gap-4 xl:grid-cols-[auto_minmax(22rem,40rem)]'>
           {/* El plano toma sólo el ancho que necesita: es un colectivo, no una
               grilla que deba estirarse a media pantalla. Lo que sobra se lo
               queda el panel, que es el que lista las butacas una por una. */}

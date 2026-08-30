@@ -4,6 +4,7 @@ import {
   BORDES_POR_CALIDAD,
   bordeDeLaCalidad,
   leerCalidades,
+  nombrarCalidad,
 } from './las-calidades-del-servicio'
 
 /**
@@ -84,5 +85,22 @@ describe('el borde con que se dibuja cada calidad', () => {
     ])
 
     expect(bordeDeLaCalidad('Servicio', calidades)).toBe(BORDES_POR_CALIDAD[0])
+  })
+})
+
+describe('el nombre de una calidad', () => {
+  it('lo que viene gritado se escribe en tono normal', () => {
+    // Las transportistas mandan el nombre en mayúsculas, a veces con letras
+    // repetidas para rellenar un campo de ancho fijo.
+    expect(nombrarCalidad('SEMI CAMA')).toBe('Semi Cama')
+    expect(nombrarCalidad('CAAAAAMAAAAA')).toBe('Caaaaamaaaaa')
+  })
+
+  it('un nombre ya bien escrito se respeta', () => {
+    expect(nombrarCalidad('Semi Cama')).toBe('Semi Cama')
+  })
+
+  it('sin nombre, lo dice', () => {
+    expect(nombrarCalidad('  ')).toBe('Sin especificar')
   })
 })

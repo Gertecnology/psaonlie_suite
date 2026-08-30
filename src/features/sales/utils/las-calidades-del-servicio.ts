@@ -30,11 +30,33 @@ export const BORDES_POR_CALIDAD = [
   'border-2 border-dotted',
 ] as const
 
+/**
+ * El nombre de una calidad, en tono normal.
+ *
+ * Las transportistas mandan «CAAAAAMAAAAA» o «SEMI CAMA»: todo en mayúsculas,
+ * a veces con las letras repetidas para rellenar un campo de ancho fijo. Un
+ * badge que grita distrae de los números, que es lo que hay que leer.
+ */
+export function nombrarCalidad(calidad: string): string {
+  const limpio = calidad.trim()
+  if (!limpio) return 'Sin especificar'
+
+  // Sólo se toca lo que viene TODO en mayúsculas: un nombre ya escrito como
+  // corresponde se respeta.
+  if (limpio !== limpio.toUpperCase()) return limpio
+
+  return limpio
+    .toLowerCase()
+    .split(/\s+/)
+    .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+    .join(' ')
+}
+
 export function leerCalidades(asientos: Asiento[]): CalidadDelServicio[] {
   const porCalidad = new Map<string, CalidadDelServicio>()
 
   for (const asiento of asientos) {
-    const calidad = (asiento.calidad ?? '').trim() || 'Sin especificar'
+    const calidad = nombrarCalidad(asiento.calidad ?? '')
     const yaVista = porCalidad.get(calidad)
 
     if (yaVista) {
@@ -65,7 +87,7 @@ export function bordeDeLaCalidad(
   if (calidades.length < 2) return BORDES_POR_CALIDAD[0]
 
   const indice = calidades.findIndex(
-    (entrada) => entrada.calidad === ((calidad ?? '').trim() || 'Sin especificar'),
+    (entrada) => entrada.calidad === nombrarCalidad(calidad ?? ''),
   )
 
   return BORDES_POR_CALIDAD[Math.max(indice, 0)] ?? BORDES_POR_CALIDAD[0]
