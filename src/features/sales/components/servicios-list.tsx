@@ -1,6 +1,8 @@
 import { Bus, Users } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useRoundTrip } from '../context/round-trip-context'
 import type {
   EmpresaServicios,
@@ -155,9 +157,9 @@ function TarjetaDeServicio({
             <span className='truncate text-[13px] font-semibold'>
               {origen?.nombre} → {destino?.nombre}
             </span>
-            <span className='bg-muted text-muted-foreground flex-none rounded px-1.5 py-0.5 text-[10px] font-semibold'>
+            <Badge variant='secondary' className='flex-none text-[10px]'>
               {nombreDeLaCalidad(servicio.Calidad)}
-            </span>
+            </Badge>
           </div>
 
           <div className='flex items-center gap-2'>
@@ -218,16 +220,16 @@ function TarjetaFantasma() {
     <Card>
       <CardContent className='flex items-center gap-3 p-3'>
         <div className='flex w-[4.5rem] flex-none flex-col items-center gap-1'>
-          <div className='bg-muted h-10 w-10 animate-pulse rounded-lg' />
-          <div className='bg-muted h-2.5 w-12 animate-pulse rounded' />
+          <Skeleton className='h-10 w-10 rounded-lg' />
+          <Skeleton className='h-2.5 w-12' />
         </div>
         <div className='border-border flex-1 space-y-2 border-l pl-3'>
-          <div className='bg-muted h-3 w-3/5 animate-pulse rounded' />
-          <div className='bg-muted h-3 w-4/5 animate-pulse rounded' />
+          <Skeleton className='h-3 w-3/5' />
+          <Skeleton className='h-3 w-4/5' />
         </div>
         <div className='border-border flex-none space-y-1.5 border-l pl-3'>
-          <div className='bg-muted h-3.5 w-20 animate-pulse rounded' />
-          <div className='bg-muted h-7 w-20 animate-pulse rounded-md' />
+          <Skeleton className='h-3.5 w-20' />
+          <Skeleton className='h-7 w-20 rounded-md' />
         </div>
       </CardContent>
     </Card>
