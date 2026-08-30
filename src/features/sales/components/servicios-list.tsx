@@ -1,10 +1,15 @@
-import { Clock, MapPin, Users, DollarSign, Star, Bus } from 'lucide-react'
+import { Clock, MapPin, Users, Bus } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useRoundTrip } from '../context/round-trip-context'
-import { formatearGuaranies } from '../utils/money'
+import {
+  aEnteroGuaranies,
+  calcularCargoServicio,
+  describirCargoServicio,
+  formatearGuaranies,
+} from '../utils/money'
 import type { EmpresaServicios, Servicio, ParadaHomologada, ServiceCharge } from '../models/sales.model'
 
 interface ServiciosListProps {
@@ -31,6 +36,14 @@ const getCalidadColor = (calidad: string) => {
   }
 }
 
+/**
+ * El nombre de la calidad, para quien vende.
+ *
+ * La lista de códigos vive acá y no en el backend, así que cualquiera que la
+ * transportista agregue cae en el default. Devolver el código pelado dejaba un
+ * badge que decía «CA» y nadie sabía qué era: ahora al menos se lee que no
+ * está identificada, con el código al lado para poder preguntar.
+ */
 const getCalidadLabel = (calidad: string) => {
   switch (calidad) {
     case 'CO':
@@ -42,11 +55,22 @@ const getCalidadLabel = (calidad: string) => {
     case 'SE':
       return 'Semi Ejecutivo'
     default:
-      return calidad
+      return calidad ? `Sin especificar (${calidad})` : 'Sin especificar'
   }
 }
 
-const formatPrice = (price: string) => formatearGuaranies(price)
+/**
+ * Lo que el cliente va a pagar por ese pasaje: la tarifa más el cargo por
+ * servicio de la empresa. Mostrar la tarifa sola hacía que el vendedor
+ * anunciara un precio y la caja cobrara otro.
+ */
+const precioAlCliente = (
+  tarifa: string,
+  serviceCharge?: ServiceCharge,
+): number => {
+  const pasaje = aEnteroGuaranies(tarifa)
+  return pasaje + calcularCargoServicio(pasaje, serviceCharge)
+}
 
 function ServicioCard({ 
   servicio, 
@@ -157,10 +181,17 @@ function ServicioCard({
             </span>
           </div>
           
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-bold text-lg">
-              {formatPrice(servicio.Tarifa)}
+          <div
+            className="flex flex-col items-end"
+            title={`${formatearGuaranies(servicio.Tarifa)} de pasaje + ${formatearGuaranies(
+              calcularCargoServicio(aEnteroGuaranies(servicio.Tarifa), _serviceCharge),
+            )} de ${describirCargoServicio(_serviceCharge).toLowerCase()}`}
+          >
+            <span className="font-bold text-lg leading-tight">
+              {formatearGuaranies(precioAlCliente(servicio.Tarifa, _serviceCharge))}
+            </span>
+            <span className="text-muted-foreground text-[11px]">
+              con el cargo por servicio
             </span>
           </div>
         </div>
@@ -194,7 +225,6 @@ function EmpresaSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Star className="h-5 w-5 text-yellow-500" />
         <h3 className="text-lg font-semibold">{empresa.empresa}</h3>
         <Badge variant="secondary" className="ml-auto">
           {empresa.data.length} servicios
