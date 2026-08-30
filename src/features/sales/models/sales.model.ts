@@ -1,3 +1,4 @@
+import type { DatosDelPasajero } from '../utils/los-datos-del-pasajero'
 import { ParadaHomologada, Servicio, ServiceCharge } from '../services/sales.service'
 import { VentaExitosa } from '../services/confirmar-venta'
 
@@ -138,9 +139,32 @@ export interface TripData {
 export interface RoundTripSearchData {
   ida: TripData
   vuelta?: TripData
+  /**
+   * Los pasajeros cargados en la planilla, en el orden de las butacas.
+   *
+   * Viven en la compra y no en el tramo: el mismo grupo viaja de ida y de
+   * vuelta. Están acá y no en el estado de la pantalla porque cargar dieciocho
+   * lleva su rato y volver del resumen a corregir un apellido no puede
+   * significar tipearlo todo otra vez.
+   */
+  pasajeros?: DatosDelPasajero[]
 }
 
-export type RoundTripStep = 'search' | 'ida-seats' | 'servicios-vuelta' | 'vuelta-seats' | 'checkout' | 'payment'
+/**
+ * Los seis pasos de una venta de mostrador.
+ *
+ * `checkout` carga los pasajeros y `resumen` revisa, elige cómo se paga y
+ * confirma. Estaban juntos en una pantalla, así que el vendedor confirmaba una
+ * venta de dieciocho pasajes sin haberla podido leer.
+ */
+export type RoundTripStep =
+  | 'search'
+  | 'ida-seats'
+  | 'servicios-vuelta'
+  | 'vuelta-seats'
+  | 'checkout'
+  | 'resumen'
+  | 'payment'
 
 export interface RoundTripContextType {
   roundTripData: RoundTripSearchData

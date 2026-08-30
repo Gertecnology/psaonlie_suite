@@ -37,6 +37,8 @@ interface PlanillaDePasajerosProps {
   /** Los números de butaca, en orden. Una fila por cada uno. */
   butacas: string[]
   agenciaId: string
+  /** Lo ya cargado, para volver a una planilla a medio llenar. */
+  valorInicial?: DatosDelPasajero[]
   /** Se avisa en cada cambio, con las filas tal como están. */
   onCambio?: (filas: DatosDelPasajero[]) => void
 }
@@ -234,10 +236,11 @@ function FilaDePasajero({
 export function PlanillaDePasajeros({
   butacas,
   agenciaId,
+  valorInicial,
   onCambio,
 }: PlanillaDePasajerosProps) {
   const [filas, setFilas] = useState<DatosDelPasajero[]>(() =>
-    butacas.map(() => filaVacia())
+    butacas.map((_, indice) => valorInicial?.[indice] ?? filaVacia())
   )
 
   /** Cuáles se completaron solas desde la libreta, para poder contarlas. */

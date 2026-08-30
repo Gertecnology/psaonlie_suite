@@ -17,7 +17,8 @@ const NUMERO_DEL_PASO: Record<string, number> = {
   'ida-seats': 3,
   'vuelta-seats': 3,
   checkout: 4,
-  payment: 5,
+  resumen: 5,
+  payment: 6,
 }
 
 export function PasoDeLaVenta({ hayResultados }: { hayResultados?: boolean }) {
