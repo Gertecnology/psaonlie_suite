@@ -43,6 +43,19 @@ export interface Asiento {
   tipo: 'VENTANA' | 'PASILLO' | 'CENTRO'
   piso: number
   calidad: string
+  /**
+   * Dónde va la butaca dentro del piso.
+   *
+   * Las manda la transportista y el backend ya las guarda —`asientoData.Fila`
+   * y `asientoData.Columna` en `asiento.service.ts`—, pero este modelo no las
+   * declaraba, así que el plano las tiraba y armaba las filas partiendo el
+   * arreglo por índice. Por eso no se parecía a un colectivo.
+   *
+   * Opcionales porque el backend cae a `1` cuando la empresa no las informa: en
+   * ese caso todas comparten fila y no hay posición que dibujar.
+   */
+  fila?: number
+  columna?: string
 }
 
 // Interface for bus configuration
@@ -50,6 +63,10 @@ export interface ConfiguracionBus {
   filas: number
   columnas: number
   pisos: number
+  /** Las letras de columna, en orden: ['A', 'B', 'C', 'D']. */
+  tipoColumnas?: string[]
+  /** Dónde cae el pasillo en cada piso: '2-2', '1-2-1'. */
+  distribuciones?: { piso: number; esquema: string }[]
 }
 
 // Interface for service info
