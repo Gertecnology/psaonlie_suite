@@ -134,8 +134,8 @@ export function SalesPage() {
               propósito: lo que se lee —origen y destino— se estira, y lo que
               se elige de una lista corta queda fijo y angosto. Una grilla de
               columnas iguales los tira a dos filas y deja huecos. */}
-          <div className='flex flex-wrap items-end gap-2'>
-            <div className='min-w-[10rem] flex-1'>
+          <div className='flex flex-wrap items-end gap-3'>
+            <div className='min-w-[11rem] max-w-[19rem] flex-1'>
               <ParadaSearch
                 value={searchData.origen}
                 onValueChange={(origen) =>
@@ -146,7 +146,7 @@ export function SalesPage() {
               />
             </div>
 
-            <div className='min-w-[10rem] flex-1'>
+            <div className='min-w-[11rem] max-w-[19rem] flex-1'>
               <ParadaSearch
                 value={searchData.destino}
                 onValueChange={(destino) =>
@@ -157,7 +157,7 @@ export function SalesPage() {
               />
             </div>
 
-            <div className='w-[7.5rem] space-y-1'>
+            <div className='w-[8.5rem] flex-none space-y-1'>
               <span className='text-muted-foreground text-xs font-medium'>
                 Salida
               </span>
@@ -193,7 +193,7 @@ export function SalesPage() {
             </div>
 
             {showVuelta && (
-              <div className='w-[7.5rem] space-y-1'>
+              <div className='w-[8.5rem] flex-none space-y-1'>
                 <span className='text-muted-foreground text-xs font-medium'>
                   Vuelta
                 </span>
@@ -226,7 +226,11 @@ export function SalesPage() {
               </div>
             )}
 
-            <Button onClick={handleSearch} disabled={!canSearch} className='h-9'>
+            <Button
+              onClick={handleSearch}
+              disabled={!canSearch}
+              className='h-9 flex-none'
+            >
               <Search className='mr-2 h-4 w-4' />
               Buscar
             </Button>
