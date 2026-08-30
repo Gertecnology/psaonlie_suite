@@ -23,6 +23,20 @@ COPY . .
 # Copy .env file
 COPY .env .env
 
+# Las variables que vienen del entorno de GitHub, para no tenerlas versionadas.
+#
+# Vite hornea en el bundle todo lo que empiece con `VITE_`, y toma tanto el
+# `.env` del repo como las variables del proceso: estas ganan sobre aquel. Es
+# el camino por el que salen las nuevas — el `.env` versionado se mantiene
+# mientras queden las viejas.
+#
+# La del SDK de Bancard estaba en el `.env` con el prefijo `NEXT_PUBLIC_`,
+# copiado del `.env` de la landing, que sí es Next.js. Vite no expone ese
+# prefijo, así que al panel le llegaba vacía y el pago con tarjeta nunca
+# llegaba a abrirse.
+ARG VITE_BANCARD_SDK_URL
+ENV VITE_BANCARD_SDK_URL=${VITE_BANCARD_SDK_URL}
+
 # Build application
 RUN pnpm build
 
