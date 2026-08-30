@@ -1,4 +1,4 @@
-import { Bus, MapPin, Users } from 'lucide-react'
+import { Bus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useRoundTrip } from '../context/round-trip-context'
@@ -126,17 +126,18 @@ function TarjetaDeServicio({
 
   return (
     <Card className='hover:border-foreground/25 transition-colors'>
-      <CardContent className='flex flex-wrap items-center gap-4 p-4'>
-        {/* La empresa. Ancho fijo: es lo que ancla la lectura de la fila. */}
-        <div className='flex w-[11.5rem] min-w-0 flex-none items-center gap-2.5'>
-          <div className='border-border flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-lg border'>
+      <CardContent className='flex items-center gap-3 p-3'>
+        {/* La empresa, en columna: el logo arriba y el nombre debajo. Ocupa
+            poco ancho, que es lo que hace falta para que entren dos tarjetas
+            por fila. */}
+        <div className='flex w-[4.5rem] flex-none flex-col items-center gap-1'>
+          <div className='border-border flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border'>
             {empresaLogo ? (
               <img
                 src={empresaLogo}
                 alt=''
                 className='h-full w-full object-contain'
                 onError={(evento) => {
-                  // Sin logo queda el ícono de atrás, que ya está dibujado.
                   evento.currentTarget.style.display = 'none'
                 }}
               />
@@ -144,67 +145,66 @@ function TarjetaDeServicio({
               <Bus className='text-muted-foreground h-4 w-4' />
             )}
           </div>
-          <div className='min-w-0'>
-            <p className='truncate text-sm font-semibold'>{empresaNombre}</p>
-            <p className='text-muted-foreground truncate text-xs'>
-              {nombreDeLaCalidad(servicio.Calidad)}
-            </p>
-          </div>
+          <p className='w-full truncate text-center text-[11px] font-semibold'>
+            {empresaNombre}
+          </p>
         </div>
 
-        {/* El viaje. Se estira: es lo que más cambia entre una fila y otra. */}
-        <div className='min-w-[15rem] max-w-[28rem] flex-1'>
-          <div className='mb-1.5 flex items-center gap-1.5 text-sm font-medium'>
-            <MapPin className='text-muted-foreground h-3.5 w-3.5 flex-none' />
-            <span className='truncate'>{origen?.nombre}</span>
-            <span className='text-muted-foreground'>→</span>
-            <span className='truncate'>{destino?.nombre}</span>
+        <div className='border-border min-w-0 flex-1 border-l pl-3'>
+          <div className='mb-1.5 flex items-baseline gap-2'>
+            <span className='truncate text-[13px] font-semibold'>
+              {origen?.nombre} → {destino?.nombre}
+            </span>
+            <span className='bg-muted text-muted-foreground flex-none rounded px-1.5 py-0.5 text-[10px] font-semibold'>
+              {nombreDeLaCalidad(servicio.Calidad)}
+            </span>
           </div>
 
-          <div className='flex items-center gap-2.5'>
-            <span className='text-base font-semibold tabular-nums'>
+          <div className='flex items-center gap-2'>
+            <span className='text-[13px] font-semibold tabular-nums'>
               {horario.sale}
             </span>
 
-            <div className='bg-border relative h-px min-w-[2.5rem] flex-1'>
+            <div className='bg-border relative h-px min-w-[2rem] flex-1'>
               {horario.duracion && (
-                <span className='bg-card text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 text-[11px] whitespace-nowrap'>
+                <span className='bg-card text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-1.5 text-[10px] whitespace-nowrap'>
                   {horario.duracion}
                 </span>
               )}
             </div>
 
-            <span className='text-base font-semibold tabular-nums'>
+            <span className='text-[13px] font-semibold tabular-nums'>
               {horario.llega}
               {horario.diasDespues > 0 && (
-                <span className='text-muted-foreground ml-0.5 align-super text-[10px]'>
+                <span className='text-muted-foreground ml-0.5 align-super text-[9px]'>
                   +{horario.diasDespues}
                 </span>
               )}
             </span>
 
-            <span className='text-muted-foreground ml-2 flex flex-none items-center gap-1 text-xs'>
-              <Users className='h-3.5 w-3.5' />
-              {libres} {libres === 1 ? 'libre' : 'libres'}
+            <span className='text-muted-foreground ml-1 flex flex-none items-center gap-1 text-[11px]'>
+              <Users className='h-3 w-3' />
+              {libres}
             </span>
           </div>
         </div>
 
-        {/* El precio y la acción. Alineados a la derecha, pegados entre sí. */}
-        <div className='ml-auto flex flex-none items-center gap-4'>
-          <div
-            className='text-right'
-            title={`${formatearGuaranies(servicio.Tarifa)} de pasaje + ${formatearGuaranies(cargo)} de ${describirCargoServicio(serviceCharge).toLowerCase()}`}
+        <div
+          className='border-border flex-none border-l pl-3 text-right'
+          title={`${formatearGuaranies(servicio.Tarifa)} de pasaje + ${formatearGuaranies(cargo)} de ${describirCargoServicio(serviceCharge).toLowerCase()}`}
+        >
+          <p className='text-[15px] leading-tight font-bold tabular-nums'>
+            {formatearGuaranies(total)}
+          </p>
+          <p className='text-muted-foreground mb-1.5 text-[10px]'>
+            con el cargo
+          </p>
+          <Button
+            size='sm'
+            className='h-7 w-full px-3 text-xs'
+            onClick={elegir}
+            disabled={!origen || !destino}
           >
-            <p className='text-lg leading-tight font-bold tabular-nums'>
-              {formatearGuaranies(total)}
-            </p>
-            <p className='text-muted-foreground text-[11px]'>
-              con el cargo por servicio
-            </p>
-          </div>
-
-          <Button onClick={elegir} disabled={!origen || !destino}>
             Vender
           </Button>
         </div>
@@ -216,24 +216,18 @@ function TarjetaDeServicio({
 function TarjetaFantasma() {
   return (
     <Card>
-      <CardContent className='flex flex-wrap items-center gap-4 p-4'>
-        <div className='flex w-[9.5rem] flex-none items-center gap-2.5'>
-          <div className='bg-muted h-10 w-10 flex-none animate-pulse rounded-lg' />
-          <div className='flex-1 space-y-1.5'>
-            <div className='bg-muted h-3 w-20 animate-pulse rounded' />
-            <div className='bg-muted h-2.5 w-14 animate-pulse rounded' />
-          </div>
+      <CardContent className='flex items-center gap-3 p-3'>
+        <div className='flex w-[4.5rem] flex-none flex-col items-center gap-1'>
+          <div className='bg-muted h-10 w-10 animate-pulse rounded-lg' />
+          <div className='bg-muted h-2.5 w-12 animate-pulse rounded' />
         </div>
-        <div className='min-w-[15rem] flex-1 space-y-2'>
+        <div className='border-border flex-1 space-y-2 border-l pl-3'>
           <div className='bg-muted h-3 w-3/5 animate-pulse rounded' />
           <div className='bg-muted h-3 w-4/5 animate-pulse rounded' />
         </div>
-        <div className='ml-auto flex flex-none items-center gap-4'>
-          <div className='space-y-1.5'>
-            <div className='bg-muted h-4 w-20 animate-pulse rounded' />
-            <div className='bg-muted h-2.5 w-24 animate-pulse rounded' />
-          </div>
-          <div className='bg-muted h-9 w-20 animate-pulse rounded-md' />
+        <div className='border-border flex-none space-y-1.5 border-l pl-3'>
+          <div className='bg-muted h-3.5 w-20 animate-pulse rounded' />
+          <div className='bg-muted h-7 w-20 animate-pulse rounded-md' />
         </div>
       </CardContent>
     </Card>
@@ -251,7 +245,8 @@ export function ServiciosList({
   if (isLoading) {
     return (
       <div className={className}>
-        <div className='space-y-2.5'>
+        <div className='grid gap-2.5 xl:grid-cols-2'>
+          <TarjetaFantasma />
           <TarjetaFantasma />
           <TarjetaFantasma />
           <TarjetaFantasma />
@@ -277,8 +272,14 @@ export function ServiciosList({
       }))
     )
     .sort((a, b) => {
-      const horaA = leerHorario(a.servicio.Embarque, a.servicio.Desembarque).sale
-      const horaB = leerHorario(b.servicio.Embarque, b.servicio.Desembarque).sale
+      const horaA = leerHorario(
+        a.servicio.Embarque,
+        a.servicio.Desembarque
+      ).sale
+      const horaB = leerHorario(
+        b.servicio.Embarque,
+        b.servicio.Desembarque
+      ).sale
       return horaA.localeCompare(horaB)
     })
 
@@ -298,7 +299,10 @@ export function ServiciosList({
 
   return (
     <div className={className}>
-      <div className='space-y-2.5'>
+      {/* Dos por fila: una tarjeta a todo el ancho deja un desierto entre el
+          horario y el precio, y obliga a recorrer 1300 px para leer una sola
+          salida. */}
+      <div className='grid gap-2.5 xl:grid-cols-2'>
         {salidas.map((salida) => (
           <TarjetaDeServicio
             key={`${salida.agenciaId}-${salida.servicio.Id}`}
