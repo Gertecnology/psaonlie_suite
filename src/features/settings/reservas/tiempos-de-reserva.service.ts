@@ -21,8 +21,16 @@ export interface ConfiguracionDeReservas {
   empresas: TiemposDeUnaEmpresa[]
 }
 
+/**
+ * La ruta va SIN `/api`.
+ *
+ * En este backend el prefijo no es global: cada controlador lo declara. El de
+ * ventas es `api/ventas`, el de agencias es `agencias` a secas. Escribir
+ * `/api/agencias/...` devuelve un 404 que parece de ruta inexistente y en
+ * realidad es de prefijo equivocado.
+ */
 export function leerTiemposDeReserva(): Promise<ConfiguracionDeReservas> {
-  return apiFetchRaw<ConfiguracionDeReservas>('/api/agencias/tiempos-de-reserva', {
+  return apiFetchRaw<ConfiguracionDeReservas>('/agencias/tiempos-de-reserva', {
     fallbackMessage: 'No se pudieron leer los tiempos de reserva',
   })
 }
@@ -30,7 +38,7 @@ export function leerTiemposDeReserva(): Promise<ConfiguracionDeReservas> {
 export function guardarTiemposDeReserva(
   tiempos: TiemposDeReserva,
 ): Promise<ConfiguracionDeReservas> {
-  return apiFetchRaw<ConfiguracionDeReservas>('/api/agencias/tiempos-de-reserva', {
+  return apiFetchRaw<ConfiguracionDeReservas>('/agencias/tiempos-de-reserva', {
     method: 'PATCH',
     body: JSON.stringify(tiempos),
     fallbackMessage: 'No se pudieron guardar los tiempos de reserva',
