@@ -441,3 +441,33 @@ export async function consultarEstadoDelBloqueo(
     throw problema
   }
 }
+
+/**
+ * Avisa que el vendedor sigue trabajando en esta reserva.
+ *
+ * Mientras llegue, el backend sigue renovando el bloqueo contra la
+ * transportista. Cuando deja de llegar, deja de pedir prórrogas — pero la
+ * ventana en curso sigue: quien vuelve antes de que venza no pierde nada.
+ *
+ * Nunca lanza. Un latido perdido no es nada: el siguiente llega en un minuto,
+ * y romper la pantalla de venta por un aviso de cortesía sería peor que el
+ * problema que resuelve.
+ */
+export async function avisarQueSigoTrabajando(
+  codigoReferencia: string,
+): Promise<void> {
+  if (!codigoReferencia) return
+
+  try {
+    await apiFetchRaw(
+      `/api/ventas/bloqueo/${encodeURIComponent(codigoReferencia)}/actividad`,
+      {
+        method: 'POST',
+        fallbackMessage: 'No se pudo avisar que seguís trabajando',
+        timeoutMs: TIMEOUT_CONSULTA_MS,
+      },
+    )
+  } catch {
+    // Ver arriba: a propósito.
+  }
+}
