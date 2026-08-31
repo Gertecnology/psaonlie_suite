@@ -32,6 +32,7 @@ import { Route as AuthenticatedAgenciasIndexRouteImport } from './routes/_authen
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
 import { Route as AuthenticatedUsersNuevoRouteImport } from './routes/_authenticated/users/nuevo'
 import { Route as AuthenticatedSettingsServiceChargesRouteImport } from './routes/_authenticated/settings_.service-charges'
+import { Route as AuthenticatedSettingsReservasRouteImport } from './routes/_authenticated/settings/reservas'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSalesSeatsRouteImport } from './routes/_authenticated/sales/seats'
 import { Route as AuthenticatedSalesPaymentRouteImport } from './routes/_authenticated/sales/payment'
@@ -183,6 +184,12 @@ const AuthenticatedSettingsServiceChargesRoute =
     id: '/settings_/service-charges',
     path: '/settings/service-charges',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsReservasRoute =
+  AuthenticatedSettingsReservasRouteImport.update({
+    id: '/reservas',
+    path: '/reservas',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
 const AuthenticatedSettingsAppearanceRoute =
   AuthenticatedSettingsAppearanceRouteImport.update({
@@ -396,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/settings/reservas': typeof AuthenticatedSettingsReservasRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/settings/reservas': typeof AuthenticatedSettingsReservasRoute
   '/settings/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/sales/payment': typeof AuthenticatedSalesPaymentRoute
   '/_authenticated/sales/seats': typeof AuthenticatedSalesSeatsRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/_authenticated/settings/reservas': typeof AuthenticatedSettingsReservasRoute
   '/_authenticated/settings_/service-charges': typeof AuthenticatedSettingsServiceChargesRoute
   '/_authenticated/users/nuevo': typeof AuthenticatedUsersNuevoRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/sales/payment'
     | '/sales/seats'
     | '/settings/appearance'
+    | '/settings/reservas'
     | '/settings/service-charges'
     | '/users/nuevo'
     | '/api/auth/verify-email'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/sales/payment'
     | '/sales/seats'
     | '/settings/appearance'
+    | '/settings/reservas'
     | '/settings/service-charges'
     | '/users/nuevo'
     | '/api/auth/verify-email'
@@ -669,6 +681,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sales/payment'
     | '/_authenticated/sales/seats'
     | '/_authenticated/settings/appearance'
+    | '/_authenticated/settings/reservas'
     | '/_authenticated/settings_/service-charges'
     | '/_authenticated/users/nuevo'
     | '/api/auth/verify-email'
@@ -868,6 +881,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/service-charges'
       preLoaderRoute: typeof AuthenticatedSettingsServiceChargesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/reservas': {
+      id: '/_authenticated/settings/reservas'
+      path: '/reservas'
+      fullPath: '/settings/reservas'
+      preLoaderRoute: typeof AuthenticatedSettingsReservasRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
     '/_authenticated/settings/appearance': {
       id: '/_authenticated/settings/appearance'
@@ -1084,6 +1104,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteRouteChildren {
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
+  AuthenticatedSettingsReservasRoute: typeof AuthenticatedSettingsReservasRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedSettingsExternalDataDayConfigurationRoute: typeof AuthenticatedSettingsExternalDataDayConfigurationRoute
   AuthenticatedSettingsExternalDataIndexRoute: typeof AuthenticatedSettingsExternalDataIndexRoute
@@ -1092,6 +1113,7 @@ interface AuthenticatedSettingsRouteRouteChildren {
 const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteChildren =
   {
     AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
+    AuthenticatedSettingsReservasRoute: AuthenticatedSettingsReservasRoute,
     AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
     AuthenticatedSettingsExternalDataDayConfigurationRoute:
       AuthenticatedSettingsExternalDataDayConfigurationRoute,

@@ -8,6 +8,7 @@ import {
   CLIENTE_CREADO,
   VENTA_CONFIRMADA_OK,
   datosConAsientosBloqueados,
+  datosConPasajerosCargados,
 } from '@/test/fixtures-venta'
 
 const TIPOS_DOCUMENTO = [
@@ -47,42 +48,25 @@ function rutasBase() {
   ]
 }
 
-/** Completa y envía el formulario del único pasajero. */
-async function registrarPasajero(usuario: ReturnType<typeof userEvent.setup>) {
-  await usuario.type(screen.getByPlaceholderText('Nombres'), 'Ana')
-  await usuario.type(screen.getByPlaceholderText('Apellidos'), 'Pérez')
-  await usuario.type(screen.getByPlaceholderText('Número'), '1234567')
-  await usuario.type(screen.getByPlaceholderText('Ej: Paraguay'), 'Paraguay')
-  await usuario.type(screen.getByPlaceholderText('Ej: 975622233'), '0981111111')
-  await usuario.type(
-    screen.getByPlaceholderText('ejemplo@correo.com'),
-    'pasajero@test.com',
-  )
+/**
+ * Los pasajeros ya vienen cargados del paso anterior.
+ *
+ * La planilla es su propia pantalla: acá se revisa lo que se cargó, se elige
+ * cómo paga y se confirma. Cargar y confirmar en la misma pantalla hacía que
+ * el vendedor apretara «confirmar» arriba sin haber visto lo de abajo.
+ */
+function abrirElResumen() {
+  const api = mockearApi(rutasBase())
 
-  const fecha = document.querySelector('input[type="date"]') as HTMLInputElement
-  await usuario.type(fecha, '1990-05-10')
+  renderVenta(<RoundTripCheckoutPage />, {
+    datosIniciales: datosConPasajerosCargados(),
+    pasoInicial: 'resumen',
+  })
 
-  // Los combos de Radix se identifican por su posición en el formulario:
-  // tipo de documento, nacionalidad, género y ocupación.
-  await elegirOpcion(usuario, 0, 'Cédula de identidad')
-  await elegirOpcion(usuario, 1, 'Paraguay')
-  await elegirOpcion(usuario, 2, 'Masculino')
-  await elegirOpcion(usuario, 3, 'Empleado')
-
-  await usuario.click(
-    screen.getByRole('button', { name: /Registrar pasajero/i }),
-  )
-
-  return screen.findByText(/Pasajero registrado/i)
+  return api
 }
 
-/**
- * Completa a nombre de quién se factura, que es lo único que este paso pide
- * además de los pasajeros.
- *
- * **No elige método de pago**: se elige al cobrar, en el paso siguiente. En el
- * mostrador la venta se confirma antes de que el cliente diga cómo paga.
- */
+/** A nombre de quién sale la factura. */
 async function completarLaFacturacion(
   usuario: ReturnType<typeof userEvent.setup>,
 ) {
@@ -93,23 +77,17 @@ async function completarLaFacturacion(
   )
 }
 
-async function elegirOpcion(
+/** Con qué paga el cliente. Obligatorio antes de confirmar. */
+async function elegirComoPaga(
   usuario: ReturnType<typeof userEvent.setup>,
-  indice: number,
-  opcion: string,
+  metodo = 'Efectivo',
 ) {
-  await usuario.click(screen.getAllByRole('combobox')[indice])
-  await usuario.click(await screen.findByRole('option', { name: opcion }))
+  await usuario.click(screen.getByRole('radio', { name: metodo }))
 }
 
 describe('RoundTripCheckoutPage', () => {
   it('muestra el desglose de lo que paga el cliente, sin la comisión', () => {
-    mockearApi(rutasBase())
-
-    renderVenta(<RoundTripCheckoutPage />, {
-      datosIniciales: datosConAsientosBloqueados(),
-      pasoInicial: 'checkout',
-    })
+    abrirElResumen()
 
     // Pasaje 150.000 + cargo 10% (15.000) = 165.000
     expect(screen.getByText('Pasajes')).toBeInTheDocument()
@@ -120,16 +98,19 @@ describe('RoundTripCheckoutPage', () => {
     expect(screen.queryByText(/comisión/i)).not.toBeInTheDocument()
   })
 
-  it('no deja confirmar hasta que todos los pasajeros están registrados', () => {
+  it('no deja confirmar hasta que todos los pasajeros están cargados', () => {
+    // Se puede llegar acá con la planilla a medio llenar: el botón lo dice y
+    // no deja seguir.
     mockearApi(rutasBase())
 
     renderVenta(<RoundTripCheckoutPage />, {
       datosIniciales: datosConAsientosBloqueados(),
-      pasoInicial: 'checkout',
+      pasoInicial: 'resumen',
     })
 
-    const boton = screen.getByRole('button', { name: /Faltan los datos de/i })
-    expect(boton).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Faltan 1 pasajero/i }),
+    ).toBeDisabled()
   })
 
   it('crea el pasajero una sola vez y usa su id para confirmar la venta', async () => {
@@ -142,16 +123,14 @@ describe('RoundTripCheckoutPage', () => {
     const usuario = userEvent.setup()
 
     renderVenta(<RoundTripCheckoutPage />, {
-      datosIniciales: datosConAsientosBloqueados(),
-      pasoInicial: 'checkout',
+      datosIniciales: datosConPasajerosCargados(),
+      pasoInicial: 'resumen',
     })
 
-    await registrarPasajero(usuario)
     await completarLaFacturacion(usuario)
+    await elegirComoPaga(usuario)
 
-    await usuario.click(
-      screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
-    )
+    await usuario.click(screen.getByRole('button', { name: /^Cobrar / }))
 
     await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
 
@@ -181,15 +160,15 @@ describe('RoundTripCheckoutPage', () => {
     const usuario = userEvent.setup()
 
     renderVenta(<RoundTripCheckoutPage />, {
-      datosIniciales: datosConAsientosBloqueados(),
-      pasoInicial: 'checkout',
+      datosIniciales: datosConPasajerosCargados(),
+      pasoInicial: 'resumen',
     })
 
-    await registrarPasajero(usuario)
     await completarLaFacturacion(usuario)
+    await elegirComoPaga(usuario)
 
     const boton = screen.getByRole('button', {
-      name: /Confirmar venta y continuar/i,
+      name: /^Cobrar /,
     })
     await Promise.all([usuario.click(boton), usuario.click(boton)])
 
@@ -231,76 +210,57 @@ describe('RoundTripCheckoutPage', () => {
     const usuario = userEvent.setup()
 
     renderVenta(<RoundTripCheckoutPage />, {
-      datosIniciales: datosConAsientosBloqueados(),
-      pasoInicial: 'checkout',
+      datosIniciales: datosConPasajerosCargados(),
+      pasoInicial: 'resumen',
     })
 
-    await registrarPasajero(usuario)
     await completarLaFacturacion(usuario)
-    await usuario.click(
-      screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
-    )
+    await elegirComoPaga(usuario)
+    await usuario.click(screen.getByRole('button', { name: /^Cobrar / }))
 
     expect(
       await screen.findByText(/rechazó el precio de la venta/i),
     ).toBeInTheDocument()
 
     // El pasajero sigue registrado: se puede corregir y reintentar.
-    expect(screen.getByText(/Pasajero registrado/i)).toBeInTheDocument()
+    // El pasajero sigue en la lista: el rechazo no borró lo cargado.
+    expect(screen.getByText('Ana Pérez')).toBeInTheDocument()
     expect(api.llamadasA('confirmar-nueva')).toBe(1)
   })
 
-  describe('el método de pago no se elige acá', () => {
-    // En el mostrador la venta se confirma antes de que el cliente diga cómo
-    // paga: se cargan los pasajeros, se confirma con la transportista y recién
-    // en el paso siguiente se cobra. Pedirlo acá obligaba a inventarlo, y lo
-    // que se inventaba era `'EFECTIVO'`: la caja terminaba diciendo que había
-    // entrado efectivo por ventas pagadas con tarjeta.
+  describe('cómo paga se elige acá, antes de confirmar', () => {
+    it('ofrece los cuatro métodos que la API acepta', () => {
+      abrirElResumen()
 
-    it('no hay dónde elegirlo', async () => {
-      mockearApi(rutasBase())
-      const usuario = userEvent.setup()
-
-      renderVenta(<RoundTripCheckoutPage />, {
-        datosIniciales: datosConAsientosBloqueados(),
-        pasoInicial: 'checkout',
-      })
-
-      await registrarPasajero(usuario)
-
-      expect(screen.queryByLabelText('Método de pago')).not.toBeInTheDocument()
+      for (const metodo of ['Efectivo', 'Transferencia', 'Wepa', 'Bancard']) {
+        expect(screen.getByRole('radio', { name: metodo })).toBeInTheDocument()
+      }
     })
 
-    it('avisa que se elige en el paso siguiente', () => {
-      mockearApi(rutasBase())
-
-      renderVenta(<RoundTripCheckoutPage />, {
-        datosIniciales: datosConAsientosBloqueados(),
-        pasoInicial: 'checkout',
-      })
+    it('sin elegir, el botón lo pide y no deja confirmar', () => {
+      abrirElResumen()
 
       expect(
-        screen.getByText(/se elige en el paso siguiente/i),
-      ).toBeInTheDocument()
+        screen.getByRole('button', { name: /Elegí cómo paga/i }),
+      ).toBeDisabled()
     })
 
     it('no deja confirmar sin los datos de facturación', async () => {
-      mockearApi(rutasBase())
       const usuario = userEvent.setup()
+      abrirElResumen()
 
-      renderVenta(<RoundTripCheckoutPage />, {
-        datosIniciales: datosConAsientosBloqueados(),
-        pasoInicial: 'checkout',
-      })
-
-      await registrarPasajero(usuario)
+      await elegirComoPaga(usuario)
 
       expect(
         screen.getByRole('button', { name: /Faltan los datos de facturación/i }),
       ).toBeDisabled()
     })
 
-    it('la venta se manda SIN método: no se inventa ninguno', async () => {
+    it('la venta se manda CON el método elegido', async () => {
+      // Mandaba `EFECTIVO` fijo y el paso siguiente lo corregía: una venta que
+      // expiraba sin cobrarse quedaba registrada como efectivo para siempre.
+      // Dejarlo vacío tampoco sirve: una venta sin método es una venta que no
+      // se sabe cómo se cobró.
       const api = mockearApi([
         ...rutasBase(),
         { url: 'confirmar-nueva', status: 201, body: VENTA_CONFIRMADA_OK },
@@ -308,16 +268,14 @@ describe('RoundTripCheckoutPage', () => {
       const usuario = userEvent.setup()
 
       renderVenta(<RoundTripCheckoutPage />, {
-        datosIniciales: datosConAsientosBloqueados(),
-        pasoInicial: 'checkout',
+        datosIniciales: datosConPasajerosCargados(),
+        pasoInicial: 'resumen',
       })
 
-      await registrarPasajero(usuario)
       await completarLaFacturacion(usuario)
+      await elegirComoPaga(usuario, 'Transferencia')
 
-      await usuario.click(
-        screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
-      )
+      await usuario.click(screen.getByRole('button', { name: /^Cobrar / }))
 
       await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
 
@@ -326,14 +284,13 @@ describe('RoundTripCheckoutPage', () => {
       ]
 
       for (const venta of enviado.ventas) {
-        expect(venta.metodoPago).toBeUndefined()
-        expect(venta.estadoPago).toBeUndefined()
+        expect(venta.metodoPago).toBe('TRANSFERENCIA')
       }
     })
 
-    it('los dos tramos van con la misma facturación', async () => {
+    it('los dos tramos van con el mismo método y la misma facturación', async () => {
       // Es una compra sola partida en dos ventas porque así lo exige la
-      // empresa. El cliente factura una vez.
+      // empresa. El cliente factura una vez y paga una vez.
       const api = mockearApi([
         ...rutasBase(),
         { url: 'confirmar-nueva', status: 201, body: VENTA_CONFIRMADA_OK },
@@ -341,16 +298,14 @@ describe('RoundTripCheckoutPage', () => {
       const usuario = userEvent.setup()
 
       renderVenta(<RoundTripCheckoutPage />, {
-        datosIniciales: datosConAsientosBloqueados(),
-        pasoInicial: 'checkout',
+        datosIniciales: datosConPasajerosCargados(),
+        pasoInicial: 'resumen',
       })
 
-      await registrarPasajero(usuario)
       await completarLaFacturacion(usuario)
+      await elegirComoPaga(usuario)
 
-      await usuario.click(
-        screen.getByRole('button', { name: /Confirmar venta y continuar/i }),
-      )
+      await usuario.click(screen.getByRole('button', { name: /^Cobrar / }))
 
       await waitFor(() => expect(api.llamadasA('confirmar-nueva')).toBe(1))
 
@@ -359,6 +314,7 @@ describe('RoundTripCheckoutPage', () => {
       ]
 
       for (const venta of enviado.ventas) {
+        expect(venta.metodoPago).toBe('EFECTIVO')
         expect(venta.facturacion).toEqual({
           documento: '4969917-2',
           razonSocial: 'Sebastian Castro',

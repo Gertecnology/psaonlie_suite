@@ -1,113 +1,199 @@
 import { cn } from '@/lib/utils'
 import type { Asiento, ConfiguracionBus } from '../../models/sales.model'
-import { SEAT_STATE_CLASSES } from './seat-states'
+import {
+  bordeDeLaCalidad,
+  leerCalidades,
+  type CalidadDelServicio,
+} from '../../utils/las-calidades-del-servicio'
+import { formatearGuaranies } from '../../utils/money'
+import {
+  armarPlanoDelPiso,
+  hayPosiciones,
+  type Celda,
+} from '../../utils/plano-del-colectivo'
 
 interface SeatGridProps {
   asientos: Asiento[]
-  onSeatSelect: (asiento: Asiento) => void
+  onSeatSelect: (asiento: Asiento, conShift?: boolean) => void
   selectedSeats?: Asiento[]
   blockedSeats?: Asiento[]
   configuracionBus: ConfiguracionBus
 }
 
-const getSeatTypeColor = (
-  disponible: boolean,
-  isSelected: boolean = false,
-  isBlocked: boolean = false
-) => {
-  if (isBlocked) {
-    return SEAT_STATE_CLASSES.bloqueado
-  }
+/**
+ * El rayado de una butaca ocupada.
+ *
+ * Ocupada y libre se distinguían sólo por el relleno, y en una notebook con
+ * el brillo bajo los dos grises se ven iguales. El rayado se lee aunque la
+ * pantalla mienta con el color.
+ */
+const RAYADO_DE_OCUPADA = {
+  backgroundImage:
+    'repeating-linear-gradient(135deg, var(--muted) 0 4px, transparent 4px 8px)',
+} as const
 
-  if (isSelected) {
-    return SEAT_STATE_CLASSES.seleccionado
-  }
+function Butaca({
+  asiento,
+  elegida,
+  reservada,
+  calidades,
+  onSeatSelect,
+}: {
+  asiento: Asiento
+  elegida: boolean
+  reservada: boolean
+  calidades: CalidadDelServicio[]
+  onSeatSelect: (asiento: Asiento, conShift?: boolean) => void
+}) {
+  const estado = reservada
+    ? 'Reservada para vos'
+    : elegida
+      ? 'Elegida'
+      : asiento.disponible
+        ? 'Libre'
+        : 'Ocupada'
 
-  if (!disponible) {
-    return SEAT_STATE_CLASSES.ocupado
-  }
+  const mia = elegida || reservada
 
-  // Todos los asientos son de tipo ventana según los datos
-  return SEAT_STATE_CLASSES.libre
+  return (
+    <button
+      onClick={(evento) =>
+        asiento.disponible && !reservada && onSeatSelect(asiento, evento.shiftKey)
+      }
+      disabled={!asiento.disponible || reservada}
+      style={!asiento.disponible && !mia ? RAYADO_DE_OCUPADA : undefined}
+      className={cn(
+        'flex h-[30px] w-[30px] items-center justify-center rounded-[5px] text-[11.5px] font-semibold tabular-nums transition-colors',
+        bordeDeLaCalidad(asiento.calidad, calidades),
+        mia
+          ? 'border-primary bg-primary text-primary-foreground'
+          : asiento.disponible
+            ? 'border-input bg-card text-foreground hover:bg-accent cursor-pointer'
+            : 'border-border text-muted-foreground cursor-not-allowed border-dashed',
+        // La reservada ya está retenida con la empresa: se ve como propia pero
+        // no se puede soltar de un click, para no perder el bloqueo por error.
+        reservada && 'cursor-default'
+      )}
+      title={`Butaca ${asiento.numero} · ${estado} · ${formatearGuaranies(asiento.precio)}`}
+      aria-label={`Butaca ${asiento.numero}, ${estado}`}
+      aria-pressed={mia}
+    >
+      {asiento.numero}
+    </button>
+  )
 }
 
-const getSeatTypeLabel = (_tipo: string) => {
-  // Todos los asientos son de tipo ventana según los datos
-  return 'Ventana'
-}
-
-function FloorGrid({
+/** Un piso, dibujado como la carrocería que es: frente abajo, pasillo al medio. */
+function Piso({
   floorSeats,
   piso,
   onSeatSelect,
   selectedSeats,
   blockedSeats,
-  columnas,
+  configuracionBus,
+  calidades,
 }: {
   floorSeats: Asiento[]
   piso: number
-  onSeatSelect: (asiento: Asiento) => void
+  onSeatSelect: (asiento: Asiento, conShift?: boolean) => void
   selectedSeats?: Asiento[]
   blockedSeats?: Asiento[]
-  columnas: number
+  configuracionBus: ConfiguracionBus
+  calidades: CalidadDelServicio[]
 }) {
-  // Group seats by row using the actual column configuration
-  const rows: Asiento[][] = []
-  for (let i = 0; i < floorSeats.length; i += columnas) {
-    rows.push(floorSeats.slice(i, i + columnas))
-  }
+  const conPosicion = hayPosiciones(floorSeats)
+
+  // Con posición, cada butaca va donde la transportista dice que va. Sin ella
+  // —una empresa que no informa la fila— se cae a filas del ancho declarado,
+  // que es lo que hacía antes: no es un plano, pero al menos no miente sobre
+  // dónde está cada una.
+  const filas = conPosicion
+    ? armarPlanoDelPiso(floorSeats, piso, configuracionBus).filas
+    : porTandas(floorSeats, configuracionBus.columnas || 4)
+
+  const mias = floorSeats.filter(
+    (asiento) =>
+      selectedSeats?.some((elegida) => elegida.numero === asiento.numero) ||
+      blockedSeats?.some((reservada) => reservada.numero === asiento.numero)
+  ).length
 
   return (
-    <div className='space-y-3'>
-      <div className='text-center'>
-        <h4 className='text-muted-foreground mb-2 text-sm font-semibold'>
-          Piso {piso}
-        </h4>
-        <div className='bg-border h-px w-full'></div>
-      </div>
+    <div className='border-border flex-none rounded-t-xl rounded-b-[5px] border-[1.5px] p-2.5'>
+      <p className='text-muted-foreground mb-2 text-center text-[10px] font-bold tracking-[0.1em] uppercase'>
+        Piso {piso}
+        {mias > 0 && ` · ${mias} ${mias === 1 ? 'elegida' : 'elegidas'}`}
+      </p>
 
-      <div className='space-y-2'>
-        {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className='flex justify-center gap-2'>
-            {row.map((asiento) => {
-              const isSelected =
-                selectedSeats?.some((seat) => seat.numero === asiento.numero) ||
-                false
-              const isBlocked =
-                blockedSeats?.some((seat) => seat.numero === asiento.numero) ||
-                false
+      <div className='flex flex-col gap-[5px]'>
+        {filas.map((fila, indiceDeFila) => (
+          <div key={indiceDeFila} className='flex items-center gap-[5px]'>
+            {fila.map((celda, indiceDeCelda) => {
+              if (celda.tipo === 'pasillo') {
+                // El pasillo es el hueco, no un ícono: con la línea a los
+                // costados el ojo lee dos bloques de butacas en vez de una
+                // grilla, que es lo que se ve al subir a un colectivo.
+                return (
+                  <div
+                    key={`pasillo-${indiceDeCelda}`}
+                    className='border-border mx-[5px] h-[30px] w-5 border-r border-l border-dashed'
+                    aria-hidden='true'
+                  />
+                )
+              }
+
+              if (celda.tipo === 'hueco') {
+                return (
+                  <div
+                    key={`hueco-${indiceDeCelda}`}
+                    className='h-[30px] w-[30px]'
+                    aria-hidden='true'
+                  />
+                )
+              }
+
+              const asiento = celda.asiento
+
               return (
-                <button
+                <Butaca
                   key={asiento.numero}
-                  onClick={() =>
-                    asiento.disponible && !isBlocked && onSeatSelect(asiento)
+                  asiento={asiento}
+                  elegida={
+                    selectedSeats?.some(
+                      (seat) => seat.numero === asiento.numero
+                    ) || false
                   }
-                  disabled={!asiento.disponible || isBlocked}
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-lg border-2 text-sm font-medium transition-all duration-200',
-                    getSeatTypeColor(asiento.disponible, isSelected, isBlocked),
-                    asiento.disponible &&
-                      !isSelected &&
-                      !isBlocked &&
-                      'cursor-pointer hover:scale-105 hover:shadow-md'
-                  )}
-                  title={`Asiento ${asiento.numero} - ${getSeatTypeLabel(asiento.tipo)} - ${
-                    isBlocked
-                      ? 'Bloqueado'
-                      : asiento.disponible
-                        ? 'Disponible'
-                        : 'Ocupado'
-                  }`}
-                >
-                  {asiento.numero}
-                </button>
+                  reservada={
+                    blockedSeats?.some(
+                      (seat) => seat.numero === asiento.numero
+                    ) || false
+                  }
+                  calidades={calidades}
+                  onSeatSelect={onSeatSelect}
+                />
               )
             })}
           </div>
         ))}
       </div>
+
+      <p className='text-muted-foreground border-border mt-2 border-t border-dashed pt-1.5 text-center text-[9.5px]'>
+        ▲ frente
+      </p>
     </div>
   )
+}
+
+/** El reparto viejo, para cuando la empresa no informa dónde va cada butaca. */
+function porTandas(asientos: Asiento[], ancho: number): Celda[][] {
+  const filas: Celda[][] = []
+  for (let i = 0; i < asientos.length; i += ancho) {
+    filas.push(
+      asientos
+        .slice(i, i + ancho)
+        .map((asiento) => ({ tipo: 'butaca', asiento }) as Celda)
+    )
+  }
+  return filas
 }
 
 export function SeatGrid({
@@ -117,47 +203,29 @@ export function SeatGrid({
   blockedSeats,
   configuracionBus,
 }: SeatGridProps) {
-  // Separate seats by floor
-  const piso1 = asientos.filter((asiento) => asiento.piso === 1)
-  const piso2 = asientos.filter((asiento) => asiento.piso === 2)
+  const calidades = leerCalidades(asientos)
 
-  const hasTwoFloors = configuracionBus.pisos > 1
-
-  if (hasTwoFloors) {
-    return (
-      <div className='grid gap-8 lg:grid-cols-2'>
-        <FloorGrid
-          floorSeats={piso1}
-          piso={1}
-          onSeatSelect={onSeatSelect}
-          selectedSeats={selectedSeats}
-          blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
-        />
-        <FloorGrid
-          floorSeats={piso2}
-          piso={2}
-          onSeatSelect={onSeatSelect}
-          selectedSeats={selectedSeats}
-          blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
-        />
-      </div>
-    )
-  }
+  // Los pisos van uno al lado del otro y cada uno ocupa lo que necesita. Con
+  // una grilla de mitades el piso 2, que suele tener tres filas, quedaba
+  // estirado al ancho del de abajo y dejaba de parecer un colectivo.
+  const pisos = [...new Set(asientos.map((asiento) => asiento.piso ?? 1))].sort(
+    (a, b) => a - b
+  )
 
   return (
-    <div className='flex justify-center'>
-      <div className='max-w-md'>
-        <FloorGrid
-          floorSeats={piso1}
-          piso={1}
+    <div className='flex flex-wrap items-start gap-6'>
+      {pisos.map((piso) => (
+        <Piso
+          key={piso}
+          floorSeats={asientos.filter((asiento) => (asiento.piso ?? 1) === piso)}
+          piso={piso}
           onSeatSelect={onSeatSelect}
           selectedSeats={selectedSeats}
           blockedSeats={blockedSeats}
-          columnas={configuracionBus.columnas}
+          configuracionBus={configuracionBus}
+          calidades={calidades}
         />
-      </div>
+      ))}
     </div>
   )
 }

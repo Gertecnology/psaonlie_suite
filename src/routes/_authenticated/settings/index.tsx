@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
+  IconClock,
   IconCurrencyDollar,
   IconExternalLink,
   IconPalette,
@@ -9,6 +10,12 @@ import {
 // ejemplo en estado local que no se guardaban en ningún lado. El índice de
 // verdad es un mapa de la configuración que existe, con su explicación.
 const secciones = [
+  {
+    url: '/settings/reservas',
+    icon: IconClock,
+    titulo: 'Reservas',
+    detalle: 'Cuánto tiempo se le guardan las butacas a quien está vendiendo.',
+  },
   {
     url: '/settings/service-charges',
     icon: IconCurrencyDollar,

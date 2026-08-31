@@ -40,8 +40,11 @@ const BLOQUEO_OK = {
 }
 
 async function elegirAsiento(usuario: ReturnType<typeof userEvent.setup>, numero: string) {
+  // El nombre accesible del botón pasó a ser «Butaca 05, Libre»: un lector de
+  // pantalla que sólo decía «05» no informaba de qué se trataba ni si estaba
+  // ocupada.
   const asiento = await screen.findByRole('button', {
-    name: new RegExp(`^${numero}$`),
+    name: new RegExp(`^Butaca ${numero},`),
   })
   await usuario.click(asiento)
 }
@@ -62,7 +65,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
 
     await elegirAsiento(usuario, '5')
     await usuario.click(
-      screen.getByRole('button', { name: /Reservar asientos/i }),
+      screen.getByRole('button', { name: /^Reservar \d+ butacas?$/i }),
     )
 
     // El error se muestra en pantalla, no se traga.
@@ -73,7 +76,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     // Y no aparece ningún indicio de reserva conseguida.
     expect(screen.queryByText(/Asientos Reservados/i)).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /Continuar al Checkout/i }),
+      screen.queryByRole('button', { name: /cargar los pasajeros/i }),
     ).not.toBeInTheDocument()
     expect(api.llamadasA('bloquear-asientos')).toBe(1)
   })
@@ -98,7 +101,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     await elegirAsiento(usuario, '5')
     await elegirAsiento(usuario, '6')
     await usuario.click(
-      screen.getByRole('button', { name: /Reservar asientos/i }),
+      screen.getByRole('button', { name: /^Reservar \d+ butacas?$/i }),
     )
 
     expect(
@@ -108,7 +111,7 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     await waitFor(() => expect(api.llamadasA('liberar-bloqueo')).toBe(1))
 
     expect(
-      screen.queryByRole('button', { name: /Continuar al Checkout/i }),
+      screen.queryByRole('button', { name: /cargar los pasajeros/i }),
     ).not.toBeInTheDocument()
   })
 
@@ -126,11 +129,11 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
 
     await elegirAsiento(usuario, '5')
     await usuario.click(
-      screen.getByRole('button', { name: /Reservar asientos/i }),
+      screen.getByRole('button', { name: /^Reservar \d+ butacas?$/i }),
     )
 
     expect(
-      await screen.findByRole('button', { name: /Continuar al Checkout/i }),
+      await screen.findByRole('button', { name: /cargar los pasajeros/i }),
     ).toBeInTheDocument()
   })
 
@@ -147,11 +150,11 @@ describe('RoundTripSeatSelectionPage — bloqueo de asientos', () => {
     })
 
     await elegirAsiento(usuario, '5')
-    const boton = screen.getByRole('button', { name: /Reservar asientos/i })
+    const boton = screen.getByRole('button', { name: /^Reservar \d+ butacas?$/i })
 
     await Promise.all([usuario.click(boton), usuario.click(boton)])
 
-    await screen.findByRole('button', { name: /Continuar al Checkout/i })
+    await screen.findByRole('button', { name: /cargar los pasajeros/i })
     expect(api.llamadasA('bloquear-asientos')).toBe(1)
   })
 

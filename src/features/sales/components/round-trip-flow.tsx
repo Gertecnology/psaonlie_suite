@@ -3,6 +3,7 @@ import { useLiberarBloqueosAlSalir } from '../hooks/use-liberar-bloqueos-al-sali
 import { SalesPage } from './sales-page'
 import { ServiciosVueltaPage } from './servicios-vuelta-page'
 import { RoundTripSeatSelectionPage } from './asientos/round-trip-seat-selection-page'
+import { PasajerosPage } from './checkout/pasajeros-page'
 import { RoundTripCheckoutPage } from './checkout/round-trip-checkout-page'
 import { RoundTripPaymentPage } from './payment'
 
@@ -60,7 +61,13 @@ export function RoundTripFlow() {
           />
         )
 
+      // Paso 4: quiénes viajan. Paso 5: revisar, elegir cómo paga y cobrar.
+      // Estaban juntos en una pantalla, así que el vendedor confirmaba una
+      // venta de dieciocho pasajes sin haberla podido leer.
       case 'checkout':
+        return <PasajerosPage />
+
+      case 'resumen':
         return (
           <RoundTripCheckoutPage
             onComplete={() => setCurrentStep('payment')}

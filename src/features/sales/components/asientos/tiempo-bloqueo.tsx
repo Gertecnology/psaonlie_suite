@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface TiempoBloqueoProps {
   /** Fecha ISO de expiración que devuelve el bloqueo. */
@@ -16,11 +16,16 @@ function formatearRestante(milisegundos: number): string {
 }
 
 /**
- * Cuenta regresiva del bloqueo de asientos.
+ * Cuánto queda de la reserva.
  *
- * El backend retiene los asientos 30 minutos. Pasado ese plazo la venta ya no
- * se puede confirmar con ese código, y hasta ahora el operador se enteraba
- * recién al fallar la confirmación, después de cargar todos los pasajeros.
+ * La transportista retiene las butacas unos minutos y el backend renueva el
+ * bloqueo antes de que se venza, mientras el vendedor sigue trabajando. El
+ * reloj se repone solo cuando eso pasa.
+ *
+ * Por eso el pill es neutro y aclara que se renueva sola: un contador en rojo
+ * bajando hace que quien vende apure la carga de los pasajeros, y con
+ * dieciocho apurarse es equivocarse. Sólo se pone en rojo cuando de verdad
+ * venció, que es cuando hay algo que hacer.
  */
 export function TiempoBloqueo({ expiraEn, onExpirado }: TiempoBloqueoProps) {
   const [restanteMs, setRestanteMs] = useState<number | null>(null)
@@ -57,17 +62,37 @@ export function TiempoBloqueo({ expiraEn, onExpirado }: TiempoBloqueoProps) {
   if (restanteMs === null) return null
 
   const expirado = restanteMs <= 0
-  const porVencer = !expirado && restanteMs < 5 * 60 * 1000
 
   return (
-    <Badge
-      variant={expirado || porVencer ? 'destructive' : 'secondary'}
-      className="text-xs"
+    <div
+      className={cn(
+        'flex items-center gap-2.5 rounded-full border py-1 pr-3 pl-2.5',
+        expirado
+          ? 'border-estado-critico/40 bg-estado-critico/10'
+          : 'border-border bg-muted'
+      )}
     >
-      <Clock className="h-3 w-3 mr-1" />
-      {expirado
-        ? 'Bloqueo vencido'
-        : `Asientos reservados ${formatearRestante(restanteMs)}`}
-    </Badge>
+      <Clock
+        className={cn(
+          'h-3.5 w-3.5 flex-none',
+          expirado ? 'text-estado-critico' : 'text-muted-foreground'
+        )}
+        aria-hidden='true'
+      />
+      {expirado ? (
+        <span className='text-estado-critico text-[13px] font-semibold'>
+          La reserva venció
+        </span>
+      ) : (
+        <>
+          <span className='text-sm font-bold tabular-nums'>
+            {formatearRestante(restanteMs)}
+          </span>
+          <span className='text-muted-foreground text-[11px]'>
+            se renueva sola
+          </span>
+        </>
+      )}
+    </div>
   )
 }

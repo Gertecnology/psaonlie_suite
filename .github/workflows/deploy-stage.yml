@@ -3,12 +3,13 @@ name: Deploy stage
 # GitHub compila y publica la imagen; el servidor sólo la baja y la corre.
 #
 # El panel se sirve estático: el build de Vite hornea las variables `VITE_*`
-# en el bundle, así que pasarlas al contenedor con `-e` no haría nada. Hoy
-# salen del `.env` versionado, que el Dockerfile copia antes de compilar.
+# en el bundle, así que pasarlas al contenedor con `-e` no haría nada. Tienen
+# que llegar como build-arg, y de ahí a un `ARG` del Dockerfile.
 #
-# Ese `.env` se mantiene a pedido. Cuando se decida sacarlo del repo, hay que
-# agregar un `ARG VITE_API_URL` al Dockerfile y pasarlo como build-arg desde
-# acá: mientras tanto, cambiarlo sólo del lado del workflow no tendría efecto.
+# Las nuevas salen del entorno `stage` de este repo (`gh variable set … --env
+# stage`), como ya estaban las de la landing. El `.env` versionado se mantiene
+# para las viejas: el Dockerfile lo copia antes de compilar y las del proceso
+# ganan sobre él.
 
 on:
   workflow_dispatch:
@@ -42,6 +43,11 @@ jobs:
     name: Construir y publicar
     runs-on: ubuntu-latest
     if: inputs.tag_existente == ''
+    # Las `vars` de un entorno sólo llegan al job que lo declara. Sin esta
+    # línea, `vars.VITE_BANCARD_SDK_URL` viaja vacía y el build hornea un
+    # `undefined` en el bundle, que es exactamente el bug que se está
+    # arreglando —sólo que sin mensaje.
+    environment: stage
     permissions:
       contents: read
       packages: write
@@ -62,6 +68,12 @@ jobs:
         with:
           context: .
           push: true
+          # Las variables de aplicacion salen del entorno `stage` del repo, no
+          # del `.env` versionado. Vite las hornea en el bundle durante el
+          # build, asi que tienen que llegar como build-arg: pasarlas al
+          # contenedor con `-e` no haria nada.
+          build-args: |
+            VITE_BANCARD_SDK_URL=${{ vars.VITE_BANCARD_SDK_URL }}
           tags: |
             ${{ env.IMAGEN }}:${{ github.sha }}
             ${{ env.IMAGEN }}:stage-latest

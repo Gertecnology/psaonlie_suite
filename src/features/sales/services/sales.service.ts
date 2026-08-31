@@ -396,3 +396,78 @@ export async function liberarBloqueo(
 
   return resultado ?? { success: true, message: 'Bloqueo liberado' }
 }
+
+/** Lo que el backend dice de una reserva. */
+export interface EstadoDelBloqueo {
+  /** `false` cuando la reserva existió y se perdió. */
+  vivo: boolean
+  estado: string
+  segundosRestantes: number
+  expiraEn: string | null
+  asientos: string[]
+}
+
+/**
+ * Si la reserva sigue en pie, según el backend.
+ *
+ * El contador del navegador es sólo visual: el reloj de la máquina puede estar
+ * corrido, la pestaña pudo estar suspendida, y la reserva puede haberse soltado
+ * a mano desde otro lado. La única autoridad sobre si las butacas siguen siendo
+ * nuestras es esta consulta.
+ *
+ * Un código que nunca existió devuelve 404 y acá se convierte en `null`. Es
+ * distinto de `vivo: false`: uno es un código mal copiado y el otro es una
+ * reserva que se perdió, y a quien vende hay que decirle cosas distintas.
+ */
+export async function consultarEstadoDelBloqueo(
+  codigoReferencia: string,
+): Promise<EstadoDelBloqueo | null> {
+  if (!codigoReferencia) return null
+
+  try {
+    return await apiFetchRaw<EstadoDelBloqueo>(
+      `/api/ventas/bloqueo/${encodeURIComponent(codigoReferencia)}/estado`,
+      {
+        fallbackMessage: 'No se pudo consultar el estado de la reserva',
+        timeoutMs: TIMEOUT_CONSULTA_MS,
+      },
+    )
+  } catch (problema) {
+    // Un 404 es una respuesta, no una falla: esa reserva no existe.
+    if (problema instanceof Error && /404|no hay ninguna reserva/i.test(problema.message)) {
+      return null
+    }
+
+    throw problema
+  }
+}
+
+/**
+ * Avisa que el vendedor sigue trabajando en esta reserva.
+ *
+ * Mientras llegue, el backend sigue renovando el bloqueo contra la
+ * transportista. Cuando deja de llegar, deja de pedir prórrogas — pero la
+ * ventana en curso sigue: quien vuelve antes de que venza no pierde nada.
+ *
+ * Nunca lanza. Un latido perdido no es nada: el siguiente llega en un minuto,
+ * y romper la pantalla de venta por un aviso de cortesía sería peor que el
+ * problema que resuelve.
+ */
+export async function avisarQueSigoTrabajando(
+  codigoReferencia: string,
+): Promise<void> {
+  if (!codigoReferencia) return
+
+  try {
+    await apiFetchRaw(
+      `/api/ventas/bloqueo/${encodeURIComponent(codigoReferencia)}/actividad`,
+      {
+        method: 'POST',
+        fallbackMessage: 'No se pudo avisar que seguís trabajando',
+        timeoutMs: TIMEOUT_CONSULTA_MS,
+      },
+    )
+  } catch {
+    // Ver arriba: a propósito.
+  }
+}

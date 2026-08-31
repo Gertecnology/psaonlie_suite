@@ -1,11 +1,22 @@
-import { Clock, MapPin, Users, DollarSign, Star, Bus } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Bus, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useRoundTrip } from '../context/round-trip-context'
-import { formatearGuaranies } from '../utils/money'
-import type { EmpresaServicios, Servicio, ParadaHomologada, ServiceCharge } from '../models/sales.model'
+import type {
+  EmpresaServicios,
+  ParadaHomologada,
+  ServiceCharge,
+  Servicio,
+} from '../models/sales.model'
+import { leerHorario } from '../utils/el-horario-del-servicio'
+import {
+  aEnteroGuaranies,
+  calcularCargoServicio,
+  describirCargoServicio,
+  formatearGuaranies,
+} from '../utils/money'
 
 interface ServiciosListProps {
   data: EmpresaServicios[]
@@ -13,25 +24,21 @@ interface ServiciosListProps {
   className?: string
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (
+    servicio: Servicio,
+    agenciaId: string,
+    serviceCharge?: ServiceCharge
+  ) => void
 }
 
-const getCalidadColor = (calidad: string) => {
-  switch (calidad) {
-    case 'CO':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-    case 'SC':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-    case 'CN':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-    case 'SE':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-  }
-}
-
-const getCalidadLabel = (calidad: string) => {
+/**
+ * El nombre de la calidad, para quien vende.
+ *
+ * La lista de códigos vive acá y no en el backend, así que cualquiera que la
+ * transportista agregue cae en el default. Devolver el código pelado dejaba un
+ * badge que decía «CA» y nadie sabía qué era.
+ */
+const nombreDeLaCalidad = (calidad: string) => {
   switch (calidad) {
     case 'CO':
       return 'Común'
@@ -42,22 +49,32 @@ const getCalidadLabel = (calidad: string) => {
     case 'SE':
       return 'Semi Ejecutivo'
     default:
-      return calidad
+      return calidad ? `Sin especificar (${calidad})` : 'Sin especificar'
   }
 }
 
-const formatPrice = (price: string) => formatearGuaranies(price)
+/**
+ * Lo que el cliente va a pagar: la tarifa más el cargo por servicio.
+ *
+ * Mostrar la tarifa sola hacía que el vendedor anunciara un precio y la caja
+ * cobrara otro, porque el cargo se sumaba dos pantallas después.
+ */
+const precioAlCliente = (tarifa: string, serviceCharge?: ServiceCharge) => {
+  const pasaje = aEnteroGuaranies(tarifa)
+  return pasaje + calcularCargoServicio(pasaje, serviceCharge)
+}
 
-function ServicioCard({ 
-  servicio, 
-  agenciaId: _agenciaId, 
+/** Una salida: la empresa a la izquierda, el viaje al medio, el precio al final. */
+function TarjetaDeServicio({
+  servicio,
+  agenciaId,
   empresaNombre,
-  empresaLogo: _empresaLogo,
-  serviceCharge: _serviceCharge,
-  origen, 
+  empresaLogo,
+  serviceCharge,
+  origen,
   destino,
-  onServiceSelect
-}: { 
+  onServiceSelect,
+}: {
   servicio: Servicio
   agenciaId: string
   empresaNombre: string
@@ -65,114 +82,132 @@ function ServicioCard({
   serviceCharge?: ServiceCharge
   origen?: ParadaHomologada | null
   destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
+  onServiceSelect?: (
+    servicio: Servicio,
+    agenciaId: string,
+    serviceCharge?: ServiceCharge
+  ) => void
 }) {
   const { roundTripData, setRoundTripData, setCurrentStep } = useRoundTrip()
+  const horario = leerHorario(servicio.Embarque, servicio.Desembarque)
+  const libres = parseInt(servicio.Libres, 10) || 0
+  const total = precioAlCliente(servicio.Tarifa, serviceCharge)
+  const cargo = calcularCargoServicio(
+    aEnteroGuaranies(servicio.Tarifa),
+    serviceCharge
+  )
 
-  const handleSeatSelection = () => {
+  const elegir = () => {
     if (!origen || !destino) return
 
     if (onServiceSelect) {
-      // Si hay callback personalizado, usarlo
-      onServiceSelect(servicio, _agenciaId, _serviceCharge)
-    } else {
-      // Comportamiento por defecto para ida.
-      //
-      // El contexto hace merge, así que hay que limpiar explícitamente el
-      // bloqueo anterior: si no, elegir otro servicio dejaba pegado el
-      // `codigoReferencia` del servicio viejo y la venta se confirmaba contra
-      // un bloqueo que no correspondía.
-      setRoundTripData({
-        ida: {
-          origen: roundTripData.ida.origen,
-          destino: roundTripData.ida.destino,
-          fecha: roundTripData.ida.fecha,
-          servicio: servicio,
-          agenciaId: _agenciaId, // Guardar el UUID de la empresa
-          serviceCharge: _serviceCharge, // Guardar el cargo por servicio
-          asientos: undefined,
-          codigoReferencia: undefined,
-          bloqueoExpiraEn: undefined,
-          ventaConfirmada: undefined,
-        }
-      })
-
-      // Ir al paso de selección de asientos de ida
-      setCurrentStep('ida-seats')
+      onServiceSelect(servicio, agenciaId, serviceCharge)
+      return
     }
+
+    // El contexto hace merge, así que hay que limpiar explícitamente el
+    // bloqueo anterior: si no, elegir otro servicio dejaba pegado el
+    // `codigoReferencia` del viejo y la venta se confirmaba contra un bloqueo
+    // que no correspondía.
+    setRoundTripData({
+      ida: {
+        origen: roundTripData.ida.origen,
+        destino: roundTripData.ida.destino,
+        fecha: roundTripData.ida.fecha,
+        servicio,
+        agenciaId,
+        serviceCharge,
+        asientos: undefined,
+        codigoReferencia: undefined,
+        bloqueoExpiraEn: undefined,
+        ventaConfirmada: undefined,
+      },
+    })
+    setCurrentStep('ida-seats')
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {_empresaLogo ? (
-              <img 
-                src={_empresaLogo} 
-                alt={`Logo ${empresaNombre}`}
-                className="h-6 w-6 object-contain rounded"
-                onError={(e) => {
-                  // Fallback to Bus icon if image fails to load
-                  e.currentTarget.style.display = 'none'
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+    <Card className='hover:border-foreground/25 transition-colors'>
+      <CardContent className='flex items-center gap-3 p-3'>
+        {/* La empresa, en columna: el logo arriba y el nombre debajo. Ocupa
+            poco ancho, que es lo que hace falta para que entren dos tarjetas
+            por fila. */}
+        <div className='flex w-[4.5rem] flex-none flex-col items-center gap-1'>
+          <div className='border-border flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border'>
+            {empresaLogo ? (
+              <img
+                src={empresaLogo}
+                alt=''
+                className='h-full w-full object-contain'
+                onError={(evento) => {
+                  evento.currentTarget.style.display = 'none'
                 }}
               />
-            ) : null}
-            <Bus className={`h-4 w-4 text-muted-foreground ${_empresaLogo ? 'hidden' : ''}`} />
-            <span className="font-medium text-sm">{empresaNombre}</span>
+            ) : (
+              <Bus className='text-muted-foreground h-4 w-4' />
+            )}
           </div>
-          <Badge className={getCalidadColor(servicio.Calidad)}>
-            {getCalidadLabel(servicio.Calidad)}
-          </Badge>
+          <p className='w-full truncate text-center text-[11px] font-semibold'>
+            {empresaNombre}
+          </p>
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Salida</p>
-              <p className="text-muted-foreground">{servicio.Embarque}</p>
-            </div>
+
+        <div className='border-border min-w-0 flex-1 border-l pl-3'>
+          <div className='mb-1.5 flex items-baseline gap-2'>
+            <span className='truncate text-[13px] font-semibold'>
+              {origen?.nombre} → {destino?.nombre}
+            </span>
+            <Badge variant='secondary' className='flex-none text-[10px]'>
+              {nombreDeLaCalidad(servicio.Calidad)}
+            </Badge>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Llegada</p>
-              <p className="text-muted-foreground">{servicio.Desembarque}</p>
+
+          <div className='flex items-center gap-2'>
+            <span className='text-[13px] font-semibold tabular-nums'>
+              {horario.sale}
+            </span>
+
+            <div className='bg-border relative h-px min-w-[2rem] flex-1'>
+              {horario.duracion && (
+                <span className='bg-card text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-1.5 text-[10px] whitespace-nowrap'>
+                  {horario.duracion}
+                </span>
+              )}
             </div>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {servicio.Libres} asientos libres
+
+            <span className='text-[13px] font-semibold tabular-nums'>
+              {horario.llega}
+              {horario.diasDespues > 0 && (
+                <span className='text-muted-foreground ml-0.5 align-super text-[9px]'>
+                  +{horario.diasDespues}
+                </span>
+              )}
+            </span>
+
+            <span className='text-muted-foreground ml-1 flex flex-none items-center gap-1 text-[11px]'>
+              <Users className='h-3 w-3' />
+              {libres}
             </span>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-bold text-lg">
-              {formatPrice(servicio.Tarifa)}
-            </span>
-          </div>
         </div>
-        
-        <div className="pt-2">
-          <Button 
-            className="w-full" 
-            size="sm"
-            onClick={handleSeatSelection}
+
+        <div
+          className='border-border flex-none border-l pl-3 text-right'
+          title={`${formatearGuaranies(servicio.Tarifa)} de pasaje + ${formatearGuaranies(cargo)} de ${describirCargoServicio(serviceCharge).toLowerCase()}`}
+        >
+          <p className='text-[15px] leading-tight font-bold tabular-nums'>
+            {formatearGuaranies(total)}
+          </p>
+          <p className='text-muted-foreground mb-1.5 text-[10px]'>
+            con el cargo
+          </p>
+          <Button
+            size='sm'
+            className='h-7 w-full px-3 text-xs'
+            onClick={elegir}
             disabled={!origen || !destino}
           >
-            Seleccionar Asiento
+            Vender
           </Button>
         </div>
       </CardContent>
@@ -180,106 +215,104 @@ function ServicioCard({
   )
 }
 
-function EmpresaSection({
-  empresa,
-  origen,
-  destino,
-  onServiceSelect
-}: {
-  empresa: EmpresaServicios
-  origen?: ParadaHomologada | null
-  destino?: ParadaHomologada | null
-  onServiceSelect?: (servicio: Servicio, agenciaId: string, serviceCharge?: ServiceCharge) => void
-}) {
+function TarjetaFantasma() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Star className="h-5 w-5 text-yellow-500" />
-        <h3 className="text-lg font-semibold">{empresa.empresa}</h3>
-        <Badge variant="secondary" className="ml-auto">
-          {empresa.data.length} servicios
-        </Badge>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* El logo de la empresa llega en `url`; con el nombre viejo
-            (`imageUrl`) nunca se mostraba ninguno. */}
-        {empresa.data.map((servicio) => (
-          <ServicioCard
-            key={servicio.Id}
-            servicio={servicio}
-            agenciaId={empresa.id}
-            empresaNombre={empresa.empresa}
-            empresaLogo={empresa.url}
-            serviceCharge={empresa.serviceCharge}
-            origen={origen}
-            destino={destino}
-            onServiceSelect={onServiceSelect}
-          />
-        ))}
-      </div>
-    </div>
+    <Card>
+      <CardContent className='flex items-center gap-3 p-3'>
+        <div className='flex w-[4.5rem] flex-none flex-col items-center gap-1'>
+          <Skeleton className='h-10 w-10 rounded-lg' />
+          <Skeleton className='h-2.5 w-12' />
+        </div>
+        <div className='border-border flex-1 space-y-2 border-l pl-3'>
+          <Skeleton className='h-3 w-3/5' />
+          <Skeleton className='h-3 w-4/5' />
+        </div>
+        <div className='border-border flex-none space-y-1.5 border-l pl-3'>
+          <Skeleton className='h-3.5 w-20' />
+          <Skeleton className='h-7 w-20 rounded-md' />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
-export function ServiciosList({ data, isLoading, className, origen, destino, onServiceSelect }: ServiciosListProps) {
+export function ServiciosList({
+  data,
+  isLoading,
+  className,
+  origen,
+  destino,
+  onServiceSelect,
+}: ServiciosListProps) {
   if (isLoading) {
     return (
       <div className={className}>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 bg-muted animate-pulse rounded" />
-                <div className="h-6 w-32 bg-muted animate-pulse rounded" />
-                <div className="h-5 w-16 bg-muted animate-pulse rounded ml-auto" />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3].map((j) => (
-                  <Card key={j}>
-                    <CardHeader>
-                      <div className="h-4 w-20 bg-muted animate-pulse rounded" />
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="h-3 w-full bg-muted animate-pulse rounded" />
-                      <div className="h-3 w-3/4 bg-muted animate-pulse rounded" />
-                      <div className="h-8 w-full bg-muted animate-pulse rounded" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className='grid gap-2.5 xl:grid-cols-2'>
+          <TarjetaFantasma />
+          <TarjetaFantasma />
+          <TarjetaFantasma />
+          <TarjetaFantasma />
         </div>
       </div>
     )
   }
 
-  if (!data || data.length === 0) {
+  // Una sola lista, ordenada por hora de salida.
+  //
+  // Antes venían agrupados por empresa, en una grilla de tres columnas: para
+  // comparar el de las 06:15 de una con el de las 06:30 de otra había que
+  // scrollear y recordar. La pregunta del mostrador es «¿cuál sale primero?»,
+  // y esa se contesta con una lista en orden.
+  const salidas = data
+    .flatMap((empresa) =>
+      empresa.data.map((servicio) => ({
+        servicio,
+        agenciaId: empresa.id,
+        empresaNombre: empresa.empresa,
+        empresaLogo: empresa.url,
+        serviceCharge: empresa.serviceCharge,
+      }))
+    )
+    .sort((a, b) => {
+      const horaA = leerHorario(
+        a.servicio.Embarque,
+        a.servicio.Desembarque
+      ).sale
+      const horaB = leerHorario(
+        b.servicio.Embarque,
+        b.servicio.Desembarque
+      ).sale
+      return horaA.localeCompare(horaB)
+    })
+
+  if (salidas.length === 0) {
     return (
       <div className={className}>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No se encontraron servicios</h3>
-            <p className="text-muted-foreground text-center">
-              No hay servicios disponibles para la ruta y fecha seleccionadas.
-              <br />
-              Intenta con otros destinos o fechas.
-            </p>
-          </CardContent>
-        </Card>
+        <div className='border-border rounded-lg border border-dashed px-6 py-10 text-center'>
+          <p className='mb-1 font-medium'>No hay salidas para esa fecha</p>
+          <p className='text-muted-foreground text-sm'>
+            Probá con otra fecha, o revisá que «Pasajeros» no esté pidiendo más
+            butacas de las que quedan.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className={className}>
-      <div className="space-y-8">
-        {data.map((empresa) => (
-          <EmpresaSection 
-            key={empresa.id} 
-            empresa={empresa} 
+      {/* Dos por fila: una tarjeta a todo el ancho deja un desierto entre el
+          horario y el precio, y obliga a recorrer 1300 px para leer una sola
+          salida. */}
+      <div className='grid gap-2.5 xl:grid-cols-2'>
+        {salidas.map((salida) => (
+          <TarjetaDeServicio
+            key={`${salida.agenciaId}-${salida.servicio.Id}`}
+            servicio={salida.servicio}
+            agenciaId={salida.agenciaId}
+            empresaNombre={salida.empresaNombre}
+            empresaLogo={salida.empresaLogo}
+            serviceCharge={salida.serviceCharge}
             origen={origen}
             destino={destino}
             onServiceSelect={onServiceSelect}

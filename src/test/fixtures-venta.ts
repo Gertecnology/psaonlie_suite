@@ -1,3 +1,4 @@
+import type { DatosDelPasajero } from '@/features/sales/utils/los-datos-del-pasajero'
 import type {
   Asiento,
   RoundTripSearchData,
@@ -93,6 +94,35 @@ export function datosConAsientosBloqueados(): RoundTripSearchData {
       codigoReferencia: 'REF-OK',
       bloqueoExpiraEn: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     },
+  }
+}
+
+/**
+ * Un pasajero ya cargado en la planilla.
+ *
+ * Desde que la planilla es su propio paso, el resumen los lee del contexto:
+ * no hay dónde tipearlos en esa pantalla.
+ */
+export const PASAJERO_CARGADO: DatosDelPasajero = {
+  numeroDocumento: '1234567',
+  nombre: 'Ana',
+  apellido: 'Pérez',
+  tipoDocumento: 'CI',
+  nacionalidad: 'PY',
+  paisResidencia: 'Paraguay',
+  fechaNacimiento: '1990-05-10',
+  sexo: 'M',
+  ocupacion: 'Empleado',
+  telefono: '0981111111',
+  email: 'pasajero@test.com',
+  observaciones: '',
+}
+
+/** Butacas bloqueadas y el pasajero ya cargado: lo que ve el paso 5. */
+export function datosConPasajerosCargados(): RoundTripSearchData {
+  return {
+    ...datosConAsientosBloqueados(),
+    pasajeros: [PASAJERO_CARGADO],
   }
 }
 
