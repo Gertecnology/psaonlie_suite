@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useRoundTrip } from '../../context/round-trip-context'
+import { useLaReservaSigueViva } from '../../hooks/use-la-reserva-sigue-viva'
+import { descargarLaLista } from '../../utils/la-lista-de-pasajeros-en-csv'
 import { leerHorario } from '../../utils/el-horario-del-servicio'
 import {
   cuantasCompletas,
@@ -13,6 +15,7 @@ import {
   formatearGuaranies,
   sumarPreciosAsientos,
 } from '../../utils/money'
+import { SeSoltaronLasButacas } from '../asientos/se-soltaron-las-butacas'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { PlanillaDePasajeros } from './planilla-de-pasajeros'
 
@@ -35,6 +38,22 @@ export function PasajerosPage() {
     roundTripData.pasajeros ?? asientos.map(() => filaVacia())
   )
 
+  /**
+   * Se soltaron las butacas mientras se cargaba.
+   *
+   * Es el paso donde más duele: con dieciocho filas encima, enterarse recién
+   * al confirmar significa haber tipeado ciento noventa y ocho campos sobre
+   * una reserva que ya no existía.
+   */
+  const [seSoltaron, setSeSoltaron] = useState(false)
+
+  useLaReservaSigueViva({
+    codigoReferencia: roundTripData.ida.codigoReferencia,
+    expiraEn: roundTripData.ida.bloqueoExpiraEn,
+    activa: !roundTripData.ida.ventaConfirmada,
+    onSeSoltaron: () => setSeSoltaron(true),
+  })
+
   const completas = cuantasCompletas(filas)
   const faltan = asientos.length - completas
 
@@ -51,9 +70,28 @@ export function PasajerosPage() {
     : null
 
   const continuar = () => {
-    if (faltan > 0) return
+    if (faltan > 0 || seSoltaron) return
     setRoundTripData({ pasajeros: filas })
     setCurrentStep('resumen')
+  }
+
+  /**
+   * Volver a elegir butacas conservando lo cargado.
+   *
+   * Los pasajeros se guardan en el contexto antes de salir: al volver acá, la
+   * planilla arranca con todo puesto y sólo falta la butaca de cada uno.
+   */
+  const elegirButacasDeNuevo = () => {
+    setRoundTripData({
+      pasajeros: filas,
+      ida: {
+        ...roundTripData.ida,
+        asientos: undefined,
+        codigoReferencia: undefined,
+        bloqueoExpiraEn: undefined,
+      },
+    })
+    setCurrentStep('ida-seats')
   }
 
   const volver = () => {
@@ -94,6 +132,18 @@ export function PasajerosPage() {
           <TiempoBloqueo expiraEn={roundTripData.ida.bloqueoExpiraEn} />
         </div>
       </div>
+
+      <SeSoltaronLasButacas
+        abierto={seSoltaron}
+        asientos={asientos}
+        pasajeros={filas}
+        onElegirDeNuevo={elegirButacasDeNuevo}
+        onBuscarOtro={() => {
+          setRoundTripData({ pasajeros: filas })
+          setCurrentStep('search')
+        }}
+        onDescargar={() => descargarLaLista(filas, 'pasajeros')}
+      />
 
       <PlanillaDePasajeros
         butacas={asientos.map((asiento) => asiento.numero)}

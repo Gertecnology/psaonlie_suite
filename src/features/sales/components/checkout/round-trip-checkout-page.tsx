@@ -16,6 +16,9 @@ import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { useRoundTrip } from '../../context/round-trip-context'
 import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
+import { useLaReservaSigueViva } from '../../hooks/use-la-reserva-sigue-viva'
+import { descargarLaLista } from '../../utils/la-lista-de-pasajeros-en-csv'
+import { SeSoltaronLasButacas } from '../asientos/se-soltaron-las-butacas'
 import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
 import {
   mensajeParaOperador,
@@ -55,6 +58,9 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
    * pagó nunca.
    */
   const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('')
+
+  /** Se soltaron las butacas mientras se revisaba. */
+  const [seSoltaron, setSeSoltaron] = useState(false)
   const [errorVenta, setErrorVenta] = useState<string | null>(null)
 
   // A nombre de quién sale la factura. También faltaba: toda venta de ida y
@@ -109,6 +115,13 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
    */
   const confirmacionCerrada = useRef(false)
   const ventaYaConfirmada = !!roundTripData.ida.ventaConfirmada
+
+  const { verificarAhora } = useLaReservaSigueViva({
+    codigoReferencia: roundTripData.ida.codigoReferencia,
+    expiraEn: roundTripData.ida.bloqueoExpiraEn,
+    activa: !ventaYaConfirmada,
+    onSeSoltaron: () => setSeSoltaron(true),
+  })
 
   // Un formulario por pasajero: si hay ida y vuelta, el mismo pasajero viaja
   // en los dos tramos.
@@ -183,6 +196,11 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
       toast.error('Elegí cómo paga el cliente antes de confirmar')
       return
     }
+
+    // La última verificación antes de emitir. El contador de la pantalla es
+    // sólo visual: sin esto se emite un boleto contra butacas que la
+    // transportista ya soltó, y la venta nace rota.
+    if (!(await verificarAhora())) return
 
     confirmacionCerrada.current = true
     setErrorVenta(null)
@@ -372,6 +390,25 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
 
   return (
     <div className="flex flex-col gap-3.5">
+      <SeSoltaronLasButacas
+        abierto={seSoltaron}
+        asientos={roundTripData.ida.asientos ?? []}
+        pasajeros={filasDePasajeros}
+        onElegirDeNuevo={() => {
+          setRoundTripData({
+            ida: {
+              ...roundTripData.ida,
+              asientos: undefined,
+              codigoReferencia: undefined,
+              bloqueoExpiraEn: undefined,
+            },
+          })
+          setCurrentStep('ida-seats')
+        }}
+        onBuscarOtro={() => setCurrentStep('search')}
+        onDescargar={() => descargarLaLista(filasDePasajeros, 'pasajeros')}
+      />
+
       <div className="flex items-start gap-3">
         <Button
           variant="outline"
