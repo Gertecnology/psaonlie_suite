@@ -16,6 +16,7 @@ import { ResumenPago, type TramoResumen } from '../pago/resumen-pago'
 import { TiempoBloqueo } from '../asientos/tiempo-bloqueo'
 import { useRoundTrip } from '../../context/round-trip-context'
 import { useConfirmarVenta } from '../../hooks/use-confirmar-venta'
+import { useAvisarQueSigoTrabajando } from '../../hooks/use-avisar-que-sigo-trabajando'
 import { useLaReservaSigueViva } from '../../hooks/use-la-reserva-sigue-viva'
 import { descargarLaLista } from '../../utils/la-lista-de-pasajeros-en-csv'
 import { SeSoltaronLasButacas } from '../asientos/se-soltaron-las-butacas'
@@ -377,6 +378,13 @@ export function RoundTripCheckoutPage({ onComplete: _onComplete }: RoundTripChec
   }
 
   const confirmando = confirmarVentaMutation.isPending
+  // Mientras el vendedor trabaje, la reserva se renueva sola. Sin señales,
+  // el backend deja de pedir prórrogas.
+  useAvisarQueSigoTrabajando({
+    codigoReferencia: roundTripData.ida.codigoReferencia,
+    activa: !roundTripData.ida.ventaConfirmada,
+  })
+
   const completas = cuantasCompletas(filasDePasajeros)
 
   // Lo que el cliente paga: los pasajes de todos los tramos más su cargo por

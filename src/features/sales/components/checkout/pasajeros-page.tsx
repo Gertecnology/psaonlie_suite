@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useRoundTrip } from '../../context/round-trip-context'
+import { useAvisarQueSigoTrabajando } from '../../hooks/use-avisar-que-sigo-trabajando'
 import { useLaReservaSigueViva } from '../../hooks/use-la-reserva-sigue-viva'
 import { descargarLaLista } from '../../utils/la-lista-de-pasajeros-en-csv'
 import { leerHorario } from '../../utils/el-horario-del-servicio'
@@ -52,6 +53,13 @@ export function PasajerosPage() {
     expiraEn: roundTripData.ida.bloqueoExpiraEn,
     activa: !roundTripData.ida.ventaConfirmada,
     onSeSoltaron: () => setSeSoltaron(true),
+  })
+
+  // Mientras el vendedor trabaje, la reserva se renueva sola. Sin señales,
+  // el backend deja de pedir prórrogas.
+  useAvisarQueSigoTrabajando({
+    codigoReferencia: roundTripData.ida.codigoReferencia,
+    activa: !roundTripData.ida.ventaConfirmada,
   })
 
   const completas = cuantasCompletas(filas)

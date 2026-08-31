@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRoundTrip } from '../../context/round-trip-context'
+import { useAvisarQueSigoTrabajando } from '../../hooks/use-avisar-que-sigo-trabajando'
 import { useBloquearAsientos } from '../../hooks/use-bloquear-asientos'
 import { useGetAsientos } from '../../hooks/use-get-asientos'
 import { useLiberarBloqueo } from '../../hooks/use-liberar-bloqueo'
@@ -122,6 +123,13 @@ export function RoundTripSeatSelectionPage({
   useEffect(() => {
     setBloqueoVencido(false)
   }, [blockReferenceCode])
+
+  // Mientras el vendedor trabaje, la reserva se renueva sola. Sin señales,
+  // el backend deja de pedir prórrogas.
+  useAvisarQueSigoTrabajando({
+    codigoReferencia: currentTripData?.codigoReferencia,
+    activa: !currentTripData?.ventaConfirmada,
+  })
 
   const handleSeatSelect = (asiento: Asiento, conShift?: boolean) => {
     if (blockedSeats.length > 0) return
